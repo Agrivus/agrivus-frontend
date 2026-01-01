@@ -26,11 +26,11 @@
 /* Custom component styles */
 @layer components {
   .btn-primary {
-    @apply inline-block px-6 py-3 bg-secondary-green text-white rounded transition-all duration-300 font-semibold text-sm uppercase tracking-wider shadow-md hover:bg-accent-gold hover:text-dark-green hover:-translate-y-1 hover:shadow-lg;
+    @apply inline-block px-6 py-3 bg-secondary-green text-white rounded transition-all duration-300 font-semibold text-sm uppercase tracking-wider shadow-md hover:bg-accent-gold hover:text-dark-green hover:-translate-y-0.5 hover:shadow-lg;
   }
 
   .btn-outline {
-    @apply inline-block px-6 py-3 bg-transparent border-2 border-secondary-green text-secondary-green rounded transition-all duration-300 font-semibold text-sm uppercase tracking-wider hover:border-accent-gold hover:text-dark-green hover:bg-accent-gold hover:bg-opacity-10;
+    @apply inline-block px-6 py-3 bg-transparent border-2 border-secondary-green text-secondary-green rounded transition-all duration-300 font-semibold text-sm uppercase tracking-wider hover:border-accent-gold hover:text-dark-green hover:bg-accent-gold hover:bg-opacity-10 hover:-translate-y-0.5;
   }
 
   .card {

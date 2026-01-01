@@ -18,8 +18,8 @@ export default {
           DEFAULT: "#d4a017",
         },
         light: {
-          green: "#e8f5e9",
-          DEFAULT: "#e8f5e9",
+          green: "#c8e6c9",
+          DEFAULT: "#c8e6c9",
         },
         dark: {
           green: "#0d3e1a",

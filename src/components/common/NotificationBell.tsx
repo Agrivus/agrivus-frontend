@@ -131,12 +131,15 @@ const NotificationBell: React.FC = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-green-600 focus:outline-none transition-colors"
+        aria-label="Notifications"
+        aria-expanded={isOpen}
       >
         <svg
           className="w-6 h-6"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"

@@ -127,6 +127,8 @@ export const QuickChatButton: React.FC = () => {
         <button
           onClick={() => setShowOptions(!showOptions)}
           className="bg-green-600 hover:bg-green-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-green-300"
+          aria-label={showOptions ? "Close chat menu" : "Open chat menu"}
+          aria-expanded={showOptions}
         >
           {showOptions ? (
             <svg
@@ -134,6 +136,7 @@ export const QuickChatButton: React.FC = () => {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -148,6 +151,7 @@ export const QuickChatButton: React.FC = () => {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"

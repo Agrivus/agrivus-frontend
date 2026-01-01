@@ -17,12 +17,12 @@ const BoostBadge: React.FC<BoostBadgeProps> = ({
   size = "md",
   showDetails = false,
 }) => {
-  // Determine badge color based on boost level
+  // Determine badge color based on boost level (using brand-consistent green/gold palette)
   const getBoostColor = (multiplier: number) => {
-    if (multiplier >= 8) return "from-purple-500 to-pink-500"; // Elite
-    if (multiplier >= 6) return "from-yellow-400 to-orange-500"; // Gold
-    if (multiplier >= 4) return "from-blue-400 to-indigo-500"; // Silver
-    if (multiplier >= 2) return "from-green-400 to-teal-500"; // Bronze
+    if (multiplier >= 8) return "from-primary-green to-bright-green"; // Elite
+    if (multiplier >= 6) return "from-accent-gold to-medium-green"; // Gold
+    if (multiplier >= 4) return "from-secondary-green to-medium-green"; // Silver
+    if (multiplier >= 2) return "from-medium-green to-bright-green"; // Bronze
     return "from-gray-400 to-gray-500"; // New
   };
 
@@ -99,7 +99,7 @@ const BoostBadge: React.FC<BoostBadgeProps> = ({
       </div>
 
       {/* Info */}
-      <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+      <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-light-green rounded-lg">
         <p className="text-xs text-gray-700">
           <span className="font-semibold">💡 Visibility Boost:</span> Your
           products appear {boostMultiplier.toFixed(1)}x more prominently in
