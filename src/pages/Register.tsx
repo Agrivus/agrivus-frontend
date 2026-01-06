@@ -31,6 +31,44 @@ const Register: React.FC = () => {
     });
   };
 
+  // Validate password strength to match backend requirements
+  const validatePassword = (
+    password: string
+  ): { valid: boolean; message: string } => {
+    if (password.length < 8) {
+      return {
+        valid: false,
+        message: "Password must be at least 8 characters long",
+      };
+    }
+    if (!/[A-Z]/.test(password)) {
+      return {
+        valid: false,
+        message: "Password must contain at least one uppercase letter",
+      };
+    }
+    if (!/[a-z]/.test(password)) {
+      return {
+        valid: false,
+        message: "Password must contain at least one lowercase letter",
+      };
+    }
+    if (!/[0-9]/.test(password)) {
+      return {
+        valid: false,
+        message: "Password must contain at least one number",
+      };
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return {
+        valid: false,
+        message:
+          "Password must contain at least one special character (!@#$%^&*)",
+      };
+    }
+    return { valid: true, message: "" };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -41,8 +79,9 @@ const Register: React.FC = () => {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.message);
       return;
     }
 
@@ -177,30 +216,36 @@ const Register: React.FC = () => {
             />
 
             {/* Password */}
-            <Input
-              label="Password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-              icon={
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-              }
-            />
+            <div>
+              <Input
+                label="Password"
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+                icon={
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                }
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Must include: 8+ characters, uppercase, lowercase, number, and
+                special character (!@#$%^&*)
+              </p>
+            </div>
 
             {/* Confirm Password */}
             <Input
