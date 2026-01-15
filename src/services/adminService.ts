@@ -96,3 +96,20 @@ export const exportData = async (
   });
   return response.data;
 };
+
+// Create a new admin user
+export const createAdminUser = async (data: {
+  email: string;
+  phone: string;
+  password: string;
+  fullName: string;
+}) => {
+  const response = await api.post("/admin/users/create-admin", data);
+  return response.data;
+};
+
+// Update user role
+export const updateUserRole = async (userId: string, role: string) => {
+  const response = await api.put(`/admin/users/${userId}/role`, { role });
+  return response.data;
+};

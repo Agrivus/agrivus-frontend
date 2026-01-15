@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getAllUsers, updateUserStatus } from "../services/adminService";
-import { Card, LoadingSpinner } from "../components/common";
+import {
+  getAllUsers,
+  updateUserStatus,
+  createAdminUser,
+  updateUserRole,
+} from "../services/adminService";
+import { Card, LoadingSpinner, Modal } from "../components/common";
 
 interface User {
   id: string;
@@ -20,6 +25,14 @@ interface User {
 export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newAdmin, setNewAdmin] = useState({
+    email: "",
+    phone: "",
+    password: "",
+    fullName: "",
+  });
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -81,6 +94,58 @@ export default function AdminUsers() {
     }
   };
 
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !newAdmin.email ||
+      !newAdmin.phone ||
+      !newAdmin.password ||
+      !newAdmin.fullName
+    ) {
+      alert("All fields are required");
+      return;
+    }
+    if (newAdmin.password.length < 8) {
+      alert("Password must be at least 8 characters long");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const response = await createAdminUser(newAdmin);
+      if (response.success) {
+        alert("Admin user created successfully!");
+        setShowCreateModal(false);
+        setNewAdmin({ email: "", phone: "", password: "", fullName: "" });
+        loadUsers();
+      }
+    } catch (error: any) {
+      console.error("Failed to create admin:", error);
+      alert(error.response?.data?.message || "Failed to create admin user");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to change this user's role to ${newRole}?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await updateUserRole(userId, newRole);
+      alert(`User role updated to ${newRole}`);
+      loadUsers();
+    } catch (error: any) {
+      console.error("Failed to update role:", error);
+      alert(error.response?.data?.message || "Failed to update user role");
+    }
+  };
+
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case "farmer":
@@ -114,13 +179,108 @@ export default function AdminUsers() {
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600">Manage all platform users</p>
         </div>
-        <Link
-          to="/admin"
-          className="text-green-600 hover:text-green-700 font-medium"
-        >
-          ← Back to Dashboard
-        </Link>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+          >
+            + Create Admin
+          </button>
+          <Link
+            to="/admin"
+            className="text-green-600 hover:text-green-700 font-medium"
+          >
+            ← Back to Dashboard
+          </Link>
+        </div>
       </div>
+
+      {/* Create Admin Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Admin"
+      >
+        <form onSubmit={handleCreateAdmin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name
+            </label>
+            <input
+              type="text"
+              value={newAdmin.fullName}
+              onChange={(e) =>
+                setNewAdmin({ ...newAdmin, fullName: e.target.value })
+              }
+              placeholder="John Doe"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={newAdmin.email}
+              onChange={(e) =>
+                setNewAdmin({ ...newAdmin, email: e.target.value })
+              }
+              placeholder="admin@example.com"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone
+            </label>
+            <input
+              type="tel"
+              value={newAdmin.phone}
+              onChange={(e) =>
+                setNewAdmin({ ...newAdmin, phone: e.target.value })
+              }
+              placeholder="+263712345678"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              value={newAdmin.password}
+              onChange={(e) =>
+                setNewAdmin({ ...newAdmin, password: e.target.value })
+              }
+              placeholder="Min 8 characters"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              minLength={8}
+              required
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(false)}
+              className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={creating}
+              className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              {creating ? "Creating..." : "Create Admin"}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Filters */}
       <Card className="mb-6">
@@ -275,6 +435,20 @@ export default function AdminUsers() {
                       >
                         View
                       </Link>
+                      <select
+                        value={user.role}
+                        onChange={(e) =>
+                          handleRoleChange(user.id, e.target.value)
+                        }
+                        className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500"
+                      >
+                        <option value="farmer">Farmer</option>
+                        <option value="buyer">Buyer</option>
+                        <option value="transporter">Transporter</option>
+                        <option value="agro_supplier">Supplier</option>
+                        <option value="vendor">Vendor</option>
+                        <option value="admin">Admin</option>
+                      </select>
                       <button
                         onClick={() =>
                           handleStatusToggle(user.id, user.is_active)
