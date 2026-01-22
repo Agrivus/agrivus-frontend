@@ -184,6 +184,11 @@ const Dashboard: React.FC = () => {
                       ➕ Create New Listing
                     </Button>
                   </Link>
+                  <Link to="/recommendations">
+                    <Button variant="outline" className="w-full">
+                      ✨ AI Insights & Recommendations
+                    </Button>
+                  </Link>
                   <Link to="/marketplace">
                     <Button variant="outline" className="w-full">
                       Browse Marketplace
@@ -312,6 +317,11 @@ const Dashboard: React.FC = () => {
                       Browse Products
                     </Button>
                   </Link>
+                  <Link to="/recommendations">
+                    <Button variant="outline" className="w-full">
+                      ✨ AI Insights & Recommendations
+                    </Button>
+                  </Link>
                   <Link to="/orders">
                     <Button variant="outline" className="w-full">
                       My Orders
@@ -406,6 +416,11 @@ const Dashboard: React.FC = () => {
                   <Link to="/orders">
                     <Button variant="primary" className="w-full">
                       View Assigned Orders
+                    </Button>
+                  </Link>
+                  <Link to="/recommendations">
+                    <Button variant="outline" className="w-full">
+                      ✨ AI Insights & Recommendations
                     </Button>
                   </Link>
                   <Button variant="outline" className="w-full">

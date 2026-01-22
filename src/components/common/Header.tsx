@@ -59,6 +59,7 @@ const Header: React.FC = () => {
       { to: "/agrimall/products", label: "Agri-Mall" },
       { to: "/agrimall/orders", label: "My Orders" },
       { to: "/export", label: "Export Gateway" },
+      { to: "/recommendations", label: "AI Insights" },
     ];
 
     // Add role-specific links
