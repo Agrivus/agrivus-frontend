@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { safeDisplayText } from "../utils/textUtils";
 import { Button, Card, LoadingSpinner } from "../components/common";
+import OptimizedImage from "../components/common/OptimizedImage";
 import { listingsService } from "../services/listingsService";
 import type { Listing } from "../types";
 
@@ -244,10 +245,12 @@ const MyListings: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           {listing.images && listing.images.length > 0 ? (
-                            <img
+                            <OptimizedImage
                               src={listing.images[0]}
                               alt={listing.cropType}
                               className="w-12 h-12 rounded object-cover"
+                              width={48}
+                              height={48}
                             />
                           ) : (
                             <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
@@ -299,7 +302,7 @@ const MyListings: React.FC = () => {
                       <td className="px-6 py-4">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${getStatusColor(
-                            listing.status
+                            listing.status,
                           )}`}
                         >
                           {listing.status}

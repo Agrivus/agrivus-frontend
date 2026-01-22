@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Card, LoadingSpinner } from "../components/common";
+import OptimizedImage from "../components/common/OptimizedImage";
 import { listingsService } from "../services/listingsService";
 import chatService from "../services/chatService";
 import type { Listing } from "../types";
@@ -79,7 +80,7 @@ const ListingDetail: React.FC = () => {
       const response = await listingsService.updateListingQuantity(
         id!,
         qty,
-        quantityReason
+        quantityReason,
       );
 
       if (response.success && response.data) {
@@ -139,7 +140,7 @@ const ListingDetail: React.FC = () => {
     setStartingChat(true);
     try {
       const response = await chatService.getOrCreateConversation(
-        listing.farmerId
+        listing.farmerId,
       );
       if (response.success) {
         navigate("/chat", { state: { conversationId: response.data.id } });
@@ -203,10 +204,12 @@ const ListingDetail: React.FC = () => {
               {/* Image Gallery */}
               <div className="h-96 bg-gradient-to-br from-primary-green to-medium-green flex items-center justify-center">
                 {listing.images && listing.images.length > 0 ? (
-                  <img
+                  <OptimizedImage
                     src={listing.images[0]}
                     alt={listing.cropType}
                     className="w-full h-full object-cover"
+                    width="100%"
+                    height={384}
                   />
                 ) : (
                   <svg

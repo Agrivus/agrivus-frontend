@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, Button, BoostBadge } from "../common";
+import OptimizedImage from "../common/OptimizedImage";
 import type { ListingWithFarmer } from "../../types";
 import { safeDisplayText, singularizeUnit } from "../../utils/textUtils";
 import chatService from "../../services/chatService";
@@ -21,7 +22,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
     setMessagingFarmer(true);
     try {
       const response = await chatService.getOrCreateConversation(
-        listingData.farmerId
+        listingData.farmerId,
       );
       if (response.success) {
         navigate("/chat", { state: { conversationId: response.data.id } });
@@ -38,10 +39,12 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
       {/* Image */}
       <div className="h-48 bg-gradient-to-br from-primary-green to-medium-green flex items-center justify-center relative overflow-hidden">
         {listingData.images && listingData.images.length > 0 ? (
-          <img
+          <OptimizedImage
             src={listingData.images[0]}
             alt={listingData.cropType}
             className="w-full h-full object-cover"
+            width="100%"
+            height={192}
           />
         ) : (
           <svg
@@ -193,9 +196,25 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
         {/* Stats */}
         <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
           <span className="flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
             </svg>
             {listingData.viewCount} views
           </span>
