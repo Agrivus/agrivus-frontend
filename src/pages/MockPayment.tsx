@@ -81,7 +81,8 @@ const MockPayment: React.FC = () => {
             Processing Payment...
           </h2>
           <p className="text-gray-600 mb-6">
-            Simulating {payment?.paymentMethod.toUpperCase()} payment gateway
+            Simulating {payment?.paymentMethod?.toUpperCase() || "PAYMENT"}{" "}
+            gateway
           </p>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-blue-900 font-semibold">
