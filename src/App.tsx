@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import Wallet from "./pages/Wallet";
 import Notifications from "./pages/Notifications";
 import PaymentHistory from "./pages/PaymentHistory";
+import Recommendations from "./pages/Recommendations";
 
 // NEW: Auction pages
 import Auctions from "./pages/Auctions";
@@ -340,6 +341,15 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <PaymentHistory />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/recommendations"
+                  element={
+                    <ProtectedRoute>
+                      <Recommendations />
                     </ProtectedRoute>
                   }
                 />

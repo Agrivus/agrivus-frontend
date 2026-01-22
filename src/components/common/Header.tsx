@@ -69,7 +69,7 @@ const Header: React.FC = () => {
     authenticatedLinks.push(
       { to: "/orders", label: "Orders" },
       { to: "/wallet", label: "Wallet" },
-      { to: "/about", label: "About" }
+      { to: "/about", label: "About" },
     );
 
     return authenticatedLinks;
@@ -226,6 +226,14 @@ const Header: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <NotificationBell />
 
+                  {/* Recommendations link */}
+                  <Link
+                    to="/recommendations"
+                    className="text-gray-600 hover:text-gray-900 font-medium transition"
+                  >
+                    💡 Recommendations
+                  </Link>
+
                   {/* Messages link */}
                   <Link
                     to="/chat"
@@ -275,6 +283,13 @@ const Header: React.FC = () => {
                 ))}
                 {isAuthenticated && (
                   <>
+                    <Link
+                      to="/recommendations"
+                      className="text-gray-600 hover:text-gray-900 font-medium transition flex items-center gap-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      💡 Recommendations
+                    </Link>
                     <Link
                       to="/notifications"
                       className="text-gray-700 hover:text-primary-green font-semibold transition-colors flex items-center gap-2"
