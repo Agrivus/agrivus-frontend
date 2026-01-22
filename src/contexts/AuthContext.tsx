@@ -5,7 +5,7 @@ import type {
   RegisterData,
   AuthResponse,
 } from "../types";
-import api from "../services/api";
+import api, { clearCache } from "../services/api";
 
 interface AuthContextType {
   user: User | null;
@@ -79,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setToken(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    clearCache(); // Clear cached requests on logout
   };
 
   const value = {
