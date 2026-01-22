@@ -1,19 +1,37 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout, Card, Button, LoadingSpinner } from "../components/common";
 import { walletService } from "../services/walletService";
+import paymentService from "../services/paymentService";
 import type { WalletBalance, Transaction } from "../services/walletService";
 
 const Wallet: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("ecocash");
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     loadWalletData();
-  }, []);
+
+    // Check for payment success/failure from URL params
+    const paymentStatus = searchParams.get("payment");
+    if (paymentStatus === "success") {
+      showNotification("✅ Payment completed successfully!", "success");
+      // Reload wallet to show updated balance
+      setTimeout(() => loadWalletData(), 1000);
+    } else if (paymentStatus === "failed") {
+      showNotification("❌ Payment failed. Please try again.", "error");
+    } else if (paymentStatus === "cancelled") {
+      showNotification("⚠️ Payment was cancelled.", "warning");
+    }
+  }, [searchParams]);
 
   const loadWalletData = async () => {
     try {
@@ -26,6 +44,7 @@ const Wallet: React.FC = () => {
       setTransactions(transactionsData.transactions);
     } catch (error) {
       console.error("Failed to load wallet data:", error);
+      showNotification("Failed to load wallet data", "error");
     } finally {
       setLoading(false);
     }
@@ -33,14 +52,84 @@ const Wallet: React.FC = () => {
 
   const handleDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const amount = parseFloat(depositAmount);
+
+    // Validation
+    if (!amount || amount <= 0) {
+      showNotification("Please enter a valid amount", "error");
+      return;
+    }
+
+    if (amount < 1) {
+      showNotification("Minimum deposit amount is $1", "error");
+      return;
+    }
+
+    if (amount > 10000) {
+      showNotification(
+        "Maximum deposit amount is $10,000 per transaction",
+        "error",
+      );
+      return;
+    }
+
     try {
-      await walletService.deposit(parseFloat(depositAmount), paymentMethod);
-      setShowDepositModal(false);
-      setDepositAmount("");
-      loadWalletData(); // Refresh
-      alert("Funds deposited successfully!");
+      setProcessing(true);
+
+      // Initiate payment via gateway
+      const response = await paymentService.initiateDeposit({
+        amount,
+        paymentMethod: paymentMethod as any,
+      });
+
+      if (response.success) {
+        const { paymentUrl, isMockPayment } = response.data;
+
+        // Close modal
+        setShowDepositModal(false);
+        setDepositAmount("");
+
+        if (isMockPayment && paymentUrl) {
+          // Redirect to mock payment page
+          window.location.href = paymentUrl;
+        } else if (paymentUrl) {
+          // Redirect to actual payment gateway (Paynow)
+          window.location.href = paymentUrl;
+        } else {
+          // Manual payment (ZIPIT/Bank Transfer)
+          showManualPaymentInstructions(response.data);
+        }
+      }
     } catch (error: any) {
-      alert(error.response?.data?.message || "Deposit failed");
+      console.error("Deposit initiation failed:", error);
+      showNotification(
+        error.response?.data?.message || "Failed to initiate payment",
+        "error",
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const showManualPaymentInstructions = (paymentData: any) => {
+    // Show modal with payment instructions for manual methods
+    alert(
+      `Payment Instructions:\n\n${paymentData.instructions}\n\nReference: ${paymentData.reference}\n\nPlease complete the payment and it will be credited within 24 hours.`,
+    );
+  };
+
+  const showNotification = (
+    message: string,
+    type: "success" | "error" | "warning" = "success",
+  ) => {
+    // Simple alert for now - you can replace with a toast notification library
+    if (type === "success") {
+      alert(`✅ ${message}`);
+    } else if (type === "error") {
+      alert(`❌ ${message}`);
+    } else {
+      alert(`⚠️ ${message}`);
     }
   };
 
@@ -99,10 +188,29 @@ const Wallet: React.FC = () => {
           <Button onClick={() => setShowDepositModal(true)}>
             <span className="mr-2">💰</span> Deposit Funds
           </Button>
-          <Button variant="outline">
-            <span className="mr-2">💸</span> Withdraw
+          <Button
+            variant="outline"
+            onClick={() => navigate("/payment/history")}
+          >
+            <span className="mr-2">📜</span> Payment History
           </Button>
         </div>
+
+        {/* Locked Wallet Warning */}
+        {balance?.isLocked && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <span className="text-2xl mr-3">🔒</span>
+              <div>
+                <h3 className="font-bold text-red-900">Wallet Locked</h3>
+                <p className="text-red-700 text-sm mt-1">
+                  Your wallet has been locked. Please contact support for
+                  assistance.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Transaction History */}
         <Card>
@@ -133,12 +241,12 @@ const Wallet: React.FC = () => {
                         tx.type === "deposit"
                           ? "bg-green-100 text-green-600"
                           : tx.type === "payment"
-                          ? "bg-blue-100 text-blue-600"
-                          : tx.type === "escrow_hold"
-                          ? "bg-yellow-100 text-yellow-600"
-                          : tx.type === "escrow_release"
-                          ? "bg-purple-100 text-purple-600"
-                          : "bg-gray-100 text-gray-600"
+                            ? "bg-blue-100 text-blue-600"
+                            : tx.type === "escrow_hold"
+                              ? "bg-yellow-100 text-yellow-600"
+                              : tx.type === "escrow_release"
+                                ? "bg-purple-100 text-purple-600"
+                                : "bg-gray-100 text-gray-600"
                       }`}
                     >
                       {tx.type === "deposit" && "💰"}
@@ -163,15 +271,15 @@ const Wallet: React.FC = () => {
                         tx.type === "deposit" || tx.type === "payment"
                           ? "text-green-600"
                           : tx.type === "withdrawal"
-                          ? "text-red-600"
-                          : "text-gray-900"
+                            ? "text-red-600"
+                            : "text-gray-900"
                       }`}
                     >
                       {tx.type === "deposit" || tx.type === "payment"
                         ? "+"
                         : tx.type === "withdrawal"
-                        ? "-"
-                        : ""}
+                          ? "-"
+                          : ""}
                       ${parseFloat(tx.amount).toLocaleString()}
                     </p>
                     <p className="text-sm text-gray-500">
@@ -186,15 +294,16 @@ const Wallet: React.FC = () => {
 
         {/* Deposit Modal */}
         {showDepositModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold text-gray-900">
                   Deposit Funds
                 </h3>
                 <button
                   onClick={() => setShowDepositModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  disabled={processing}
                 >
                   ✕
                 </button>
@@ -203,52 +312,96 @@ const Wallet: React.FC = () => {
               <form onSubmit={handleDeposit}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Amount (USD)
+                    Amount (USD) *
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="1"
+                    max="10000"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter amount"
+                    placeholder="Enter amount (min $1, max $10,000)"
                     required
+                    disabled={processing}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Minimum: $1 | Maximum: $10,000 per transaction
+                  </p>
                 </div>
 
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Payment Method
+                    Payment Method *
                   </label>
                   <select
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    disabled={processing}
                   >
-                    <option value="ecocash">EcoCash</option>
-                    <option value="zipit">ZIPIT</option>
-                    <option value="usd_wallet">USD Wallet</option>
-                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="ecocash">💳 EcoCash</option>
+                    <option value="onemoney">💳 OneMoney</option>
+                    <option value="telecash">💳 Telecash</option>
+                    <option value="zipit">🏦 ZIPIT (Bank Transfer)</option>
+                    <option value="usd_bank">🏦 USD Bank Transfer</option>
+                    <option value="card">💳 Debit/Credit Card</option>
                   </select>
+
+                  {/* Payment Method Info */}
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      {paymentMethod === "ecocash" &&
+                        "📱 You will be redirected to EcoCash to complete payment"}
+                      {paymentMethod === "onemoney" &&
+                        "📱 You will be redirected to OneMoney to complete payment"}
+                      {paymentMethod === "telecash" &&
+                        "📱 You will be redirected to Telecash to complete payment"}
+                      {paymentMethod === "zipit" &&
+                        "🏦 You will receive bank transfer instructions"}
+                      {paymentMethod === "usd_bank" &&
+                        "🏦 You will receive bank account details for USD transfer"}
+                      {paymentMethod === "card" &&
+                        "💳 You will be redirected to secure card payment page"}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                {/* Development Mode Warning */}
+                <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-sm text-yellow-800">
-                    <strong>Test Mode:</strong> This is a sandbox deposit. In
-                    production, you'll be redirected to the payment gateway.
+                    <strong>ℹ️ Development Mode:</strong> This is currently
+                    using a mock payment gateway. Real payment processing will
+                    be enabled once Paynow integration is activated.
                   </p>
                 </div>
 
                 <div className="flex gap-4">
-                  <Button type="submit" className="flex-1">
-                    Deposit ${depositAmount || "0"}
+                  <Button
+                    type="submit"
+                    className="flex-1"
+                    disabled={
+                      processing ||
+                      !depositAmount ||
+                      parseFloat(depositAmount) < 1
+                    }
+                  >
+                    {processing ? (
+                      <>
+                        <LoadingSpinner size="sm" />
+                        <span className="ml-2">Processing...</span>
+                      </>
+                    ) : (
+                      `Deposit $${depositAmount || "0"}`
+                    )}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowDepositModal(false)}
                     className="flex-1"
+                    disabled={processing}
                   >
                     Cancel
                   </Button>

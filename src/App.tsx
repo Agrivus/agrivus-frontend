@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Wallet from "./pages/Wallet";
 import Notifications from "./pages/Notifications";
+import PaymentHistory from "./pages/PaymentHistory";
 
 // NEW: Auction pages
 import Auctions from "./pages/Auctions";
@@ -50,6 +51,7 @@ import ExportAssessmentResults from "./pages/ExportAssessmentResults";
 import ExportMarketIntelligence from "./pages/ExportMarketIntelligence";
 import ExportDocuments from "./pages/ExportDocuments";
 import ExportLogistics from "./pages/ExportLogistics";
+import MockPayment from "./pages/MockPayment";
 
 function App() {
   return (
@@ -323,6 +325,21 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <ExportLogistics />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Payment Mock Route */}
+                <Route
+                  path="/payment/mock/:paymentId"
+                  element={<MockPayment />}
+                />
+
+                <Route
+                  path="/payment/history"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentHistory />
                     </ProtectedRoute>
                   }
                 />
