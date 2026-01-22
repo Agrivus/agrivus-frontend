@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { LoadingSpinner } from "../components/common";
 import ListingCard from "../components/marketplace/ListingCard";
 import MarketplaceFilters from "../components/marketplace/MarketplaceFilters";
@@ -8,47 +8,93 @@ import type { ListingWithFarmer, ListingFilters } from "../types";
 const Marketplace: React.FC = () => {
   const [listings, setListings] = useState<ListingWithFarmer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [filters, setFilters] = useState<ListingFilters>({
-    page: 1,
-    limit: 20,
+    limit: 10, // smaller page size for low bandwidth
     sortBy: "date_desc",
   });
+  const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 20,
+    limit: 10,
     total: 0,
     totalPages: 0,
   });
+  const [hasMore, setHasMore] = useState(true);
+
+  const observer = useRef<IntersectionObserver | null>(null);
+  const inFlight = useRef(false);
+
+  const lastListingRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (loadingMore) return;
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore && !inFlight.current) {
+          setPage((prev) => prev + 1);
+        }
+      });
+
+      if (node) observer.current.observe(node);
+    },
+    [loadingMore, hasMore],
+  );
 
   useEffect(() => {
-    fetchListings();
-  }, [filters]);
+    // Load data on initial mount and when filters or page changes
+    const controller = new AbortController();
+    const loadListings = async () => {
+      try {
+        setError("");
+        inFlight.current = true;
+        if (page === 1) setLoading(true);
+        else setLoadingMore(true);
 
-  const fetchListings = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const response = await listingsService.getListings(filters);
+        const response = await listingsService.getListings({
+          ...filters,
+          page,
+          limit: filters.limit || 10,
+        });
 
-      if (response.success && response.data) {
-        setListings(response.data.listings);
-        setPagination(response.data.pagination);
+        if (response.success && response.data) {
+          const { listings: fetched, pagination: p } = response.data;
+          if (page === 1) setListings(fetched);
+          else setListings((prev) => [...prev, ...fetched]);
+
+          setPagination(p);
+          const computedHasMore =
+            p.page < p.totalPages && fetched.length >= (filters.limit || 10);
+          setHasMore(computedHasMore);
+        }
+      } catch (err: any) {
+        // Swallow abort errors quietly
+        if (err?.name !== "CanceledError") {
+          setError(err.message || "Failed to load listings");
+        }
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+        inFlight.current = false;
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to load listings");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    loadListings();
+    return () => controller.abort();
+  }, [page, filters]);
 
   const handleFilterChange = (newFilters: ListingFilters) => {
-    setFilters(newFilters);
+    // Reset list and pagination
+    setListings([]);
+    setPage(1);
+    setHasMore(true);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    setFilters({ ...newFilters, limit: newFilters.limit || 10 });
   };
 
-  const handlePageChange = (newPage: number) => {
-    setFilters({ ...filters, page: newPage });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const loadMoreManually = () => {
+    if (!loadingMore && hasMore) setPage((prev) => prev + 1);
   };
 
   return (
@@ -116,45 +162,31 @@ const Marketplace: React.FC = () => {
             {listings.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                  {listings.map((listing) => (
-                    <ListingCard key={listing.listing.id} listing={listing} />
-                  ))}
+                  {listings.map((listing, index) => {
+                    if (index === listings.length - 1) {
+                      return (
+                        <div ref={lastListingRef} key={listing.listing.id}>
+                          <ListingCard listing={listing} />
+                        </div>
+                      );
+                    }
+                    return (
+                      <ListingCard key={listing.listing.id} listing={listing} />
+                    );
+                  })}
                 </div>
 
-                {/* Pagination */}
-                {pagination.totalPages > 1 && (
-                  <div className="flex justify-center gap-2">
+                {/* Load More Fallback Button (Hybrid UX) */}
+                <div className="flex justify-center">
+                  {hasMore && !loadingMore && (
                     <button
-                      onClick={() => handlePageChange(pagination.page - 1)}
-                      disabled={pagination.page === 1}
-                      className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={loadMoreManually}
+                      className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
                     >
-                      Previous
+                      Load More
                     </button>
-
-                    {[...Array(pagination.totalPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handlePageChange(index + 1)}
-                        className={`px-4 py-2 border rounded ${
-                          pagination.page === index + 1
-                            ? "bg-primary-green text-white border-primary-green"
-                            : "border-gray-300 hover:bg-gray-100"
-                        }`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
-
-                    <button
-                      onClick={() => handlePageChange(pagination.page + 1)}
-                      disabled={pagination.page === pagination.totalPages}
-                      className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </>
             ) : (
               <div className="text-center py-20">
@@ -170,6 +202,21 @@ const Marketplace: React.FC = () => {
                     strokeWidth={2}
                     d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                   />
+
+                  {/* Loading More Indicator */}
+                  {loadingMore && (
+                    <div className="text-center py-8">
+                      <div className="animate-spin text-4xl mb-2">🌾</div>
+                      <p className="text-gray-600">Loading more...</p>
+                    </div>
+                  )}
+
+                  {/* End of List */}
+                  {!hasMore && listings.length > 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>You've reached the end of the listings</p>
+                    </div>
+                  )}
                 </svg>
                 <h3 className="text-2xl font-bold text-gray-700 mb-2">
                   No listings found
