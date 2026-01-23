@@ -12,3 +12,4 @@ export { default as StatCard } from "./StatCard";
 export { default as NotificationBell } from "./NotificationBell";
 export { default as ImageUpload } from "./ImageUpload";
 export { default as BoostBadge } from "./BoostBadge";
+export { default as OptimizedImage } from "./OptimizedImage";
