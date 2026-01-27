@@ -1,6 +1,11 @@
 import { io, Socket } from "socket.io-client";
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// Prefer explicit WS URL, otherwise derive from API base (http→ws) or current origin
+const SOCKET_URL =
+  import.meta.env.VITE_WS_URL ||
+  (import.meta.env.VITE_API_BASE_URL
+    ? import.meta.env.VITE_API_BASE_URL.replace(/^http/, "ws")
+    : window.location.origin.replace(/^https?/, "ws"));
 
 class WebSocketService {
   private socket: Socket | null = null;
