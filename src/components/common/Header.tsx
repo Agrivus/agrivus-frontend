@@ -97,13 +97,7 @@ const Header: React.FC = () => {
                   <span className="hidden md:inline text-accent-gold">
                     Welcome, {user?.fullName}
                   </span>
-                  <Link
-                    to="/dashboard"
-                    className="hover:text-accent-gold transition-colors"
-                  >
-                    Dashboard
-                  </Link>
-                  {user?.role === "admin" && (
+                  {user?.role === "admin" ? (
                     <Link
                       to="/admin"
                       className="hover:text-accent-gold transition-colors flex items-center gap-1"
@@ -123,6 +117,13 @@ const Header: React.FC = () => {
                         />
                       </svg>
                       Admin
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/dashboard"
+                      className="hover:text-accent-gold transition-colors"
+                    >
+                      Dashboard
                     </Link>
                   )}
                   <button

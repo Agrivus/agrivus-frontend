@@ -18,8 +18,8 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login({ email, password });
-      navigate("/dashboard");
+      const user = await login({ email, password });
+      navigate(user?.role === "admin" ? "/admin" : "/dashboard");
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
     } finally {
