@@ -82,14 +82,19 @@ const Header: React.FC = () => {
       <div className="bg-dark-green text-white py-2">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center text-sm">
-            <div className="flex gap-4">
+            {/* Contact info - hidden on mobile */}
+            <div className="hidden md:flex gap-4">
               <span>📞 +263 78 256 2211</span>
               <span>📧 agrivus438@gmail.com</span>
             </div>
+            {/* Spacer on mobile */}
+            <div className="md:hidden"></div>
+
             <div className="flex gap-4 items-center">
               {isAuthenticated ? (
                 <>
-                  <span className="text-accent-gold">
+                  {/* Welcome text - hidden on mobile */}
+                  <span className="hidden md:inline text-accent-gold">
                     Welcome, {user?.fullName}
                   </span>
                   <Link
