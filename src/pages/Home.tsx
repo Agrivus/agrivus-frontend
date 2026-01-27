@@ -9,35 +9,117 @@ const Home: React.FC = () => {
   // Guest Home Page (not logged in)
   const GuestHome = () => (
     <div>
-      {/* Hero Section */}
-      <section
-        className="relative bg-primary-green text-white py-32 px-4"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(26, 92, 42, 0.9), rgba(26, 92, 42, 0.9)), url(https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="container mx-auto text-center animate-fade-up">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 font-serif">
-            Building the Digital Agricultural Economy for Africa
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            From Farm to Global Market, Seamlessly - Empowering Smallholder
-            Farmers Through Technology
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link to="/register?role=farmer">
-              <Button variant="primary" size="lg">
-                Join as Farmer
-              </Button>
-            </Link>
-            <Link to="/marketplace">
-              <Button variant="outline" size="lg">
-                Browse Marketplace
-              </Button>
-            </Link>
+      {/* Hero Section - New Design */}
+      <section className="relative bg-light-green py-20 px-4 lg:py-32">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div className="animate-fade-up">
+              <p className="text-sm font-bold text-primary-green tracking-wider mb-4 uppercase">
+                Digital Agricultural Ecosystem
+              </p>
+              <h1 className="text-5xl lg:text-6xl font-bold font-serif leading-tight mb-6">
+                From Farm to Global Market,{" "}
+                <span className="text-primary-green">Seamlessly</span>
+              </h1>
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed max-w-lg">
+                Connect with buyers, access premium markets, and grow your
+                agricultural business with Africa's most comprehensive digital
+                platform. Real-time pricing, secure transactions, and export
+                opportunities—all in one place.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <Link to="/register?role=farmer">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                  >
+                    Get Started Free →
+                  </Button>
+                </Link>
+                <Link to="/marketplace">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full sm:w-auto border-2 border-primary-green text-primary-green hover:bg-primary-green hover:text-white"
+                  >
+                    Explore Marketplace
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <svg
+                  className="w-5 h-5 text-primary-green"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                No credit card required • Free for farmers
+              </div>
+            </div>
+
+            {/* Right Image & Stats */}
+            <div className="relative">
+              <div className="relative">
+                <img
+                  src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
+                  alt="Agricultural landscape"
+                  className="w-full h-96 object-cover rounded-lg shadow-lg"
+                />
+
+                {/* Stats Overlay */}
+                <div className="absolute bottom-6 right-6 bg-white rounded-lg shadow-xl p-6 max-w-xs">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-primary-green rounded-lg flex items-center justify-center">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-primary-green">
+                        $2M+
+                      </div>
+                      <div className="text-sm text-gray-600">Trade Volume</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Users Stat */}
+                <div className="absolute top-6 right-6 bg-white rounded-lg shadow-xl p-4">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5 text-primary-green"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM9 11a6 6 0 016 6 1 1 0 11-2 0 4 4 0 00-4-4 1 1 0 110-2h.5a1 1 0 001-.5 1 1 0 10-1-1.5 6 6 0 00-6 6 1 1 0 11-2 0 8 8 0 018-8z" />
+                    </svg>
+                    <div>
+                      <div className="font-bold text-gray-900">10,000+</div>
+                      <div className="text-xs text-gray-600">Active Users</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
