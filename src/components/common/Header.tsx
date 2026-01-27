@@ -212,7 +212,7 @@ const Header: React.FC = () => {
         {/* Desktop Navigation Row */}
         <div className="hidden md:block bg-gray-50">
           <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center py-3">
+            <div className="flex justify-end items-center py-3 gap-8">
               {/* Navigation Links */}
               <nav className="flex items-center gap-6">
                 {getNavLinks().map((link) => (

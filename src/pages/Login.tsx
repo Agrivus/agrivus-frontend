@@ -114,17 +114,6 @@ const Login: React.FC = () => {
             </Link>
           </p>
         </div>
-
-        {/* Demo Credentials */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded">
-          <p className="text-sm text-blue-800 font-semibold mb-2">
-            Demo Credentials:
-          </p>
-          <p className="text-xs text-blue-700">Email: farmer@example.com</p>
-          <p className="text-xs text-blue-700">
-            Password: (your test password)
-          </p>
-        </div>
       </Card>
     </div>
   );

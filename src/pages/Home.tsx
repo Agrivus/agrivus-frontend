@@ -21,11 +21,13 @@ const Home: React.FC = () => {
       >
         <div className="container mx-auto text-center animate-fade-up">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 font-serif">
-            Building the Digital Agricultural Economy for Africa
+            From Farm to Global Market, Seamlessly
           </h1>
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            From Farm to Global Market, Seamlessly - Empowering Smallholder
-            Farmers Through Technology
+            Connect with buyers, access premium markets, and grow your
+            agricultural business with Africa's most comprehensive digital
+            platform. Real-time pricing, secure transactions, and export
+            opportunities—all in one place.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/register?role=farmer">
@@ -44,7 +46,7 @@ const Home: React.FC = () => {
 
       {/* Features Section */}
       <section className="py-20 bg-light-green">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 md:px-16 lg:px-32">
           <div className="section-title">
             <h2>Why Choose Agrivus?</h2>
           </div>
@@ -123,6 +125,475 @@ const Home: React.FC = () => {
                 Escrow-protected transactions with multiple payment options
                 including EcoCash and ZIPIT.
               </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4 md:px-16 lg:px-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div>
+              <div className="mb-6">
+                <span className="inline-block bg-yellow-100 text-accent-gold px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                  ⚡ Platform Features
+                </span>
+              </div>
+              <h2 className="text-4xl font-bold text-dark-gray mb-4 font-serif">
+                Everything You Need to Succeed in Agricultural Trade
+              </h2>
+              <p className="text-gray-600 mb-8 text-lg">
+                Agrivus provides powerful tools designed specifically for
+                African farmers, buyers, and transporters to maximize their
+                potential.
+              </p>
+
+              <div className="space-y-6">
+                {/* Feature 1 */}
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-green text-white">
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-primary-green mb-2">
+                      Real-Time Market Insights
+                    </h3>
+                    <p className="text-gray-600">
+                      Access live pricing data, market trends, and AI-powered
+                      recommendations to make informed decisions.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feature 2 */}
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-green text-white">
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-primary-green mb-2">
+                      Secure Transactions
+                    </h3>
+                    <p className="text-gray-600">
+                      Built-in wallet system and secure payment processing
+                      ensure safe transactions for all parties.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feature 3 */}
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-green text-white">
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-primary-green mb-2">
+                      Export Gateway
+                    </h3>
+                    <p className="text-gray-600">
+                      Connect directly with international buyers and access
+                      export documentation support.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feature 4 */}
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-green text-white">
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-primary-green mb-2">
+                      Activity Boost System
+                    </h3>
+                    <p className="text-gray-600">
+                      Build your platform score with transactions and get better
+                      visibility in marketplace searches.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Image */}
+            <div className="relative">
+              <img
+                src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
+                alt="Agricultural Technology"
+                className="rounded-lg shadow-lg w-full h-auto"
+              />
+              {/* Stats Overlay */}
+              <div className="absolute bottom-8 left-8 right-8 bg-white rounded-lg shadow-lg p-6">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-primary-green">
+                      24/7
+                    </div>
+                    <div className="text-sm text-gray-600">Support</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-primary-green">
+                      100%
+                    </div>
+                    <div className="text-sm text-gray-600">Secure</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-primary-green">
+                      Fast
+                    </div>
+                    <div className="text-sm text-gray-600">Delivery</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Built for Every Role Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4 md:px-16 lg:px-32">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4 font-serif">
+              Built for Every Role in Agriculture
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Whether you're growing, buying, or moving agricultural products,
+              Agrivus has the tools you need
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Farmers Card */}
+            <Card className="overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="h-48 bg-gradient-to-br from-green-300 to-green-500 relative overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
+                  alt="Farmer in field"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-8 bg-green-50">
+                <div className="w-12 h-12 bg-primary-green rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  For Farmers
+                </h3>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-primary-green flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>List unlimited products on the marketplace</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-primary-green flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Participate in auctions for better pricing</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-primary-green flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Access export opportunities globally</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-primary-green flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Track sales and manage inventory</span>
+                  </li>
+                </ul>
+                <Link to="/register?role=farmer" className="w-full">
+                  <Button variant="primary" size="lg" className="w-full">
+                    Register as Farmer
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+
+            {/* Buyers Card */}
+            <Card className="overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="h-48 bg-gradient-to-br from-yellow-300 to-yellow-500 relative overflow-hidden">
+                <img
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8Lqs-QkPR7Ebt1GBBDQYTl1fmwln7AdItVw&s"
+                  alt="Buyer"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-8 bg-yellow-50">
+                <div className="w-12 h-12 bg-accent-gold rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-0.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-0.9-2-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  For Buyers
+                </h3>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-accent-gold flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Browse verified products from trusted farmers</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-accent-gold flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Place competitive bids in live auctions</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-accent-gold flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Access bulk purchase options</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-accent-gold flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Secure payment and order tracking</span>
+                  </li>
+                </ul>
+                <Link to="/register?role=buyer" className="w-full">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full bg-accent-gold hover:bg-yellow-600"
+                  >
+                    Register as Buyer
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+
+            {/* Transporters Card */}
+            <Card className="overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="h-48 bg-gradient-to-br from-cyan-300 to-cyan-500 relative overflow-hidden">
+                <img
+                  src="https://media.istockphoto.com/id/492316094/photo/trailer-laden-with-cabbage.jpg?s=612x612&w=0&k=20&c=fFMDMqvtuUe8-p88q0tB2sMDrxDpxJ3lTFjhtsFPf3Q="
+                  alt="Transport"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-8 bg-cyan-50">
+                <div className="w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm11 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM5 12l1.5-4.5h11L19 12H5z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  For Transporters
+                </h3>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-cyan-500 flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>
+                      Connect with farmers and buyers needing logistics
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-cyan-500 flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Manage routes and optimize delivery schedules</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-cyan-500 flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Receive timely payments for services</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-cyan-500 flex-shrink-0 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Build your reputation score</span>
+                  </li>
+                </ul>
+                <Link to="/register?role=transporter" className="w-full">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full bg-cyan-500 hover:bg-cyan-600"
+                  >
+                    Register as Transporter
+                  </Button>
+                </Link>
+              </div>
             </Card>
           </div>
         </div>
