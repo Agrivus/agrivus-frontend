@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Input, Card } from "../components/common";
@@ -9,8 +9,15 @@ const Login: React.FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect after successful login
+  useEffect(() => {
+    if (user) {
+      navigate(user.role === "admin" ? "/admin" : "/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,8 +25,8 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const user = await login({ email, password });
-      navigate(user?.role === "admin" ? "/admin" : "/dashboard");
+      await login({ email, password });
+      // Redirect will happen after user state updates via useEffect above
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
     } finally {
