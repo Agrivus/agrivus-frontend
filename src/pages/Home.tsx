@@ -29,35 +29,37 @@ const Home: React.FC = () => {
             platform. Real-time pricing, secure transactions, and export
             opportunities—all in one place.
           </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link to="/register?role=farmer">
-              <Button variant="primary" size="lg">
-                Join As Farmer
-              </Button>
-            </Link>
-            <Link to="/register?role=buyer">
-              <Button
-                variant="outline"
-                size="lg"
-                className="bg-accent-gold text-dark-gray hover:bg-yellow-500"
-              >
-                Join As Buyer
-              </Button>
-            </Link>
-            <Link to="/register?role=transporter">
-              <Button
-                variant="outline"
-                size="lg"
-                className="bg-white text-primary-green hover:bg-gray-100"
-              >
-                Join As Transporter
-              </Button>
-            </Link>
+          <div className="flex flex-col gap-4 items-center">
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link to="/register?role=farmer">
+                <Button variant="primary" size="lg">
+                  Join As Farmer
+                </Button>
+              </Link>
+              <Link to="/register?role=buyer">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="bg-accent-gold text-white hover:bg-yellow-500"
+                >
+                  Join As Buyer
+                </Button>
+              </Link>
+              <Link to="/register?role=transporter">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="bg-white text-primary-green hover:bg-gray-100"
+                >
+                  Join As Transporter
+                </Button>
+              </Link>
+            </div>
             <Link to="/marketplace">
               <Button
                 variant="outline"
                 size="lg"
-                className="bg-accent-gold text-dark-gray hover:bg-yellow-500"
+                className="bg-accent-gold text-white hover:bg-yellow-500"
               >
                 Browse Marketplace
               </Button>
