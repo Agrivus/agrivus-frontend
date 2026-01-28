@@ -64,9 +64,18 @@ export default function AdminCashDeposits() {
         setDeposits((prev) => prev.filter((d) => d.id !== paymentId));
         alert("✅ Deposit approved successfully!");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to approve deposit:", error);
-      alert("Failed to approve deposit");
+      console.error("Error response:", error.response?.data);
+
+      // Show detailed error message
+      const errorMessage =
+        error.response?.data?.details?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Unknown error";
+
+      alert(`Failed to approve deposit: ${errorMessage}`);
     } finally {
       setApproving(null);
     }
