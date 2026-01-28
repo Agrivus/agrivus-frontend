@@ -28,7 +28,7 @@ export const getUserDetails = async (userId: string) => {
 export const updateUserStatus = async (
   userId: string,
   isActive: boolean,
-  reason?: string
+  reason?: string,
 ) => {
   const response = await api.put(`/admin/users/${userId}/status`, {
     isActive,
@@ -77,7 +77,7 @@ export const getSecurityIncidents = async (params?: {
 // Get revenue report
 export const getRevenueReport = async (
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ) => {
   const response = await api.get("/admin/revenue-report", {
     params: { startDate, endDate },
@@ -89,7 +89,7 @@ export const getRevenueReport = async (
 export const exportData = async (
   type: "users" | "orders" | "revenue",
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ) => {
   const response = await api.get("/admin/export", {
     params: { type, startDate, endDate },
@@ -112,4 +112,54 @@ export const createAdminUser = async (data: {
 export const updateUserRole = async (userId: string, role: string) => {
   const response = await api.put(`/admin/users/${userId}/role`, { role });
   return response.data;
+};
+
+// Get pending cash deposits
+export const getPendingCashDeposits = async (page = 1, limit = 20) => {
+  const response = await api.get("/admin/payments/cash-deposits", {
+    params: { page, limit },
+  });
+  return response.data;
+};
+
+// Approve cash deposit
+export const approveCashDeposit = async (
+  paymentId: string,
+  data?: { approvalNotes?: string },
+) => {
+  const response = await api.post(
+    `/admin/payments/cash-deposits/${paymentId}/approve`,
+    data || {},
+  );
+  return response.data;
+};
+
+// Reject cash deposit
+export const rejectCashDeposit = async (
+  paymentId: string,
+  data: { rejectionReason: string },
+) => {
+  const response = await api.post(
+    `/admin/payments/cash-deposits/${paymentId}/reject`,
+    data,
+  );
+  return response.data;
+};
+
+export const adminService = {
+  getAdminStats,
+  getAllUsers,
+  getUserDetails,
+  updateUserStatus,
+  getUserBoostInfo,
+  getAllOrders,
+  getAllTransactions,
+  getSecurityIncidents,
+  getRevenueReport,
+  exportData,
+  createAdminUser,
+  updateUserRole,
+  getPendingCashDeposits,
+  approveCashDeposit,
+  rejectCashDeposit,
 };

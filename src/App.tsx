@@ -37,6 +37,7 @@ import AdminOrders from "./pages/AdminOrders";
 import AdminTransactions from "./pages/AdminTransactions";
 import AdminSecurity from "./pages/AdminSecurity";
 import AdminReports from "./pages/AdminReports";
+import AdminCashDeposits from "./pages/AdminCashDeposits";
 
 // NEW: AgriMall pages
 import AgriMallProducts from "./pages/AgriMallProducts";
@@ -260,6 +261,14 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={["admin"]}>
                       <AdminTransactions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/cash-deposits"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminCashDeposits />
                     </ProtectedRoute>
                   }
                 />

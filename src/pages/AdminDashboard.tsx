@@ -194,7 +194,7 @@ const AdminDashboard: React.FC = () => {
                           {status.replace("_", " ")}
                         </p>
                       </div>
-                    )
+                    ),
                   )}
               </div>
             </Card>
@@ -268,8 +268,8 @@ const AdminDashboard: React.FC = () => {
                             order.status === "confirmed"
                               ? "bg-green-100 text-green-800"
                               : order.status === "paid"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-yellow-100 text-yellow-800"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-yellow-100 text-yellow-800"
                           }`}
                         >
                           {order.status}
@@ -322,6 +322,19 @@ const AdminDashboard: React.FC = () => {
                 <h3 className="font-bold text-gray-800">Transactions</h3>
                 <p className="text-sm text-gray-600">
                   View wallet transactions
+                </p>
+              </button>
+
+              <button
+                onClick={() => navigate("/admin/cash-deposits")}
+                className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow border-2 border-transparent hover:border-primary-green"
+              >
+                <div className="text-4xl mb-2">💵</div>
+                <h3 className="font-bold text-gray-800">
+                  Verify Cash Deposits
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Approve pending deposits
                 </p>
               </button>
 
