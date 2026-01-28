@@ -44,7 +44,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const newSocket = io("http://localhost:5000", {
+    const socketUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+    const newSocket = io(socketUrl, {
       auth: { token },
       transports: ["websocket"],
     });
@@ -65,7 +67,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     newSocket.on("chat:message", (message: Message) => {
       // This will be handled by individual components
       window.dispatchEvent(
-        new CustomEvent("chat:message", { detail: message })
+        new CustomEvent("chat:message", { detail: message }),
       );
     });
 
@@ -74,15 +76,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       "chat:new-message",
       (data: { conversationId: string; message: Message }) => {
         window.dispatchEvent(
-          new CustomEvent("chat:new-message", { detail: data })
+          new CustomEvent("chat:new-message", { detail: data }),
         );
-      }
+      },
     );
 
     // Handle read receipts
     newSocket.on("chat:messages-read", (data: any) => {
       window.dispatchEvent(
-        new CustomEvent("chat:messages-read", { detail: data })
+        new CustomEvent("chat:messages-read", { detail: data }),
       );
     });
 
@@ -100,7 +102,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           }
           return prev;
         });
-      }
+      },
     );
 
     newSocket.on(
@@ -113,7 +115,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             [data.conversationId]: existing.filter((id) => id !== data.userId),
           };
         });
-      }
+      },
     );
 
     // Handle online status responses
@@ -173,7 +175,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (!socket) return;
       socket.emit("chat:check-online", userIds);
     },
-    [socket]
+    [socket],
   );
 
   return (
