@@ -10,12 +10,15 @@ if ("serviceWorker" in navigator) {
       .then((registration) => {
         console.log("✅ Service Worker registered:", registration);
 
-        // Check for updates periodically (every 60 seconds)
+        // Check for updates immediately
+        registration.update();
+
+        // Check for updates very frequently (every 10 seconds)
         setInterval(() => {
           registration.update().catch((err) => {
             console.log("Service Worker update check failed:", err);
           });
-        }, 60000);
+        }, 10000);
 
         // Listen for new service worker
         registration.addEventListener("updatefound", () => {
