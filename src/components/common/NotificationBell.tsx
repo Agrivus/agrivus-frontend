@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotifications } from "../../contexts/NotificationsContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const NotificationBell: React.FC = () => {
   const {
@@ -11,6 +12,7 @@ const NotificationBell: React.FC = () => {
     deleteNotificationById,
   } = useNotifications();
 
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -33,7 +35,7 @@ const NotificationBell: React.FC = () => {
   const handleNotificationClick = (
     id: string,
     isRead: boolean,
-    notification: any
+    notification: any,
   ) => {
     if (!isRead) {
       markNotificationAsRead(id);
@@ -67,8 +69,12 @@ const NotificationBell: React.FC = () => {
         break;
 
       case "payment_received":
-        // Navigate to wallet
-        navigate("/wallet");
+        // Navigate to wallet (regular users) or admin deposits (admins)
+        if (user?.role === "admin") {
+          navigate("/admin/cash-deposits");
+        } else {
+          navigate("/wallet");
+        }
         break;
 
       case "transport_assigned":
@@ -201,7 +207,7 @@ const NotificationBell: React.FC = () => {
                     handleNotificationClick(
                       notification.id,
                       notification.isRead,
-                      notification
+                      notification,
                     )
                   }
                   className={`p-4 border-b border-gray-100 cursor-pointer transition-all hover:bg-gray-50 ${

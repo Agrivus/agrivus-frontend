@@ -87,12 +87,14 @@ const Notifications: React.FC = () => {
 
     // Navigate based on notification data
     if (notification.data) {
-      // Admin cash deposit verification
+      console.log("Notification data:", notification.data);
+
+      // Admin cash deposit verification - check for any payment with requiresAction
       if (
         notification.data.requiresAction &&
-        user?.role === "admin" &&
-        notification.data.paymentId
+        user?.role === "admin"
       ) {
+        console.log("Navigating to cash deposits");
         navigate("/admin/cash-deposits");
         return;
       }
@@ -116,10 +118,11 @@ const Notifications: React.FC = () => {
       }
     }
 
-    // Default to wallet for payment notifications
+    // Default to wallet only for non-admins
     if (
-      notification.type === "payment_received" ||
-      notification.type === "account_alert"
+      user?.role !== "admin" &&
+      (notification.type === "payment_received" ||
+        notification.type === "account_alert")
     ) {
       navigate("/wallet");
     }
