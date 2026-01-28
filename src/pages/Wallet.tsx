@@ -364,10 +364,10 @@ const Wallet: React.FC = () => {
               {/* Payment Methods Notice */}
               <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
                 <p className="text-sm text-amber-900">
-                  <strong>📌 Notice:</strong> At this time, cash deposits are
-                  the only available option for funding your wallet. Additional
-                  electronic payment methods will be introduced in a future
-                  update.
+                  <strong>📌 Please Note:</strong> At this time, cash deposits
+                  are the only available option for funding your wallet.
+                  Additional electronic payment methods will be introduced in a
+                  future update.
                 </p>
               </div>
 
