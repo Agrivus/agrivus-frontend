@@ -1,4 +1,4 @@
-const CACHE_NAME = "agrivus-v2";
+const CACHE_NAME = "agrivus-v3";
 const urlsToCache = ["/", "/index.html", "/manifest.json"];
 
 // Install event - cache essential files
@@ -18,15 +18,18 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Fetch event - network first for index.html, cache first for others
+// Fetch event - network first for HTML and JS, cache first for others
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Network first strategy for HTML (always get latest)
+  // Network first strategy for HTML and JS (always get latest)
   if (
     request.method === "GET" &&
-    (url.pathname === "/" || url.pathname.endsWith(".html"))
+    (url.pathname === "/" ||
+      url.pathname.endsWith(".html") ||
+      url.pathname.endsWith(".js") ||
+      url.pathname.includes("/assets/"))
   ) {
     event.respondWith(
       fetch(request)
