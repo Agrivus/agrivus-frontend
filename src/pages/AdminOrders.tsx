@@ -30,7 +30,7 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 20,
+    limit: 1000,
     total: 0,
     totalPages: 0,
   });
@@ -298,7 +298,7 @@ export default function AdminOrders() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        order.status
+                        order.status,
                       )}`}
                     >
                       {order.status.replace("_", " ").toUpperCase()}

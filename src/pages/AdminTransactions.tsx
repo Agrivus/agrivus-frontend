@@ -22,7 +22,7 @@ export default function AdminTransactions() {
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 20,
+    limit: 1000,
     total: 0,
     totalPages: 0,
   });
@@ -248,7 +248,7 @@ export default function AdminTransactions() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeColor(
-                        txn.type
+                        txn.type,
                       )}`}
                     >
                       {txn.type.replace("_", " ").toUpperCase()}
@@ -271,7 +271,7 @@ export default function AdminTransactions() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        txn.status
+                        txn.status,
                       )}`}
                     >
                       {txn.status.toUpperCase()}
