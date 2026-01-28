@@ -31,25 +31,25 @@ const Home: React.FC = () => {
           </p>
           <div className="flex flex-col gap-4 items-center">
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/register?role=farmer">
-                <Button variant="primary" size="lg">
+              <Link to="/register?role=farmer" className="w-48">
+                <Button variant="primary" size="lg" className="w-full">
                   Join As Farmer
                 </Button>
               </Link>
-              <Link to="/register?role=buyer">
+              <Link to="/register?role=buyer" className="w-48">
                 <Button
                   variant="outline"
                   size="lg"
-                  className="bg-accent-gold text-white hover:bg-yellow-500"
+                  className="w-full bg-accent-gold text-white hover:bg-yellow-500"
                 >
                   Join As Buyer
                 </Button>
               </Link>
-              <Link to="/register?role=transporter">
+              <Link to="/register?role=transporter" className="w-48">
                 <Button
                   variant="outline"
                   size="lg"
-                  className="bg-white text-primary-green hover:bg-gray-100"
+                  className="w-full bg-white text-primary-green hover:bg-gray-100"
                 >
                   Join As Transporter
                 </Button>
@@ -59,7 +59,7 @@ const Home: React.FC = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="bg-accent-gold text-white hover:bg-yellow-500"
+                className="bg-accent-gold text-yellow-500 hover:bg-yellow-500"
               >
                 Browse Marketplace
               </Button>
