@@ -14,7 +14,7 @@ const Wallet: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("ecocash");
+  const [paymentMethod] = useState("cash");
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
@@ -25,6 +25,12 @@ const Wallet: React.FC = () => {
     if (paymentStatus === "success") {
       showNotification("✅ Payment completed successfully!", "success");
       // Reload wallet to show updated balance
+      setTimeout(() => loadWalletData(), 1000);
+    } else if (paymentStatus === "pending") {
+      showNotification(
+        "⏳ Your cash deposit has been submitted for verification. You will receive a notification once it's confirmed.",
+        "success",
+      );
       setTimeout(() => loadWalletData(), 1000);
     } else if (paymentStatus === "failed") {
       showNotification("❌ Payment failed. Please try again.", "error");
@@ -327,47 +333,41 @@ const Wallet: React.FC = () => {
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Payment Method *
+                  Payment Method
                 </label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  disabled={processing}
-                >
-                  <option value="ecocash">💳 EcoCash</option>
-                  <option value="onemoney">💳 OneMoney</option>
-                  <option value="telecash">💳 Telecash</option>
-                  <option value="zipit">🏦 ZIPIT (Bank Transfer)</option>
-                  <option value="usd_bank">🏦 USD Bank Transfer</option>
-                  <option value="card">💳 Debit/Credit Card</option>
-                </select>
+                <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                  💵 Cash Deposit
+                </div>
 
                 {/* Payment Method Info */}
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    {paymentMethod === "ecocash" &&
-                      "📱 You will be redirected to EcoCash to complete payment"}
-                    {paymentMethod === "onemoney" &&
-                      "📱 You will be redirected to OneMoney to complete payment"}
-                    {paymentMethod === "telecash" &&
-                      "📱 You will be redirected to Telecash to complete payment"}
-                    {paymentMethod === "zipit" &&
-                      "🏦 You will receive bank transfer instructions"}
-                    {paymentMethod === "usd_bank" &&
-                      "🏦 You will receive bank account details for USD transfer"}
-                    {paymentMethod === "card" &&
-                      "💳 You will be redirected to secure card payment page"}
+                <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-900 font-semibold mb-2">
+                    How to Deposit via Cash:
                   </p>
+                  <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
+                    <li>
+                      Hand your cash to one of our authorized company
+                      stakeholders
+                    </li>
+                    <li>Complete the deposit form below</li>
+                    <li>
+                      Your deposit will be marked as pending for admin
+                      verification
+                    </li>
+                    <li>
+                      Once verified, your funds will appear in your wallet
+                    </li>
+                  </ol>
                 </div>
               </div>
 
-              {/* Development Mode Warning */}
-              <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>ℹ️ Development Mode:</strong> This is currently using
-                  a mock payment gateway. Real payment processing will be
-                  enabled once Paynow integration is activated.
+              {/* Payment Methods Notice */}
+              <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-900">
+                  <strong>📌 Notice:</strong> Due to ongoing company
+                  registration procedures, alternative payment methods are
+                  temporarily suspended. Cash deposit is currently our primary
+                  payment method. We appreciate your understanding.
                 </p>
               </div>
 

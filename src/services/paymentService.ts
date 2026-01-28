@@ -2,13 +2,7 @@ import api from "./api";
 
 export interface PaymentInitiationRequest {
   amount: number;
-  paymentMethod:
-    | "ecocash"
-    | "onemoney"
-    | "telecash"
-    | "zipit"
-    | "usd_bank"
-    | "card";
+  paymentMethod: "cash";
 }
 
 export interface PaymentInitiationResponse {
