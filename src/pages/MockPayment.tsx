@@ -204,10 +204,10 @@ const MockPayment: React.FC = () => {
             {/* Professional Notice */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-blue-900">
-                <strong>📋 Please Note:</strong> Due to our ongoing company
-                registration procedures, we currently accept cash deposits only.
-                Once our registration process is completed, we will reintroduce
-                additional payment methods.
+                <strong>📋 Please Note:</strong> Cash deposits are currently the
+                only supported way to add funds to your wallet. Additional
+                electronic payment methods will be made available in a future
+                release.
               </p>
             </div>
 
@@ -250,10 +250,9 @@ const MockPayment: React.FC = () => {
                 📋 Service Notice
               </h3>
               <p className="text-sm text-amber-800 mb-4">
-                Alternative payment methods are currently suspended due to our
-                ongoing company registration procedures. We are working to
-                complete the registration process and reactivate all payment
-                methods as soon as possible.
+                Alternative payment methods are temporarily unavailable while we
+                complete payment platform upgrades. Cash deposits remain fully
+                supported and will be processed as usual.
               </p>
               <p className="text-sm text-amber-800 font-semibold">
                 Currently Available: Cash Deposits Only
