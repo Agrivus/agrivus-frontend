@@ -32,11 +32,33 @@ const Home: React.FC = () => {
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/register?role=farmer">
               <Button variant="primary" size="lg">
-                Join as Farmer
+                Join As Farmer
+              </Button>
+            </Link>
+            <Link to="/register?role=buyer">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="bg-accent-gold text-dark-gray hover:bg-yellow-500"
+              >
+                Join As Buyer
+              </Button>
+            </Link>
+            <Link to="/register?role=transporter">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="bg-white text-primary-green hover:bg-gray-100"
+              >
+                Join As Transporter
               </Button>
             </Link>
             <Link to="/marketplace">
-              <Button variant="outline" size="lg">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="bg-accent-gold text-dark-gray hover:bg-yellow-500"
+              >
                 Browse Marketplace
               </Button>
             </Link>
