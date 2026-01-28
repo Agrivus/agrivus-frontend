@@ -32,7 +32,7 @@ const Home: React.FC = () => {
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/register?role=farmer">
               <Button variant="primary" size="lg">
-                Join Now!
+                Join as Farmer
               </Button>
             </Link>
             <Link to="/marketplace">
