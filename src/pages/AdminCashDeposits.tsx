@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { adminService } from "../services/adminService";
 import { Card, LoadingSpinner } from "../components/common";
 
@@ -18,7 +17,6 @@ interface CashDeposit {
 }
 
 export default function AdminCashDeposits() {
-  const navigate = useNavigate();
   const [deposits, setDeposits] = useState<CashDeposit[]>([]);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState<string | null>(null);
