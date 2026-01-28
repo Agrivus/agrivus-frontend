@@ -1,8 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useNotifications } from "../contexts/NotificationsContext";
+import { useAuth } from "../contexts/AuthContext";
 import { LoadingSpinner } from "../components/common";
 
 const Notifications: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     notifications,
     unreadCount,
@@ -72,9 +76,52 @@ const Notifications: React.FC = () => {
     return { timeAgo, fullDate };
   };
 
-  const handleNotificationClick = (id: string, isRead: boolean) => {
+  const handleNotificationClick = (
+    id: string,
+    isRead: boolean,
+    notification: any,
+  ) => {
     if (!isRead) {
       markNotificationAsRead(id);
+    }
+
+    // Navigate based on notification data
+    if (notification.data) {
+      // Admin cash deposit verification
+      if (
+        notification.data.requiresAction &&
+        user?.role === "admin" &&
+        notification.data.paymentId
+      ) {
+        navigate("/admin/cash-deposits");
+        return;
+      }
+
+      // Order details
+      if (notification.data.orderId) {
+        navigate(`/orders/${notification.data.orderId}`);
+        return;
+      }
+
+      // Auction details
+      if (notification.data.auctionId) {
+        navigate(`/auctions/${notification.data.auctionId}`);
+        return;
+      }
+
+      // Chat
+      if (notification.data.conversationId) {
+        navigate(`/chat/${notification.data.conversationId}`);
+        return;
+      }
+    }
+
+    // Default to wallet for payment notifications
+    if (
+      notification.type === "payment_received" ||
+      notification.type === "account_alert"
+    ) {
+      navigate("/wallet");
     }
   };
 
@@ -167,7 +214,7 @@ const Notifications: React.FC = () => {
             filteredNotifications.map((notification) => {
               const { icon, bg } = getNotificationIcon(notification.type);
               const { timeAgo, fullDate } = formatDateTime(
-                notification.createdAt
+                notification.createdAt,
               );
 
               return (
@@ -176,7 +223,8 @@ const Notifications: React.FC = () => {
                   onClick={() =>
                     handleNotificationClick(
                       notification.id,
-                      notification.isRead
+                      notification.isRead,
+                      notification,
                     )
                   }
                   className={`bg-white rounded-lg shadow-md p-6 cursor-pointer transition-all hover:shadow-lg ${
