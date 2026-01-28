@@ -1,4 +1,4 @@
-const CACHE_NAME = "agrivus-v3";
+const CACHE_NAME = "agrivus-v4";
 const urlsToCache = ["/", "/index.html", "/manifest.json"];
 
 // Install event - cache essential files
