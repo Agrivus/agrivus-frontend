@@ -37,7 +37,7 @@ const Home: React.FC = () => {
             </Link>
             <Link to="/register?role=buyer">
               <Button
-                variant="secondary"
+                variant="outline"
                 size="lg"
                 className="bg-accent-gold text-dark-gray hover:bg-yellow-500"
               >
@@ -46,7 +46,7 @@ const Home: React.FC = () => {
             </Link>
             <Link to="/register?role=transporter">
               <Button
-                variant="secondary"
+                variant="outline"
                 size="lg"
                 className="bg-white text-primary-green hover:bg-gray-100"
               >
@@ -55,7 +55,7 @@ const Home: React.FC = () => {
             </Link>
             <Link to="/marketplace">
               <Button
-                variant="secondary"
+                variant="outline"
                 size="lg"
                 className="bg-accent-gold text-dark-gray hover:bg-yellow-500"
               >
