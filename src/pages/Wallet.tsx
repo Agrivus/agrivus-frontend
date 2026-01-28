@@ -367,7 +367,7 @@ const Wallet: React.FC = () => {
                   <strong>📌 Please Note:</strong> At this time, cash deposits
                   are the only available option for funding your wallet.
                   Additional electronic payment methods will be introduced in a
-                  future update.
+                  future update
                 </p>
               </div>
 

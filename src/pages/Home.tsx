@@ -507,7 +507,7 @@ const Home: React.FC = () => {
               <div className="h-48 bg-gradient-to-br from-cyan-300 to-cyan-500 relative overflow-hidden">
                 <img
                   src="https://media.istockphoto.com/id/492316094/photo/trailer-laden-with-cabbage.jpg?s=612x612&w=0&k=20&c=fFMDMqvtuUe8-p88q0tB2sMDrxDpxJ3lTFjhtsFPf3Q="
-                  alt="Transport"
+                  alt="Transporthttps://www.agrivus.com/dashboard"
                   className="w-full h-full object-cover"
                 />
               </div>
