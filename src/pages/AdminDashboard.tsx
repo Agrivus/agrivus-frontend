@@ -3,6 +3,7 @@ import { getAdminStats } from "../services/adminService";
 import { Card, LoadingSpinner } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import type { UserRole } from "../types";
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -10,7 +11,6 @@ const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
 
   useEffect(() => {
     if (user?.role !== "admin") {
@@ -22,7 +22,13 @@ const AdminDashboard: React.FC = () => {
 
   // Helper to extract real numbers from new API structure
   const getOverview = () => {
-    if (!stats) return { totalUsers: 0, totalListings: 0, totalOrders: 0, totalVolume: 0 };
+    if (!stats)
+      return {
+        totalUsers: 0,
+        totalListings: 0,
+        totalOrders: 0,
+        totalVolume: 0,
+      };
     if (stats.overview) return stats.overview;
     // fallback for old API
     return {
@@ -33,19 +39,41 @@ const AdminDashboard: React.FC = () => {
     };
   };
 
-  const getUserBreakdown = () => {
+  type DashboardUserBreakdown = Record<
+    "farmer" | "buyer" | "transporter" | "supplier",
+    number
+  >;
+
+  const getUserBreakdown = (): DashboardUserBreakdown => {
     if (!stats) return { farmer: 0, buyer: 0, transporter: 0, supplier: 0 };
     if (stats.userBreakdown) {
-      // Convert array to object by role
-      const breakdown = { farmer: 0, buyer: 0, transporter: 0, supplier: 0 };
-      stats.userBreakdown.forEach((row: any) => {
-        if (row.role === "agro_supplier") breakdown.supplier = Number(row.count);
-        else if (row.role in breakdown) breakdown[row.role] = Number(row.count);
-      });
+      const breakdown: DashboardUserBreakdown = {
+        farmer: 0,
+        buyer: 0,
+        transporter: 0,
+        supplier: 0,
+      };
+      (stats.userBreakdown as Array<{ role: UserRole; count: number }>).forEach(
+        (row) => {
+          if (row.role === "agro_supplier")
+            breakdown.supplier = Number(row.count);
+          else if (
+            row.role === "farmer" ||
+            row.role === "buyer" ||
+            row.role === "transporter"
+          ) {
+            breakdown[row.role as "farmer" | "buyer" | "transporter"] = Number(
+              row.count,
+            );
+          }
+        },
+      );
       return breakdown;
     }
     // fallback for old API
-    return stats.usersByRole || { farmer: 0, buyer: 0, transporter: 0, supplier: 0 };
+    return (
+      stats.usersByRole || { farmer: 0, buyer: 0, transporter: 0, supplier: 0 }
+    );
   };
 
   const fetchStats = async () => {
