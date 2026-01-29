@@ -11,6 +11,7 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+
   useEffect(() => {
     if (user?.role !== "admin") {
       navigate("/dashboard");
@@ -18,6 +19,34 @@ const AdminDashboard: React.FC = () => {
     }
     fetchStats();
   }, [user, navigate]);
+
+  // Helper to extract real numbers from new API structure
+  const getOverview = () => {
+    if (!stats) return { totalUsers: 0, totalListings: 0, totalOrders: 0, totalVolume: 0 };
+    if (stats.overview) return stats.overview;
+    // fallback for old API
+    return {
+      totalUsers: stats.totalUsers || 0,
+      totalListings: stats.totalListings || 0,
+      totalOrders: stats.totalOrders || 0,
+      totalVolume: stats.totalVolume || 0,
+    };
+  };
+
+  const getUserBreakdown = () => {
+    if (!stats) return { farmer: 0, buyer: 0, transporter: 0, supplier: 0 };
+    if (stats.userBreakdown) {
+      // Convert array to object by role
+      const breakdown = { farmer: 0, buyer: 0, transporter: 0, supplier: 0 };
+      stats.userBreakdown.forEach((row: any) => {
+        if (row.role === "agro_supplier") breakdown.supplier = Number(row.count);
+        else if (row.role in breakdown) breakdown[row.role] = Number(row.count);
+      });
+      return breakdown;
+    }
+    // fallback for old API
+    return stats.usersByRole || { farmer: 0, buyer: 0, transporter: 0, supplier: 0 };
+  };
 
   const fetchStats = async () => {
     try {
@@ -80,7 +109,7 @@ const AdminDashboard: React.FC = () => {
                   <div>
                     <p className="text-sm opacity-90">Total Users</p>
                     <p className="text-3xl font-bold">
-                      {stats.totalUsers?.toLocaleString() || 0}
+                      {getOverview().totalUsers.toLocaleString()}
                     </p>
                   </div>
                   <div className="text-5xl opacity-50">👥</div>
@@ -92,7 +121,7 @@ const AdminDashboard: React.FC = () => {
                   <div>
                     <p className="text-sm opacity-90">Total Listings</p>
                     <p className="text-3xl font-bold">
-                      {stats.totalListings?.toLocaleString() || 0}
+                      {getOverview().totalListings.toLocaleString()}
                     </p>
                   </div>
                   <div className="text-5xl opacity-50">📦</div>
@@ -104,7 +133,7 @@ const AdminDashboard: React.FC = () => {
                   <div>
                     <p className="text-sm opacity-90">Total Orders</p>
                     <p className="text-3xl font-bold">
-                      {stats.totalOrders?.toLocaleString() || 0}
+                      {getOverview().totalOrders.toLocaleString()}
                     </p>
                   </div>
                   <div className="text-5xl opacity-50">🛒</div>
@@ -116,7 +145,7 @@ const AdminDashboard: React.FC = () => {
                   <div>
                     <p className="text-sm opacity-90">Total Volume</p>
                     <p className="text-3xl font-bold">
-                      ${(stats.totalVolume || 0).toLocaleString()}
+                      ${getOverview().totalVolume.toLocaleString()}
                     </p>
                   </div>
                   <div className="text-5xl opacity-50">💰</div>
@@ -135,7 +164,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="text-center">
                   <div className="text-4xl mb-2">👨‍🌾</div>
                   <p className="text-2xl font-bold text-primary-green">
-                    {stats.usersByRole?.farmer || 0}
+                    {getUserBreakdown().farmer}
                   </p>
                   <p className="text-sm text-gray-600">Farmers</p>
                 </div>
@@ -145,7 +174,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="text-center">
                   <div className="text-4xl mb-2">🛒</div>
                   <p className="text-2xl font-bold text-primary-green">
-                    {stats.usersByRole?.buyer || 0}
+                    {getUserBreakdown().buyer}
                   </p>
                   <p className="text-sm text-gray-600">Buyers</p>
                 </div>
@@ -155,7 +184,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="text-center">
                   <div className="text-4xl mb-2">🚚</div>
                   <p className="text-2xl font-bold text-primary-green">
-                    {stats.usersByRole?.transporter || 0}
+                    {getUserBreakdown().transporter}
                   </p>
                   <p className="text-sm text-gray-600">Transporters</p>
                 </div>
@@ -165,7 +194,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="text-center">
                   <div className="text-4xl mb-2">🏪</div>
                   <p className="text-2xl font-bold text-primary-green">
-                    {stats.usersByRole?.supplier || 0}
+                    {getUserBreakdown().supplier}
                   </p>
                   <p className="text-sm text-gray-600">Suppliers</p>
                 </div>
