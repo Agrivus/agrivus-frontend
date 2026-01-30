@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import NotificationBell from "./NotificationBell";
 import chatService from "../../services/chatService";
-import logoImage from "../../assets/logo.jpg";
+import logoPNG from "../../assets/logo.png";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -166,7 +166,7 @@ const Header: React.FC = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
               <img
-                src={logoImage}
+                src={logoPNG}
                 alt="Agrivus Logo"
                 className="w-12 h-12 rounded-full object-cover transition-transform group-hover:scale-110 group-hover:rotate-6"
               />

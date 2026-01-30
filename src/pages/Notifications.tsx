@@ -90,10 +90,7 @@ const Notifications: React.FC = () => {
       console.log("Notification data:", notification.data);
 
       // Admin cash deposit verification - check for any payment with requiresAction
-      if (
-        notification.data.requiresAction &&
-        user?.role === "admin"
-      ) {
+      if (notification.data.requiresAction && user?.role === "admin") {
         console.log("Navigating to cash deposits");
         navigate("/admin/cash-deposits");
         return;
