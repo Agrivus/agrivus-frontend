@@ -167,7 +167,7 @@ const Header: React.FC = () => {
               <img
                 src="/logo.png"
                 alt="Agrivus Logo"
-                className="w-12 h-12 rounded-full object-cover transition-transform group-hover:scale-110 group-hover:rotate-6"
+                style={{ width: 48, height: 48, display: "block" }}
               />
               <div className="hidden sm:block">
                 <span className="text-xs font-medium tracking-wider uppercase bg-gradient-to-r from-primary-green via-medium-green to-accent-gold bg-clip-text text-transparent">
