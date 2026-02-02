@@ -1,1 +1,4 @@
+# Don't redirect asset requests to index.html
+/assets/* 404
+# Redirect all other routes to index.html for SPA routing
 /* /index.html 200
