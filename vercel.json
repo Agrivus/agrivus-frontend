@@ -4,12 +4,18 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "https://api.agrivus.com/api/:path*"
+      "handle": "filesystem"
     },
-    { "source": "/:path*", "destination": "/index.html" }
+    {
+      "src": "/api/(.*)",
+      "dest": "https://api.agrivus.com/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ],
   "cleanUrls": true,
   "trailingSlash": false,
