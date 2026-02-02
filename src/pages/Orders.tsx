@@ -59,8 +59,8 @@ const Orders: React.FC = () => {
   };
 
   const getRoleSpecificActions = (order: any) => {
-    // For buyers: Only show view details button
-    if (user?.role === "buyer") {
+    // For buyers and transporters: Only show view details button
+    if (user?.role === "buyer" || user?.role === "transporter") {
       return null; // View Details button is already shown in the Actions column
     }
 
@@ -170,7 +170,7 @@ const Orders: React.FC = () => {
                           </h3>
                           <span
                             className={`px-3 py-1.5 rounded-full text-xs font-bold border ${getStatusColor(
-                              order.status
+                              order.status,
                             )}`}
                           >
                             {getStatusText(order.status, order.usesTransport)}
@@ -275,11 +275,11 @@ const Orders: React.FC = () => {
                   No orders found
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  {user?.role === "buyer"
+                  {user?.role === "buyer" || user?.role === "transporter"
                     ? "You haven't placed any orders yet."
                     : "You don't have any orders to fulfill yet."}
                 </p>
-                {user?.role === "buyer" && (
+                {(user?.role === "buyer" || user?.role === "transporter") && (
                   <Link to="/marketplace">
                     <Button variant="primary">Browse Marketplace</Button>
                   </Link>

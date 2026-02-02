@@ -85,7 +85,7 @@ function App() {
                 <Route
                   path="/orders/create"
                   element={
-                    <ProtectedRoute allowedRoles={["buyer"]}>
+                    <ProtectedRoute allowedRoles={["buyer", "transporter"]}>
                       <CreateOrder />
                     </ProtectedRoute>
                   }
@@ -158,7 +158,7 @@ function App() {
                 <Route
                   path="/auctions/:id/checkout"
                   element={
-                    <ProtectedRoute allowedRoles={["buyer"]}>
+                    <ProtectedRoute allowedRoles={["buyer", "transporter"]}>
                       <AuctionCheckout />
                     </ProtectedRoute>
                   }
@@ -166,7 +166,7 @@ function App() {
                 <Route
                   path="/my-bids"
                   element={
-                    <ProtectedRoute allowedRoles={["buyer"]}>
+                    <ProtectedRoute allowedRoles={["buyer", "transporter"]}>
                       <MyBids />
                     </ProtectedRoute>
                   }

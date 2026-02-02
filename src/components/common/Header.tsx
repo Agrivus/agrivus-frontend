@@ -80,7 +80,7 @@ const Header: React.FC = () => {
     }
 
     // Add role-specific links
-    if (user?.role === "buyer") {
+    if (user?.role === "buyer" || user?.role === "transporter") {
       authenticatedLinks.push({ to: "/my-bids", label: "My Bids" });
     }
 
