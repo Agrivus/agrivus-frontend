@@ -5,6 +5,7 @@ import OptimizedImage from "../common/OptimizedImage";
 import type { ListingWithFarmer } from "../../types";
 import { safeDisplayText, singularizeUnit } from "../../utils/textUtils";
 import chatService from "../../services/chatService";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface ListingCardProps {
   listing: ListingWithFarmer;
@@ -13,6 +14,7 @@ interface ListingCardProps {
 const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
   const { listing: listingData, farmer } = listing;
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [messagingFarmer, setMessagingFarmer] = useState(false);
 
   const handleQuickMessage = async (e: React.MouseEvent) => {
@@ -32,6 +34,22 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
     } finally {
       setMessagingFarmer(false);
     }
+  };
+
+  const handleOrderNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (user?.role !== "buyer") {
+      alert("Only buyers can place orders");
+      return;
+    }
+
+    navigate(`/orders/create?listingId=${listingData.id}`);
   };
 
   return (
@@ -183,14 +201,16 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
               View Details
             </Button>
           </Link>
-          <Link
-            to={`/orders/create?listingId=${listingData.id}`}
-            className="flex-1"
-          >
-            <Button variant="success" className="w-full" size="sm">
+          <div className="flex-1">
+            <Button
+              variant="success"
+              className="w-full"
+              size="sm"
+              onClick={handleOrderNow}
+            >
               Order Now
             </Button>
-          </Link>
+          </div>
         </div>
 
         {/* Stats */}
