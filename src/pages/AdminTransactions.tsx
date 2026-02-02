@@ -29,12 +29,51 @@ export default function AdminTransactions() {
   const [filters, setFilters] = useState({
     type: "",
   });
+  const [transactionStats, setTransactionStats] = useState({
+    totalTransactions: 0,
+    totalVolume: 0,
+    creditsCount: 0,
+    debitsCount: 0,
+  });
 
   const transactionTypes = ["credit", "debit", "escrow_hold", "escrow_release"];
 
   useEffect(() => {
     loadTransactions();
+    loadStats();
   }, [pagination.page, filters]);
+
+  const loadStats = async () => {
+    try {
+      // Load all transactions without filters to get accurate stats
+      const response = await getAllTransactions({
+        page: 1,
+        limit: 10000, // Get all transactions for accurate stats
+      });
+
+      if (response.success) {
+        const allTransactions = response.data.transactions;
+        const stats = {
+          totalTransactions: response.data.pagination.total,
+          totalVolume: allTransactions
+            .filter((t: Transaction) => t.status === "completed")
+            .reduce(
+              (sum: number, t: Transaction) => sum + parseFloat(t.amount),
+              0,
+            ),
+          creditsCount: allTransactions.filter(
+            (t: Transaction) => t.type === "credit",
+          ).length,
+          debitsCount: allTransactions.filter(
+            (t: Transaction) => t.type === "debit",
+          ).length,
+        };
+        setTransactionStats(stats);
+      }
+    } catch (error) {
+      console.error("Failed to load transaction stats:", error);
+    }
+  };
 
   const loadTransactions = async () => {
     try {
@@ -92,13 +131,6 @@ export default function AdminTransactions() {
     );
   }
 
-  const totalVolume = transactions
-    .filter((t) => t.status === "completed")
-    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-
-  const credits = transactions.filter((t) => t.type === "credit");
-  const debits = transactions.filter((t) => t.type === "debit");
-
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -122,7 +154,7 @@ export default function AdminTransactions() {
         <Card className="bg-blue-50">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">
-              {pagination.total}
+              {transactionStats.totalTransactions.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Total Transactions</div>
           </div>
@@ -130,7 +162,11 @@ export default function AdminTransactions() {
         <Card className="bg-green-50">
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
-              ${totalVolume.toLocaleString()}
+              $
+              {transactionStats.totalVolume.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </div>
             <div className="text-sm text-gray-600">Total Volume</div>
           </div>
@@ -138,7 +174,7 @@ export default function AdminTransactions() {
         <Card className="bg-purple-50">
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">
-              {credits.length}
+              {transactionStats.creditsCount.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Credits</div>
           </div>
@@ -146,7 +182,7 @@ export default function AdminTransactions() {
         <Card className="bg-red-50">
           <div className="text-center">
             <div className="text-2xl font-bold text-red-600">
-              {debits.length}
+              {transactionStats.debitsCount.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Debits</div>
           </div>
@@ -251,7 +287,7 @@ export default function AdminTransactions() {
                         txn.type,
                       )}`}
                     >
-                      {txn.type.replace("_", " ").toUpperCase()}
+                      {txn.type.replace(/_/g, " ").toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -265,7 +301,11 @@ export default function AdminTransactions() {
                       {txn.type === "credit" || txn.type === "escrow_release"
                         ? "+"
                         : "-"}
-                      ${parseFloat(txn.amount).toLocaleString()}
+                      $
+                      {parseFloat(txn.amount).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

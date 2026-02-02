@@ -38,6 +38,12 @@ export default function AdminOrders() {
     status: "",
     search: "",
   });
+  const [orderStats, setOrderStats] = useState({
+    totalOrders: 0,
+    completedValue: 0,
+    inTransitCount: 0,
+    pendingCount: 0,
+  });
 
   const statuses = [
     "pending",
@@ -52,7 +58,44 @@ export default function AdminOrders() {
 
   useEffect(() => {
     loadOrders();
+    loadStats();
   }, [pagination.page, filters]);
+
+  const loadStats = async () => {
+    try {
+      // Load all orders without filters to get accurate stats
+      const response = await getAllOrders({
+        page: 1,
+        limit: 10000, // Get all orders for accurate stats
+      });
+
+      if (response.success) {
+        const allOrders = response.data.orders;
+        const stats = {
+          totalOrders: response.data.pagination.total,
+          completedValue: allOrders
+            .filter(
+              (o: Order) =>
+                o.status === "confirmed" || o.status === "delivered",
+            )
+            .reduce(
+              (sum: number, o: Order) => sum + parseFloat(o.total_amount),
+              0,
+            ),
+          inTransitCount: allOrders.filter(
+            (o: Order) => o.status === "in_transit",
+          ).length,
+          pendingCount: allOrders.filter(
+            (o: Order) =>
+              o.status === "pending" || o.status === "payment_pending",
+          ).length,
+        };
+        setOrderStats(stats);
+      }
+    } catch (error) {
+      console.error("Failed to load order stats:", error);
+    }
+  };
 
   const loadOrders = async () => {
     try {
@@ -122,7 +165,7 @@ export default function AdminOrders() {
         <Card className="bg-blue-50">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">
-              {pagination.total}
+              {orderStats.totalOrders.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Total Orders</div>
           </div>
@@ -131,10 +174,10 @@ export default function AdminOrders() {
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
               $
-              {orders
-                .filter((o) => o.status === "confirmed")
-                .reduce((sum, o) => sum + parseFloat(o.total_amount), 0)
-                .toLocaleString()}
+              {orderStats.completedValue.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </div>
             <div className="text-sm text-gray-600">Completed Value</div>
           </div>
@@ -142,7 +185,7 @@ export default function AdminOrders() {
         <Card className="bg-yellow-50">
           <div className="text-center">
             <div className="text-2xl font-bold text-yellow-600">
-              {orders.filter((o) => o.status === "in_transit").length}
+              {orderStats.inTransitCount.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">In Transit</div>
           </div>
@@ -150,7 +193,7 @@ export default function AdminOrders() {
         <Card className="bg-purple-50">
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">
-              {orders.filter((o) => o.status === "pending").length}
+              {orderStats.pendingCount.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Pending</div>
           </div>
@@ -288,11 +331,19 @@ export default function AdminOrders() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-bold text-gray-900">
-                      ${parseFloat(order.total_amount).toLocaleString()}
+                      $
+                      {parseFloat(order.total_amount).toLocaleString(
+                        undefined,
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                      )}
                     </div>
                     <div className="text-xs text-gray-500">
-                      ${parseFloat(order.price_per_unit).toFixed(2)}/
-                      {order.unit}
+                      $
+                      {parseFloat(order.price_per_unit).toLocaleString(
+                        undefined,
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                      )}
+                      /{order.unit}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -301,7 +352,7 @@ export default function AdminOrders() {
                         order.status,
                       )}`}
                     >
-                      {order.status.replace("_", " ").toUpperCase()}
+                      {order.status.replace(/_/g, " ").toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
