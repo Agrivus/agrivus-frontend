@@ -79,7 +79,7 @@ const OrderDetail: React.FC = () => {
     try {
       setActionLoading(true);
       const response = await ordersService.assignTransporter(id!, {
-        transporterId: selectedTransporter,
+        primaryTransporterId: selectedTransporter,
         transportCost: estimatedCost.toString(),
         pickupLocation: order.listing?.location,
       });
