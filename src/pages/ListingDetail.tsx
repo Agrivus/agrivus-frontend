@@ -28,7 +28,6 @@ const ListingDetail: React.FC = () => {
   const [updatingPrice, setUpdatingPrice] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
-  const [updatingImage, setUpdatingImage] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -136,7 +135,6 @@ const ListingDetail: React.FC = () => {
     if (!images || images.length === 0) return;
 
     try {
-      setUpdatingImage(true);
       const response = await listingsService.updateListing(id!, {
         images,
       });
@@ -148,8 +146,6 @@ const ListingDetail: React.FC = () => {
       }
     } catch (err: any) {
       alert(err.message || "Failed to update listing image");
-    } finally {
-      setUpdatingImage(false);
     }
   };
 

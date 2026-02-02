@@ -25,7 +25,7 @@ const OrderDetail: React.FC = () => {
   >([]);
   const [matchingLoading, setMatchingLoading] = useState(false);
   const [selectedTransporter, setSelectedTransporter] = useState<string | null>(
-    null
+    null,
   );
   const [showTransporterModal, setShowTransporterModal] = useState(false);
 
@@ -69,7 +69,7 @@ const OrderDetail: React.FC = () => {
     }
 
     const selected = transporterMatches.find(
-      (t) => t.transporterId === selectedTransporter
+      (t) => t.transporterId === selectedTransporter,
     );
     if (!selected) return;
 
@@ -101,7 +101,7 @@ const OrderDetail: React.FC = () => {
   const handleConfirmDelivery = async () => {
     if (
       !window.confirm(
-        "Confirm that you have received the goods in good condition?"
+        "Confirm that you have received the goods in good condition?",
       )
     ) {
       return;
@@ -263,7 +263,7 @@ const OrderDetail: React.FC = () => {
                 </h2>
                 <span
                   className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusBadge(
-                    order.order.status
+                    order.order.status,
                   )}`}
                 >
                   {getStatusText(order.order.status, order.order.usesTransport)}
@@ -338,8 +338,8 @@ const OrderDetail: React.FC = () => {
                       {order.order.deliveredAt
                         ? new Date(order.order.deliveredAt).toLocaleString()
                         : order.order.usesTransport
-                        ? "Awaiting delivery"
-                        : "Awaiting collection"}
+                          ? "Awaiting delivery"
+                          : "Awaiting collection"}
                     </p>
                   </div>
                 </div>
@@ -497,7 +497,7 @@ const OrderDetail: React.FC = () => {
                 <button
                   onClick={() =>
                     handleMessageUser(
-                      isBuyer ? order.order.farmerId : order.order.buyerId
+                      isBuyer ? order.order.farmerId : order.order.buyerId,
                     )
                   }
                   className="w-full mt-2 text-blue-600 hover:text-blue-700 border border-blue-600 hover:border-blue-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -644,82 +644,98 @@ const OrderDetail: React.FC = () => {
             )}
 
             {/* Farmer Actions */}
-            {isFarmer && order.order.status === "paid" && (
-              <Card className="p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">
-                  Actions
-                </h3>
+            {isFarmer &&
+              (order.order.status === "paid" ||
+                order.order.status === "pending_transport") && (
+                <Card className="p-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4">
+                    Actions
+                  </h3>
 
-                {/* Check if order uses platform transport and no transporter assigned yet */}
-                {order.order.usesTransport && !order.transporter ? (
-                  <>
-                    <Button
-                      variant="primary"
-                      className="w-full"
-                      onClick={handleMatchTransporter}
-                      isLoading={matchingLoading}
-                      disabled={matchingLoading}
-                    >
-                      🔍 Find Transporters
-                    </Button>
-                    <p className="text-xs text-gray-600 mt-2">
-                      Match with available transporters using AI-powered
-                      recommendations.
-                    </p>
-                  </>
-                ) : order.order.usesTransport && order.transporter ? (
-                  <>
-                    <div className="bg-green-50 border border-green-200 rounded p-3 mb-4">
-                      <p className="text-sm text-green-800 font-semibold">
-                        ✅ Transporter Assigned:{" "}
-                        {order.transporter.businessName ||
-                          order.transporter.fullName}
+                  {/* Check if order uses platform transport and no transporter assigned yet */}
+                  {order.order.usesTransport && !order.transporter ? (
+                    <>
+                      {order.order.status === "pending_transport" ? (
+                        <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                          <p className="text-sm text-blue-800 font-semibold">
+                            ⏳ Waiting for Transporter Response
+                          </p>
+                          <p className="text-xs text-blue-700 mt-1">
+                            Your offer has been sent to a transporter. They will
+                            accept or decline within 24 hours.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <Button
+                            variant="primary"
+                            className="w-full"
+                            onClick={handleMatchTransporter}
+                            isLoading={matchingLoading}
+                            disabled={matchingLoading}
+                          >
+                            🔍 Find Transporters
+                          </Button>
+                          <p className="text-xs text-gray-600 mt-2">
+                            Match with available transporters using AI-powered
+                            recommendations.
+                          </p>
+                        </>
+                      )}
+                    </>
+                  ) : order.order.usesTransport && order.transporter ? (
+                    <>
+                      <div className="bg-green-50 border border-green-200 rounded p-3 mb-4">
+                        <p className="text-sm text-green-800 font-semibold">
+                          ✅ Transporter Assigned:{" "}
+                          {order.transporter.businessName ||
+                            order.transporter.fullName}
+                        </p>
+                        <p className="text-xs text-green-700 mt-1">
+                          Contact: {order.transporter.phone}
+                        </p>
+                      </div>
+                      <Button
+                        variant="primary"
+                        className="w-full"
+                        onClick={handleMarkInTransit}
+                        isLoading={actionLoading}
+                        disabled={actionLoading}
+                      >
+                        🚚 Mark as Dispatched
+                      </Button>
+                      <p className="text-xs text-gray-600 mt-2">
+                        Mark as dispatched once goods are handed over to the
+                        transporter.
                       </p>
-                      <p className="text-xs text-green-700 mt-1">
-                        Contact: {order.transporter.phone}
+                    </>
+                  ) : (
+                    /* Self pickup - no transporter needed */
+                    <>
+                      <div className="bg-amber-50 border border-amber-200 rounded p-3 mb-4">
+                        <p className="text-sm text-amber-800 font-semibold">
+                          📍 Self Pickup Order
+                        </p>
+                        <p className="text-xs text-amber-700 mt-1">
+                          Buyer will collect from: {order.listing?.location}
+                        </p>
+                      </div>
+                      <Button
+                        variant="primary"
+                        className="w-full"
+                        onClick={handleMarkInTransit}
+                        isLoading={actionLoading}
+                        disabled={actionLoading}
+                      >
+                        📦 Mark as Ready for Pickup
+                      </Button>
+                      <p className="text-xs text-gray-600 mt-2">
+                        Mark when goods are ready for the buyer to collect.
                       </p>
-                    </div>
-                    <Button
-                      variant="primary"
-                      className="w-full"
-                      onClick={handleMarkInTransit}
-                      isLoading={actionLoading}
-                      disabled={actionLoading}
-                    >
-                      🚚 Mark as Dispatched
-                    </Button>
-                    <p className="text-xs text-gray-600 mt-2">
-                      Mark as dispatched once goods are handed over to the
-                      transporter.
-                    </p>
-                  </>
-                ) : (
-                  /* Self pickup - no transporter needed */
-                  <>
-                    <div className="bg-amber-50 border border-amber-200 rounded p-3 mb-4">
-                      <p className="text-sm text-amber-800 font-semibold">
-                        📍 Self Pickup Order
-                      </p>
-                      <p className="text-xs text-amber-700 mt-1">
-                        Buyer will collect from: {order.listing?.location}
-                      </p>
-                    </div>
-                    <Button
-                      variant="primary"
-                      className="w-full"
-                      onClick={handleMarkInTransit}
-                      isLoading={actionLoading}
-                      disabled={actionLoading}
-                    >
-                      📦 Mark as Ready for Pickup
-                    </Button>
-                    <p className="text-xs text-gray-600 mt-2">
-                      Mark when goods are ready for the buyer to collect.
-                    </p>
-                  </>
-                )}
-              </Card>
-            )}
+                    </>
+                  )}
+                </Card>
+              )}
 
             {/* Assigned status - waiting for dispatch */}
             {isFarmer && order.order.status === "assigned" && (

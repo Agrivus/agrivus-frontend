@@ -79,6 +79,14 @@ const Header: React.FC = () => {
       authenticatedLinks.push({ to: "/export", label: "Export Gateway" });
     }
 
+    // Add Transport Offers for transporters only
+    if (user?.role === "transporter") {
+      authenticatedLinks.push({
+        to: "/transport-offers",
+        label: "Transport Offers",
+      });
+    }
+
     // Add role-specific links
     if (user?.role === "buyer" || user?.role === "transporter") {
       authenticatedLinks.push({ to: "/my-bids", label: "My Bids" });

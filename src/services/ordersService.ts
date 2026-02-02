@@ -55,24 +55,74 @@ export const ordersService = {
         orderId: string;
         pickupLocation: string;
         deliveryLocation: string;
+        estimatedDistance?: number;
+        estimatedWeightKg?: number;
+        minimumFee?: number;
+        feeNote?: string;
         matches: TransporterMatch[];
       }>
     >(`/orders/${orderId}/match-transporter`);
     return response.data;
   },
 
-  // Assign transporter (farmers only)
+  // Assign transporters - Cascading system with 3 priority tiers
   assignTransporter: async (
     orderId: string,
     data: {
-      transporterId: string;
+      primaryTransporterId: string;
+      secondaryTransporterId?: string;
+      tertiaryTransporterId?: string;
       transportCost: string;
       pickupLocation?: string;
-    }
+    },
   ) => {
     const response = await api.post<ApiResponse<any>>(
       `/orders/${orderId}/assign-transporter`,
-      data
+      data,
+    );
+    return response.data;
+  },
+
+  // Get pending transport offers (transporters only)
+  getTransportOffers: async (status: string = "pending") => {
+    const response = await api.get<
+      ApiResponse<{
+        offers: any[];
+      }>
+    >(`/orders/offers?status=${status}`);
+    return response.data;
+  },
+
+  // Accept transport offer
+  acceptTransportOffer: async (offerId: string) => {
+    const response = await api.post<ApiResponse<any>>(
+      `/orders/offers/${offerId}/accept`,
+    );
+    return response.data;
+  },
+
+  // Counter transport offer (transporter)
+  counterTransportOffer: async (offerId: string, counterFee: number) => {
+    const response = await api.post<ApiResponse<any>>(
+      `/orders/offers/${offerId}/counter`,
+      { counterFee },
+    );
+    return response.data;
+  },
+
+  // Decline transport offer
+  declineTransportOffer: async (offerId: string, reason?: string) => {
+    const response = await api.post<ApiResponse<any>>(
+      `/orders/offers/${offerId}/decline`,
+      { reason },
+    );
+    return response.data;
+  },
+
+  // Accept transport counter offer (farmer)
+  acceptTransportCounter: async (offerId: string) => {
+    const response = await api.post<ApiResponse<any>>(
+      `/orders/offers/${offerId}/accept-counter`,
     );
     return response.data;
   },
@@ -81,7 +131,7 @@ export const ordersService = {
   updateOrderStatus: async (orderId: string, status: string) => {
     const response = await api.patch<ApiResponse<Order>>(
       `/orders/${orderId}/status`,
-      { status }
+      { status },
     );
     return response.data;
   },
@@ -89,7 +139,7 @@ export const ordersService = {
   // Confirm delivery (buyers only)
   confirmDelivery: async (orderId: string) => {
     const response = await api.post<ApiResponse<Order>>(
-      `/orders/${orderId}/confirm-delivery`
+      `/orders/${orderId}/confirm-delivery`,
     );
     return response.data;
   },

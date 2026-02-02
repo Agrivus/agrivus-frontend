@@ -12,6 +12,7 @@ import MyListings from "./pages/MyListings";
 import CreateOrder from "./pages/CreateOrder";
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
+import TransportOffers from "./pages/TransportOffers";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -103,6 +104,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <OrderDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/transport-offers"
+                  element={
+                    <ProtectedRoute allowedRoles={["transporter"]}>
+                      <TransportOffers />
                     </ProtectedRoute>
                   }
                 />
