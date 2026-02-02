@@ -71,8 +71,12 @@ const Header: React.FC = () => {
       ...baseLinks,
       { to: "/agrimall/products", label: "Agri-Mall" },
       { to: "/agrimall/orders", label: "My Orders" },
-      { to: "/export", label: "Export Gateway" },
       { to: "/recommendations", label: "Insights" },
+    // Add Export Gateway for farmers only
+    if (user?.role === "farmer") {
+      authenticatedLinks.push({ to: "/export", label: "Export Gateway" });
+    }
+
     ];
 
     // Add role-specific links
