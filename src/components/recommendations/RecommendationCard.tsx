@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, Button } from "../common";
 import type { Recommendation } from "../../services/recommendationsService";
 
@@ -19,6 +20,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
     const icons: Record<string, string> = {
       crop_suggestion: "🌾",
       buyer_match: "🤝",
+      farmer_match: "👩‍🌾",
       pricing_optimization: "💰",
       seasonal_insight: "📅",
       product_bundle: "📦",
@@ -31,6 +33,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
     const names: Record<string, string> = {
       crop_suggestion: "Crop Suggestion",
       buyer_match: "Buyer Match",
+      farmer_match: "Farmer Match",
       pricing_optimization: "Pricing Optimization",
       seasonal_insight: "Seasonal Insight",
       product_bundle: "Product Bundle",
@@ -152,6 +155,21 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
                 </div>
               )}
 
+            {recommendation.type === "farmer_match" &&
+              recommendation.data.farmerName && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    <strong>Farmer:</strong> {recommendation.data.farmerName} |
+                    <strong className="ml-2">Available:</strong>{" "}
+                    {recommendation.data.availableQuantity} |
+                    <strong className="ml-2">Price:</strong> $
+                    {parseFloat(recommendation.data.pricePerUnit).toFixed(2)} |
+                    <strong className="ml-2">Rating:</strong>{" "}
+                    {recommendation.data.farmerScore}/100
+                  </p>
+                </div>
+              )}
+
             {recommendation.type === "pricing_optimization" &&
               recommendation.data.currentPrice && (
                 <div className="mt-3 pt-3 border-t border-gray-200">
@@ -189,7 +207,24 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
             </Button>
           </div>
         )}
-
+        {/* Quick Action for Farmer Matches */}
+        {recommendation.type === "farmer_match" &&
+          recommendation.data?.listingId && (
+            <div className="mt-3 flex gap-3">
+              <Link
+                to={`/listing/${recommendation.data.listingId}`}
+                className="flex-1 inline-flex items-center justify-center font-semibold rounded transition-all duration-300 uppercase tracking-wider shadow-md hover:-translate-y-0.5 hover:shadow-lg px-4 py-2 text-xs bg-transparent border-2 border-secondary-green text-secondary-green hover:border-accent-gold hover:text-dark-green hover:bg-accent-gold hover:bg-opacity-10"
+              >
+                View Listing
+              </Link>
+              <Link
+                to={`/orders/create?listingId=${recommendation.data.listingId}`}
+                className="flex-1 inline-flex items-center justify-center font-semibold rounded transition-all duration-300 uppercase tracking-wider shadow-md hover:-translate-y-0.5 hover:shadow-lg px-4 py-2 text-xs bg-secondary-green text-white hover:bg-dark-green"
+              >
+                Buy Now
+              </Link>
+            </div>
+          )}
         {/* Status Badge */}
         {recommendation.status !== "active" && (
           <div className="mt-4 text-center">

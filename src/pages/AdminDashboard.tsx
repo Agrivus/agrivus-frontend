@@ -46,14 +46,16 @@ const AdminDashboard: React.FC = () => {
 
   const getUserBreakdown = (): DashboardUserBreakdown => {
     if (!stats) return { farmer: 0, buyer: 0, transporter: 0, supplier: 0 };
-    if (stats.userBreakdown) {
+
+    // Use data.users from API response
+    if (stats.users) {
       const breakdown: DashboardUserBreakdown = {
         farmer: 0,
         buyer: 0,
         transporter: 0,
         supplier: 0,
       };
-      (stats.userBreakdown as Array<{ role: UserRole; count: number }>).forEach(
+      (stats.users as Array<{ role: UserRole; count: string }>).forEach(
         (row) => {
           if (row.role === "agro_supplier")
             breakdown.supplier = Number(row.count);
@@ -70,10 +72,8 @@ const AdminDashboard: React.FC = () => {
       );
       return breakdown;
     }
-    // fallback for old API
-    return (
-      stats.usersByRole || { farmer: 0, buyer: 0, transporter: 0, supplier: 0 }
-    );
+    // Fallback
+    return { farmer: 0, buyer: 0, transporter: 0, supplier: 0 };
   };
 
   const fetchStats = async () => {
@@ -237,22 +237,27 @@ const AdminDashboard: React.FC = () => {
             </h2>
             <Card>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {stats.ordersByStatus &&
-                  Object.entries(stats.ordersByStatus).map(
-                    ([status, count]: [string, any]) => (
+                {stats.orders && stats.orders.length > 0 ? (
+                  stats.orders.map(
+                    (order: { status: string; count: string }) => (
                       <div
-                        key={status}
+                        key={order.status}
                         className="text-center p-4 bg-light-green rounded-lg"
                       >
                         <p className="text-2xl font-bold text-primary-green">
-                          {count}
+                          {Number(order.count)}
                         </p>
                         <p className="text-xs text-gray-600 capitalize">
-                          {status.replace("_", " ")}
+                          {order.status.replace(/_/g, " ")}
                         </p>
                       </div>
                     ),
-                  )}
+                  )
+                ) : (
+                  <p className="text-center text-gray-500 py-4 col-span-full">
+                    No order data available
+                  </p>
+                )}
               </div>
             </Card>
           </div>
@@ -268,16 +273,28 @@ const AdminDashboard: React.FC = () => {
                   Total Platform Volume
                 </p>
                 <p className="text-3xl font-bold text-primary-green">
-                  ${(stats.totalVolume || 0).toLocaleString()}
+                  $
+                  {Number(
+                    stats.revenue?.total_volume ||
+                      getOverview().totalVolume ||
+                      0,
+                  ).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
               </Card>
 
               <Card className="bg-light-green">
                 <p className="text-sm text-gray-600 mb-2">
-                  Platform Commission (Est. 3%)
+                  Total Commission Earned
                 </p>
                 <p className="text-3xl font-bold text-accent-gold">
-                  ${((stats.totalVolume || 0) * 0.03).toLocaleString()}
+                  $
+                  {Number(stats.revenue?.total_commission || 0).toLocaleString(
+                    undefined,
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                  )}
                 </p>
               </Card>
 
@@ -287,8 +304,10 @@ const AdminDashboard: React.FC = () => {
                 </p>
                 <p className="text-3xl font-bold text-primary-green">
                   $
-                  {stats.totalOrders > 0
-                    ? ((stats.totalVolume || 0) / stats.totalOrders).toFixed(2)
+                  {getOverview().totalOrders > 0
+                    ? (
+                        getOverview().totalVolume / getOverview().totalOrders
+                      ).toFixed(2)
                     : "0.00"}
                 </p>
               </Card>
@@ -313,23 +332,35 @@ const AdminDashboard: React.FC = () => {
                           Order #{order.id.substring(0, 8)}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {order.cropType} • {order.quantity} {order.unit}
+                          {order.crop_type || "N/A"} • {order.quantity}{" "}
+                          {order.unit}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-primary-green">
-                          ${parseFloat(order.totalAmount).toLocaleString()}
+                          $
+                          {parseFloat(order.total_amount || 0).toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}
                         </p>
                         <span
                           className={`text-xs px-2 py-1 rounded ${
-                            order.status === "confirmed"
+                            order.status === "confirmed" ||
+                            order.status === "delivered"
                               ? "bg-green-100 text-green-800"
                               : order.status === "paid"
                                 ? "bg-blue-100 text-blue-800"
-                                : "bg-yellow-100 text-yellow-800"
+                                : order.status === "pending" ||
+                                    order.status === "payment_pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {order.status}
+                          {order.status?.replace(/_/g, " ")}
                         </span>
                       </div>
                     </div>

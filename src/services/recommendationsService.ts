@@ -6,6 +6,7 @@ export interface Recommendation {
   type:
     | "crop_suggestion"
     | "buyer_match"
+    | "farmer_match"
     | "pricing_optimization"
     | "seasonal_insight"
     | "product_bundle"
