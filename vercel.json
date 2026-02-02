@@ -5,12 +5,14 @@
   "installCommand": "npm install",
   "framework": "vite",
   "rewrites": [
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/:path*",
+      "destination": "https://api.agrivus.com/api/:path*"
+    },
+    { "source": "/:path*", "destination": "/index.html" }
   ],
   "cleanUrls": true,
   "trailingSlash": false,
-  "outputDirectory": "dist",
   "headers": [
     {
       "source": "/(.*)",
