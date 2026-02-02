@@ -293,7 +293,7 @@ function App() {
                 <Route
                   path="/export"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={["farmer", "admin"]}>
                       <ExportGateway />
                     </ProtectedRoute>
                   }
@@ -301,7 +301,7 @@ function App() {
                 <Route
                   path="/export/assessment"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={["farmer", "admin"]}>
                       <ExportAssessment />
                     </ProtectedRoute>
                   }
@@ -309,7 +309,7 @@ function App() {
                 <Route
                   path="/export/assessment/:assessmentId"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={["farmer", "admin"]}>
                       <ExportAssessmentResults />
                     </ProtectedRoute>
                   }
@@ -317,7 +317,7 @@ function App() {
                 <Route
                   path="/export/market-intelligence"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={["farmer", "admin"]}>
                       <ExportMarketIntelligence />
                     </ProtectedRoute>
                   }
@@ -325,7 +325,7 @@ function App() {
                 <Route
                   path="/export/documents"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={["farmer", "admin"]}>
                       <ExportDocuments />
                     </ProtectedRoute>
                   }
@@ -333,7 +333,7 @@ function App() {
                 <Route
                   path="/export/logistics"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={["farmer", "admin"]}>
                       <ExportLogistics />
                     </ProtectedRoute>
                   }

@@ -761,11 +761,13 @@ const Home: React.FC = () => {
                 Access international markets and get premium prices for your
                 quality produce.
               </p>
-              <Link to="/export">
-                <Button variant="outline" size="sm">
-                  Explore Exports →
-                </Button>
-              </Link>
+              {(user?.role === "farmer" || user?.role === "admin") && (
+                <Link to="/export">
+                  <Button variant="outline" size="sm">
+                    Explore Exports →
+                  </Button>
+                </Link>
+              )}
             </Card>
             <Card className="p-6 border-t-4 border-blue-500">
               <div className="text-4xl mb-4">💬</div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Card, LoadingSpinner } from "../components/common";
+import { ImageUpload } from "../components/common/ImageUpload";
 import OptimizedImage from "../components/common/OptimizedImage";
 import { listingsService } from "../services/listingsService";
 import chatService from "../services/chatService";
@@ -26,6 +27,8 @@ const ListingDetail: React.FC = () => {
   const [priceReason, setPriceReason] = useState("");
   const [updatingPrice, setUpdatingPrice] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [updatingImage, setUpdatingImage] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -129,6 +132,27 @@ const ListingDetail: React.FC = () => {
     }
   };
 
+  const handleImageUploadComplete = async (images: string[]) => {
+    if (!images || images.length === 0) return;
+
+    try {
+      setUpdatingImage(true);
+      const response = await listingsService.updateListing(id!, {
+        images,
+      });
+
+      if (response.success && response.data) {
+        alert("Listing image updated successfully!");
+        setListing(response.data);
+        setShowImageModal(false);
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to update listing image");
+    } finally {
+      setUpdatingImage(false);
+    }
+  };
+
   const handleContactFarmer = async () => {
     if (!listing) return;
 
@@ -202,7 +226,7 @@ const ListingDetail: React.FC = () => {
           <div className="lg:col-span-2">
             <Card className="overflow-hidden">
               {/* Image Gallery */}
-              <div className="h-96 bg-gradient-to-br from-primary-green to-medium-green flex items-center justify-center">
+              <div className="h-96 bg-gradient-to-br from-primary-green to-medium-green flex items-center justify-center relative">
                 {listing.images && listing.images.length > 0 ? (
                   <OptimizedImage
                     src={listing.images[0]}
@@ -219,6 +243,14 @@ const ListingDetail: React.FC = () => {
                     viewBox="0 0 24 24"
                   >
                     <path
+                {isFarmer && (
+                  <button
+                    onClick={() => setShowImageModal(true)}
+                    className="absolute top-4 right-4 bg-white/90 hover:bg-white text-primary-green text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
+                  >
+                    Update Image
+                  </button>
+                )}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
@@ -714,6 +746,50 @@ const ListingDetail: React.FC = () => {
                   disabled={updatingPrice}
                 >
                   Update
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Update Modal */}
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-xl w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">
+                Update Listing Image
+              </h2>
+              <button
+                onClick={() => setShowImageModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                <p className="text-xs text-blue-800">
+                  💡 Uploading a new image will replace the current primary
+                  image for this listing.
+                </p>
+              </div>
+
+              <ImageUpload
+                maxImages={1}
+                existingImages={[]}
+                onUploadComplete={handleImageUploadComplete}
+              />
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowImageModal(false)}
+                >
+                  Cancel
                 </Button>
               </div>
             </div>
