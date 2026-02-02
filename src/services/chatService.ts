@@ -62,13 +62,13 @@ const chatService = {
   async getMessages(
     conversationId: string,
     page: number = 1,
-    limit: number = 50
+    limit: number = 50,
   ) {
     const response = await api.get(
       `/chat/conversations/${conversationId}/messages`,
       {
         params: { page, limit },
-      }
+      },
     );
     return response.data;
   },
@@ -76,6 +76,12 @@ const chatService = {
   // Get unread message count
   async getUnreadCount() {
     const response = await api.get("/chat/unread-count");
+    return response.data;
+  },
+
+  // Get unread conversations count (count of conversations with unread messages)
+  async getUnreadConversationsCount() {
+    const response = await api.get("/chat/unread-conversations-count");
     return response.data;
   },
 

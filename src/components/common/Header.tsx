@@ -16,7 +16,7 @@ const Header: React.FC = () => {
       if (!isAuthenticated) return;
 
       try {
-        const response = await chatService.getUnreadCount();
+        const response = await chatService.getUnreadConversationsCount();
         if (response.success) {
           setUnreadChatCount(response.data.count);
         }
