@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import type {
   User,
   LoginCredentials,
@@ -158,7 +164,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     clearCache(); // Clear cached requests on logout
   };
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
+    if (!token) return;
+
     try {
       const response = await api.get<{
         success: boolean;
@@ -174,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("Failed to refresh user data:", error);
       // Don't throw - silently fail to avoid breaking the app
     }
-  };
+  }, [token]);
 
   const value = {
     user,

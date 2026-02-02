@@ -44,11 +44,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Prevent duplicate connections
+    if (socket?.connected) {
+      return;
+    }
+
     const socketUrl =
       import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
     const newSocket = io(socketUrl, {
       auth: { token },
       transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
     });
 
     newSocket.on("connect", () => {

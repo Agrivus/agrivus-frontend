@@ -11,7 +11,8 @@ const Home: React.FC = () => {
     if (isAuthenticated) {
       refreshUser();
     }
-  }, [isAuthenticated, refreshUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Guest Home Page (not logged in)
   const GuestHome = () => (
