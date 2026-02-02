@@ -61,8 +61,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         prev.map((notif) =>
           notif.id === id
             ? { ...notif, isRead: true, readAt: new Date().toISOString() }
-            : notif
-        )
+            : notif,
+        ),
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
@@ -79,7 +79,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
           ...notif,
           isRead: true,
           readAt: new Date().toISOString(),
-        }))
+        })),
       );
       setUnreadCount(0);
     } catch (error) {
@@ -137,12 +137,18 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       });
 
+      // Periodically sync notification count from server
+      const syncInterval = setInterval(() => {
+        fetchNotifications();
+      }, 60000); // Sync every 60 seconds
+
       // Keep connection alive
       const pingInterval = setInterval(() => {
         wsService.ping();
       }, 30000); // Ping every 30 seconds
 
       return () => {
+        clearInterval(syncInterval);
         clearInterval(pingInterval);
         wsService.disconnect();
       };
@@ -180,7 +186,7 @@ export const useNotifications = () => {
   const context = useContext(NotificationsContext);
   if (!context) {
     throw new Error(
-      "useNotifications must be used within NotificationsProvider"
+      "useNotifications must be used within NotificationsProvider",
     );
   }
   return context;

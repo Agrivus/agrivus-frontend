@@ -32,9 +32,22 @@ const Header: React.FC = () => {
       loadUnreadCount();
     };
 
+    // Listen for messages being read to update count
+    const handleMessageRead = () => {
+      loadUnreadCount();
+    };
+
     window.addEventListener("chat:new-message", handleNewMessage);
-    return () =>
+    window.addEventListener("chat:message-read", handleMessageRead);
+
+    // Poll for updates every 30 seconds as fallback
+    const pollInterval = setInterval(loadUnreadCount, 30000);
+
+    return () => {
       window.removeEventListener("chat:new-message", handleNewMessage);
+      window.removeEventListener("chat:message-read", handleMessageRead);
+      clearInterval(pollInterval);
+    };
   }, [isAuthenticated]);
 
   const handleLogout = () => {
