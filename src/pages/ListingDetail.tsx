@@ -57,8 +57,8 @@ const ListingDetail: React.FC = () => {
       return;
     }
 
-    if (user?.role !== "buyer") {
-      alert("Only buyers can place orders");
+    if (user?.role !== "buyer" && user?.role !== "farmer") {
+      alert("Only buyers and farmers can place orders");
       return;
     }
 

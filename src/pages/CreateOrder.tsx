@@ -49,7 +49,7 @@ const CreateOrder: React.FC = () => {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData({
       ...formData,
@@ -84,7 +84,7 @@ const CreateOrder: React.FC = () => {
 
     if (quantity > availableQuantity) {
       setError(
-        `Maximum available quantity is ${availableQuantity} ${listing.unit}`
+        `Maximum available quantity is ${availableQuantity} ${listing.unit}`,
       );
       return;
     }
@@ -115,15 +115,17 @@ const CreateOrder: React.FC = () => {
     }
   };
 
-  // Redirect if not a buyer
-  if (user?.role !== "buyer") {
+  // Redirect if not a buyer or farmer
+  if (user?.role !== "buyer" && user?.role !== "farmer") {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <Card className="p-8 text-center max-w-md">
           <h2 className="text-2xl font-bold text-warning mb-4">
             Access Denied
           </h2>
-          <p className="text-gray-600 mb-6">Only buyers can place orders.</p>
+          <p className="text-gray-600 mb-6">
+            Only buyers and farmers can place orders.
+          </p>
           <Button variant="primary" onClick={() => navigate("/marketplace")}>
             Go to Marketplace
           </Button>
