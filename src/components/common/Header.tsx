@@ -70,7 +70,7 @@ const Header: React.FC = () => {
     const authenticatedLinks = [
       ...baseLinks,
       { to: "/agrimall/products", label: "Agri-Mall" },
-      { to: "/agrimall/orders", label: "My Orders" },
+      { to: "/agrimall/orders", label: "Mall Orders" },
       { to: "/recommendations", label: "Insights" },
     ];
 
