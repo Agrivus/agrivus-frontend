@@ -5,21 +5,25 @@ import { Button, Card, LoadingSpinner, BoostBadge } from "../components/common";
 import StatCard from "../components/common/StatCard";
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
-    // Simulate loading stats
-    setTimeout(() => {
+    // Refresh user data to get latest stats
+    const loadStats = async () => {
+      await refreshUser();
+
       setStats({
         totalTransactions: user?.totalTransactions || 0,
         platformScore: user?.platformScore || 0,
         totalVolume: user?.totalVolume || "0.00",
       });
       setLoading(false);
-    }, 500);
-  }, [user]);
+    };
+
+    loadStats();
+  }, []);
 
   if (loading) {
     return (

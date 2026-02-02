@@ -1,10 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button, Card } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 
 const Home: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, refreshUser } = useAuth();
+
+  // Refresh user data on page load to get latest stats
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshUser();
+    }
+  }, [isAuthenticated, refreshUser]);
 
   // Guest Home Page (not logged in)
   const GuestHome = () => (
