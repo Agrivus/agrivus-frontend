@@ -4,6 +4,7 @@ import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { ordersService } from "../services/ordersService";
+import { getErrorMessage } from "../utils/errorHandler";
 
 interface TransportOffer {
   offerId: string;
@@ -54,7 +55,7 @@ const TransportOffers: React.FC = () => {
         setOffers(response.data.offers);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to load transport offers");
+      setError(getErrorMessage(err, "Failed to load transport offers"));
     } finally {
       setLoading(false);
     }

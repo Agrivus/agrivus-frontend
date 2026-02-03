@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Input, Card } from "../components/common";
+import { getErrorMessage } from "../utils/errorHandler";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -28,7 +29,9 @@ const Login: React.FC = () => {
       await login({ email, password });
       // Redirect will happen after user state updates via useEffect above
     } catch (err: any) {
-      setError(err.message || "Login failed. Please try again.");
+      setError(
+        getErrorMessage(err, "Login failed. Please check your credentials."),
+      );
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { getAuctionDetails, placeBid } from "../services/auctionsService";
 import { safeDisplayText } from "../utils/textUtils";
 import { Card, LoadingSpinner, Button } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
+import { getAuctionErrorMessage } from "../utils/errorHandler";
 
 const AuctionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +50,7 @@ const AuctionDetail: React.FC = () => {
       setBidAmount((currentPrice + bidIncrement).toFixed(2));
     } catch (err: any) {
       setError(
-        err.response?.data?.message || "Failed to fetch auction details"
+        err.response?.data?.message || "Failed to fetch auction details",
       );
     } finally {
       setLoading(false);
@@ -103,7 +104,7 @@ const AuctionDetail: React.FC = () => {
       // Show success message
       alert("Bid placed successfully! 🎉");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to place bid");
+      setError(getAuctionErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

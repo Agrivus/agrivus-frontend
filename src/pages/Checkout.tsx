@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import agrimallService from "../services/agrimallService";
 import type { CheckoutSummary, Transporter } from "../services/agrimallService";
 import { Button, LoadingSpinner, Card } from "../components/common";
-
+import { getErrorMessage } from "../utils/errorHandler";
 export default function Checkout() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -15,7 +15,7 @@ export default function Checkout() {
   // Form state
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [selectedTransporter, setSelectedTransporter] = useState<string | null>(
-    null
+    null,
   );
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [buyerNotes, setBuyerNotes] = useState("");
@@ -35,7 +35,7 @@ export default function Checkout() {
         navigate("/agrimall/cart");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load checkout");
+      setError(getErrorMessage(err, "Failed to load checkout"));
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ export default function Checkout() {
 
     if (!summary.wallet.sufficient) {
       alert(
-        `Insufficient wallet balance. You need $${summary.wallet.shortfall} more.`
+        `Insufficient wallet balance. You need $${summary.wallet.shortfall} more.`,
       );
       return;
     }

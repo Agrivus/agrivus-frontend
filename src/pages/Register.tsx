@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Input, Card } from "../components/common";
 import type { UserRole } from "../types";
+import { getErrorMessage } from "../utils/errorHandler";
 
 const Register: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -92,7 +93,7 @@ const Register: React.FC = () => {
       await register(registerData);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err.message || "Registration failed. Please try again.");
+      setError(getErrorMessage(err, "Registration failed. Please try again."));
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import ListingCard from "../components/marketplace/ListingCard";
 import MarketplaceFilters from "../components/marketplace/MarketplaceFilters";
 import { listingsService } from "../services/listingsService";
 import type { ListingWithFarmer, ListingFilters } from "../types";
+import { getErrorMessage } from "../utils/errorHandler";
 
 const Marketplace: React.FC = () => {
   const [listings, setListings] = useState<ListingWithFarmer[]>([]);
@@ -71,7 +72,7 @@ const Marketplace: React.FC = () => {
       } catch (err: any) {
         // Swallow abort errors quietly
         if (err?.name !== "CanceledError") {
-          setError(err.message || "Failed to load listings");
+          setError(getErrorMessage(err, "Failed to load listings"));
         }
       } finally {
         setLoading(false);

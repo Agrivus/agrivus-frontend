@@ -5,6 +5,7 @@ import { listingsService } from "../services/listingsService";
 import { Card, Button, Input } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 import { singularizeUnit } from "../utils/textUtils";
+import { getAuctionErrorMessage } from "../utils/errorHandler";
 
 const CreateAuction: React.FC = () => {
   const { user } = useAuth();
@@ -33,7 +34,7 @@ const CreateAuction: React.FC = () => {
       const response = await listingsService.getMyListings();
       // Filter only active listings not in auction
       const activeListings = (response.data || []).filter(
-        (l: any) => l.status === "active" && !l.isAuction
+        (l: any) => l.status === "active" && !l.isAuction,
       );
       setListings(activeListings);
     } catch (err: any) {
@@ -44,7 +45,7 @@ const CreateAuction: React.FC = () => {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
@@ -93,7 +94,7 @@ const CreateAuction: React.FC = () => {
       alert("Auction created successfully! 🎉");
       navigate("/auctions");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create auction");
+      setError(getAuctionErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

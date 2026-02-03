@@ -6,6 +6,7 @@ import { Button, Card, LoadingSpinner } from "../components/common";
 import OptimizedImage from "../components/common/OptimizedImage";
 import { listingsService } from "../services/listingsService";
 import type { Listing } from "../types";
+import { getErrorMessage } from "../utils/errorHandler";
 
 const MyListings: React.FC = () => {
   useAuth();
@@ -27,7 +28,7 @@ const MyListings: React.FC = () => {
         setListings(response.data);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to load listings");
+      setError(getErrorMessage(err, "Failed to load your listings"));
     } finally {
       setLoading(false);
     }

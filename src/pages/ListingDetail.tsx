@@ -8,6 +8,7 @@ import { listingsService } from "../services/listingsService";
 import chatService from "../services/chatService";
 import type { Listing } from "../types";
 import { safeDisplayText, singularizeUnit } from "../utils/textUtils";
+import { getListingErrorMessage } from "../utils/errorHandler";
 
 const ListingDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +46,7 @@ const ListingDetail: React.FC = () => {
         setFarmer(response.data.farmer);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to load listing");
+      setError(getListingErrorMessage(err));
     } finally {
       setLoading(false);
     }

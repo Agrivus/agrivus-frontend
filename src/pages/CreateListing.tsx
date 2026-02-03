@@ -6,6 +6,7 @@ import Input from "../components/common/Input";
 import Card from "../components/common/Card";
 import ImageUpload from "../components/common/ImageUpload";
 import { listingsService } from "../services/listingsService";
+import { getErrorMessage } from "../utils/errorHandler";
 
 const CreateListing: React.FC = () => {
   const { user } = useAuth();
@@ -30,7 +31,7 @@ const CreateListing: React.FC = () => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     setFormData({
       ...formData,
@@ -83,7 +84,9 @@ const CreateListing: React.FC = () => {
         navigate("/dashboard");
       }
     } catch (err: any) {
-      setError(err.message || "Failed to create listing");
+      setError(
+        getErrorMessage(err, "Failed to create listing. Please try again."),
+      );
     } finally {
       setLoading(false);
     }
@@ -179,12 +182,12 @@ const CreateListing: React.FC = () => {
                   formData.cropType === "Maize"
                     ? "e.g., Hickory King, SC627"
                     : formData.cropType === "Vegetables"
-                    ? "e.g., Cabbage, Tomato, Spinach"
-                    : formData.cropType === "Fruits"
-                    ? "e.g., Mango, Apple, Orange"
-                    : formData.cropType === "Other"
-                    ? "e.g., Dressed Chicken, Honey"
-                    : "e.g., Specific variety or name"
+                      ? "e.g., Cabbage, Tomato, Spinach"
+                      : formData.cropType === "Fruits"
+                        ? "e.g., Mango, Apple, Orange"
+                        : formData.cropType === "Other"
+                          ? "e.g., Dressed Chicken, Honey"
+                          : "e.g., Specific variety or name"
                 }
               />
             )}

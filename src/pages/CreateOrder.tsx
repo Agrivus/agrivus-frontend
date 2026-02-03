@@ -5,6 +5,10 @@ import { Button, Input, Card, LoadingSpinner } from "../components/common";
 import { listingsService } from "../services/listingsService";
 import { ordersService } from "../services/ordersService";
 import type { Listing } from "../types";
+import {
+  getOrderErrorMessage,
+  getListingErrorMessage,
+} from "../utils/errorHandler";
 
 const CreateOrder: React.FC = () => {
   const { user } = useAuth();
@@ -42,7 +46,7 @@ const CreateOrder: React.FC = () => {
         setListing(response.data.listing);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to load listing");
+      setError(getListingErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -109,7 +113,7 @@ const CreateOrder: React.FC = () => {
         navigate("/orders");
       }
     } catch (err: any) {
-      setError(err.message || "Failed to create order");
+      setError(getOrderErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

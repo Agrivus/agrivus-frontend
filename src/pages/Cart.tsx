@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import agrimallService from "../services/agrimallService";
 import type { Cart as CartType } from "../services/agrimallService";
 import { Button, LoadingSpinner, Card } from "../components/common";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function Cart() {
       const response = await agrimallService.getCart();
       setCart(response.cart);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load cart");
+      setError(getErrorMessage(err, "Failed to load cart"));
     } finally {
       setLoading(false);
     }
@@ -29,13 +30,13 @@ export default function Cart() {
 
   const handleUpdateQuantity = async (
     productId: string,
-    newQuantity: number
+    newQuantity: number,
   ) => {
     try {
       setUpdating(productId);
       const response = await agrimallService.updateCartItem(
         productId,
-        newQuantity
+        newQuantity,
       );
       setCart(response.cart);
     } catch (err: any) {
@@ -167,7 +168,7 @@ export default function Cart() {
                         onClick={() =>
                           handleUpdateQuantity(
                             item.productId,
-                            item.quantity - 1
+                            item.quantity - 1,
                           )
                         }
                         disabled={
@@ -188,7 +189,7 @@ export default function Cart() {
                         onClick={() =>
                           handleUpdateQuantity(
                             item.productId,
-                            item.quantity + 1
+                            item.quantity + 1,
                           )
                         }
                         disabled={

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import agrimallService from "../services/agrimallService";
 import type { Product } from "../services/agrimallService";
 import { Card, Button, LoadingSpinner } from "../components/common";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function AgriMallProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,7 +23,7 @@ export default function AgriMallProducts() {
       const response = await agrimallService.getProducts({ search, limit: 50 });
       setProducts(response.products || []);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load products");
+      setError(getErrorMessage(err, "Failed to load products"));
     } finally {
       setLoading(false);
     }

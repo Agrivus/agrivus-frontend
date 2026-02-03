@@ -7,6 +7,7 @@ import Card from "../components/common/Card";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { ordersService } from "../services/ordersService";
 import type { OrderStatus } from "../types";
+import { getErrorMessage } from "../utils/errorHandler";
 
 const Orders: React.FC = () => {
   const { user } = useAuth();
@@ -31,7 +32,7 @@ const Orders: React.FC = () => {
         setOrders(response.data.orders);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to load orders");
+      setError(getErrorMessage(err, "Failed to load orders"));
     } finally {
       setLoading(false);
     }

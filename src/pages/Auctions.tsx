@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getLiveAuctions } from "../services/auctionsService";
 import { Card, LoadingSpinner } from "../components/common";
+import { getErrorMessage } from "../utils/errorHandler";
 
 const Auctions: React.FC = () => {
   const [auctions, setAuctions] = useState<any[]>([]);
@@ -18,7 +19,7 @@ const Auctions: React.FC = () => {
       const response = await getLiveAuctions();
       setAuctions(response.data.auctions);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch auctions");
+      setError(getErrorMessage(err, "Failed to load auctions"));
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { Card, Button, LoadingSpinner } from "../components/common";
 import { walletService } from "../services/walletService";
 import paymentService from "../services/paymentService";
 import type { WalletBalance, Transaction } from "../services/walletService";
+import { getWalletErrorMessage, getErrorMessage } from "../utils/errorHandler";
 
 const Wallet: React.FC = () => {
   const navigate = useNavigate();
@@ -50,7 +51,10 @@ const Wallet: React.FC = () => {
       setTransactions(transactionsData.transactions);
     } catch (error) {
       console.error("Failed to load wallet data:", error);
-      showNotification("Failed to load wallet data", "error");
+      showNotification(
+        getErrorMessage(error, "Failed to load wallet data"),
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -109,10 +113,7 @@ const Wallet: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Deposit initiation failed:", error);
-      showNotification(
-        error.response?.data?.message || "Failed to initiate payment",
-        "error",
-      );
+      showNotification(getWalletErrorMessage(error), "error");
     } finally {
       setProcessing(false);
     }
