@@ -86,7 +86,9 @@ function App() {
                 <Route
                   path="/orders/create"
                   element={
-                    <ProtectedRoute allowedRoles={["buyer", "transporter"]}>
+                    <ProtectedRoute
+                      allowedRoles={["buyer", "transporter", "farmer"]}
+                    >
                       <CreateOrder />
                     </ProtectedRoute>
                   }
