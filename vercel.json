@@ -3,6 +3,10 @@
     {
       "source": "/api/(.*)",
       "destination": "https://api.agrivus.com/api/$1"
+    },
+    {
+      "source": "/((?!assets|_next|favicon|manifest|service-worker|icon).*)$",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -24,7 +28,5 @@
         }
       ]
     }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  ]
 }
