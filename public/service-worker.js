@@ -1,5 +1,5 @@
-const CACHE_NAME = "agrivus-v5";
-const urlsToCache = ["/", "/index.html", "/manifest.json"];
+const CACHE_NAME = "agrivus-v6";
+const urlsToCache = ["/manifest.json"];
 
 // Install event - cache essential files
 self.addEventListener("install", (event) => {
@@ -23,7 +23,7 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Network first strategy for HTML and JS (always get latest)
+  // Network-only strategy for HTML/JS/assets to avoid stale index+asset mismatch
   if (
     request.method === "GET" &&
     (url.pathname === "/" ||
@@ -33,16 +33,7 @@ self.addEventListener("fetch", (event) => {
   ) {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          // Cache the fresh response
-          if (response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseToCache);
-            });
-          }
-          return response;
-        })
+        .then((response) => response)
         .catch(() => {
           // Fallback to cache if network fails
           return caches.match(request).then((response) => {
