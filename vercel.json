@@ -10,7 +10,7 @@
     },
     {
       "source": "/favicon.ico",
-      "destination": "/icon.ico"
+      "destination": "/favicon.ico"
     },
     {
       "source": "/manifest.json",
