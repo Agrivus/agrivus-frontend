@@ -1,7 +1,7 @@
 {
   "name": "Agrivus - Digital Agricultural Ecosystem",
   "short_name": "Agrivus",
-  "description": "Connecting farmers with buyers across Zimbabwe",
+  "description": "Connecting farmers with buyers through a digital marketplace for agricultural products and services.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,13 +9,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/smallicon.png",
+      "src": "favicon.ico",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/x-icon",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon.png",
+      "src": "smallicon.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"
