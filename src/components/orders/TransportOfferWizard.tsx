@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ordersService } from "../../services/ordersService";
+import { getErrorMessage } from "../../utils/errorHandler";
 
 interface Transporter {
   transporterId: string;
@@ -82,9 +83,7 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
         setProposedFee(feeData.minimumFee.toString());
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load transporters",
-      );
+      setError(getErrorMessage(err, "Failed to load transporters"));
     } finally {
       setLoading(false);
     }
@@ -132,9 +131,7 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
 
       onSuccess();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to assign transporters",
-      );
+      setError(getErrorMessage(err, "Failed to assign transporters"));
       setStep("summary");
     }
   };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { safeDisplayText } from "../utils/textUtils";
+import { getErrorMessage } from "../utils/errorHandler";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -56,7 +57,7 @@ const OrderDetail: React.FC = () => {
         setShowTransporterModal(true);
       }
     } catch (err: any) {
-      alert(err.message || "Failed to find transporters");
+      alert(getErrorMessage(err, "Failed to find transporters"));
     } finally {
       setMatchingLoading(false);
     }
@@ -92,7 +93,7 @@ const OrderDetail: React.FC = () => {
         fetchOrderDetails();
       }
     } catch (err: any) {
-      alert(err.message || "Failed to assign transporter");
+      alert(getErrorMessage(err, "Failed to assign transporter"));
     } finally {
       setActionLoading(false);
     }
