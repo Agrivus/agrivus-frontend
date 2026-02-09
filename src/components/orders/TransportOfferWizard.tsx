@@ -62,6 +62,10 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
   );
   const [minimumFee, setMinimumFee] = useState<number>(187.5);
   const [feeError, setFeeError] = useState<string | null>(null);
+  const isSingleTransporter = transporters.length <= 1;
+  const steps = isSingleTransporter
+    ? ["select-primary", "summary"]
+    : ["select-primary", "select-secondary", "select-tertiary", "summary"];
 
   useEffect(() => {
     loadTransporters();
@@ -95,7 +99,7 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
       return;
     }
 
-    if (!secondarySelected && !tertiarySelected) {
+    if (!isSingleTransporter && !secondarySelected && !tertiarySelected) {
       setError("Please select at least 2 transporters");
       return;
     }
@@ -246,34 +250,23 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
       <div className="bg-green-600 text-white p-6">
         <h2 className="text-2xl font-bold mb-2">Select Transporters</h2>
         <p className="text-green-100">
-          Choose 3 transporters in priority order. Tier 1 gets first chance,
-          then Tier 2, then Tier 3.
+          {isSingleTransporter
+            ? "Only one transporter is available right now. You can proceed with a single priority offer."
+            : "Choose up to 3 transporters in priority order. Tier 1 gets first chance, then Tier 2, then Tier 3."}
         </p>
       </div>
 
       {/* Progress Bar */}
       <div className="px-6 pt-6">
         <div className="flex gap-2 mb-6">
-          {[
-            "select-primary",
-            "select-secondary",
-            "select-tertiary",
-            "summary",
-          ].map((s, i) => (
+          {steps.map((s, i) => (
             <div key={s} className="flex items-center flex-1">
               <div
                 className={`flex-1 h-2 rounded-full ${
-                  [
-                    "select-primary",
-                    "select-secondary",
-                    "select-tertiary",
-                    "summary",
-                  ].indexOf(step) >= i
-                    ? "bg-green-500"
-                    : "bg-gray-200"
+                  steps.indexOf(step) >= i ? "bg-green-500" : "bg-gray-200"
                 }`}
               ></div>
-              {i < 3 && <div className="w-2"></div>}
+              {i < steps.length - 1 && <div className="w-2"></div>}
             </div>
           ))}
         </div>
@@ -400,62 +393,70 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
                 )}
               </div>
 
-              {/* Tier 2 */}
-              <div className="p-4 border-2 border-blue-500 rounded-lg bg-blue-50">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-blue-500 text-white px-3 py-1 rounded-full font-bold text-sm">
-                    Tier 2
-                  </span>
-                  <span className="text-sm text-gray-600">(After 1 hour)</span>
-                </div>
-                {secondarySelected ? (
-                  <div>
-                    <p className="font-semibold">
-                      {
-                        transporters.find(
-                          (t) => t.transporterId === secondarySelected,
-                        )?.transporter.fullName
-                      }
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {
-                        transporters.find(
-                          (t) => t.transporterId === secondarySelected,
-                        )?.transporter.vehicleType
-                      }
-                    </p>
+              {!isSingleTransporter && (
+                <>
+                  {/* Tier 2 */}
+                  <div className="p-4 border-2 border-blue-500 rounded-lg bg-blue-50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-blue-500 text-white px-3 py-1 rounded-full font-bold text-sm">
+                        Tier 2
+                      </span>
+                      <span className="text-sm text-gray-600">
+                        (After 1 hour)
+                      </span>
+                    </div>
+                    {secondarySelected ? (
+                      <div>
+                        <p className="font-semibold">
+                          {
+                            transporters.find(
+                              (t) => t.transporterId === secondarySelected,
+                            )?.transporter.fullName
+                          }
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {
+                            transporters.find(
+                              (t) => t.transporterId === secondarySelected,
+                            )?.transporter.vehicleType
+                          }
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-gray-600 text-sm italic">
+                        Not selected
+                      </p>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-gray-600 text-sm italic">Not selected</p>
-                )}
-              </div>
 
-              {/* Tier 3 */}
-              {tertiarySelected && (
-                <div className="p-4 border-2 border-purple-500 rounded-lg bg-purple-50">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-purple-500 text-white px-3 py-1 rounded-full font-bold text-sm">
-                      Tier 3
-                    </span>
-                    <span className="text-sm text-gray-600">
-                      (After 2 hours)
-                    </span>
-                  </div>
-                  <p className="font-semibold">
-                    {
-                      transporters.find(
-                        (t) => t.transporterId === tertiarySelected,
-                      )?.transporter.fullName
-                    }
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {
-                      transporters.find(
-                        (t) => t.transporterId === tertiarySelected,
-                      )?.transporter.vehicleType
-                    }
-                  </p>
-                </div>
+                  {/* Tier 3 */}
+                  {tertiarySelected && (
+                    <div className="p-4 border-2 border-purple-500 rounded-lg bg-purple-50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-purple-500 text-white px-3 py-1 rounded-full font-bold text-sm">
+                          Tier 3
+                        </span>
+                        <span className="text-sm text-gray-600">
+                          (After 2 hours)
+                        </span>
+                      </div>
+                      <p className="font-semibold">
+                        {
+                          transporters.find(
+                            (t) => t.transporterId === tertiarySelected,
+                          )?.transporter.fullName
+                        }
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {
+                          transporters.find(
+                            (t) => t.transporterId === tertiarySelected,
+                          )?.transporter.vehicleType
+                        }
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* How It Works */}
@@ -463,16 +464,28 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
                 <h4 className="font-semibold text-sm mb-2">
                   How Cascading Works:
                 </h4>
-                <ul className="text-sm text-gray-700 space-y-1">
-                  <li>✓ Hour 0: Tier 1 gets exclusive 1-hour window</li>
-                  <li>✓ Hour 1: Tier 2 activated (Tier 1 still can accept)</li>
-                  <li>
-                    ✓ Hour 2: Tier 3 activated (all tiers still can accept)
-                  </li>
-                  <li>
-                    ✓ First to accept wins! Assigned transporter gets the job
-                  </li>
-                </ul>
+                {isSingleTransporter ? (
+                  <ul className="text-sm text-gray-700 space-y-1">
+                    <li>✓ Only one transporter is available right now</li>
+                    <li>✓ The offer will be sent immediately</li>
+                    <li>
+                      ✓ First to accept wins! Assigned transporter gets the job
+                    </li>
+                  </ul>
+                ) : (
+                  <ul className="text-sm text-gray-700 space-y-1">
+                    <li>✓ Hour 0: Tier 1 gets exclusive 1-hour window</li>
+                    <li>
+                      ✓ Hour 1: Tier 2 activated (Tier 1 still can accept)
+                    </li>
+                    <li>
+                      ✓ Hour 2: Tier 3 activated (all tiers still can accept)
+                    </li>
+                    <li>
+                      ✓ First to accept wins! Assigned transporter gets the job
+                    </li>
+                  </ul>
+                )}
               </div>
 
               {/* Cost Summary */}
@@ -527,6 +540,10 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
               <button
                 onClick={() => {
                   if (step === "summary") {
+                    if (isSingleTransporter) {
+                      setStep("select-primary");
+                      return;
+                    }
                     setTertiarySelected(null);
                     setStep("select-tertiary");
                   } else if (step === "select-tertiary") {
@@ -546,6 +563,10 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
                 if (step === "select-primary") {
                   if (!primarySelected) {
                     setError("Please select a primary transporter");
+                    return;
+                  }
+                  if (isSingleTransporter) {
+                    setStep("summary");
                     return;
                   }
                   setStep("select-secondary");
