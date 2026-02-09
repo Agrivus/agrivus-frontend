@@ -29,7 +29,7 @@ const Home: React.FC = () => {
       >
         <div className="container mx-auto text-center animate-fade-up">
           <p className="text-sm uppercase tracking-widest text-yellow-200 mb-4">
-            Buy. Sell. Connect. Grow Agriculture with Agrivus.
+            Buy! Sell! Connect! Grow Agriculture with Agrivus.
           </p>
           <h1 className="text-5xl md:text-6xl font-bold mb-5 font-serif">
             Zimbabwe's Agricultural Marketplace & Ecosystem
