@@ -32,11 +32,11 @@ const Home: React.FC = () => {
             <div>
               <h1 className="mt-6 text-4xl md:text-6xl font-bold font-serif leading-tight">
                 Buy! Sell! Connect!
-                <span className="block text-[#FFC000]">
+                <span className="block text-[rgb(255,140,0)]">
                   Grow Agriculture with Agrivus
                 </span>
               </h1>
-              <p className="mt-5 text-lg md:text-xl text-gray-700 max-w-xl">
+              <p className="mt-5 text-lg md:text-xl text-[rgb(186,167,143)]">
                 Where farmers, buyers, and agricultural businesses connect and
                 trade efficiently.
               </p>
@@ -90,7 +90,7 @@ const Home: React.FC = () => {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="w-full inline-flex items-center justify-center gap-2 border-primary-green text-primary-green bg-white hover:bg-green-50"
+                    className="w-full inline-flex items-center justify-center gap-2 border-primary-green text-[rgb(186,167,143)] bg-white hover:bg-green-50"
                   >
                     <svg
                       className="h-4 w-4"
