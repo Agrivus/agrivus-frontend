@@ -29,48 +29,46 @@ const Home: React.FC = () => {
       >
         <div className="container mx-auto text-center animate-fade-up">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 font-serif">
-            From Farm to Global Market,{" "}
-            <span className="text-accent-gold">Seamlessly</span>
+            Buy! Sell! Connect! Grow Agriculture with{" "}
+            <span className="text-accent-gold">Agrivus</span>
           </h1>
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            Connect with buyers, access premium markets, and grow your
-            agricultural business with Africa's most comprehensive digital
-            platform. Real-time pricing, secure transactions, and export
-            opportunities—all in one place.
+            Where farmers, buyers, and agricultural businesses connect and trade
+            efficiently.
           </p>
           <div className="flex flex-col gap-4 items-center">
             <div className="flex flex-wrap gap-4 justify-center">
               <Link to="/register?role=farmer" className="w-48">
                 <Button variant="primary" size="lg" className="w-full">
-                  Join As Farmer
+                  Sell Produce
                 </Button>
               </Link>
-              <Link to="/register?role=buyer" className="w-48">
+              <Link to="/marketplace" className="w-48">
                 <Button
                   variant="outline"
                   size="lg"
                   className="w-full bg-accent-gold text-white hover:bg-yellow-500"
                 >
-                  Join As Buyer
+                  Buy Produce
                 </Button>
               </Link>
-              <Link to="/register?role=transporter" className="w-48">
+              <Link to="/transport-offers" className="w-48">
                 <Button
                   variant="outline"
                   size="lg"
                   className="w-full bg-white text-primary-green hover:bg-gray-100"
                 >
-                  Join As Transporter
+                  Find Agricultural Services
                 </Button>
               </Link>
             </div>
-            <Link to="/marketplace">
+            <Link to="/register">
               <Button
                 variant="outline"
                 size="lg"
                 className="bg-accent-gold text-yellow-500 hover:bg-yellow-500"
               >
-                Browse Marketplace
+                Join Agrivus Network
               </Button>
             </Link>
           </div>
@@ -81,7 +79,7 @@ const Home: React.FC = () => {
       <section className="py-20 bg-light-green">
         <div className="container mx-auto px-4 md:px-16 lg:px-32">
           <div className="section-title">
-            <h2>Why Choose Agrivus?</h2>
+            <h2>What You Can Do on Agrivus</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
