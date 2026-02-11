@@ -32,7 +32,7 @@ const Home: React.FC = () => {
             <div>
               <h1 className="mt-6 text-4xl md:text-6xl font-bold font-serif leading-tight">
                 Buy! Sell! Connect!
-                <span className="block text-primary-green">
+                <span className="block text-[#FFC000]">
                   Grow Agriculture with Agrivus
                 </span>
               </h1>
