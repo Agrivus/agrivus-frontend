@@ -27,50 +27,172 @@ const Home: React.FC = () => {
           backgroundPosition: "center",
         }}
       >
-        <div className="container mx-auto text-center animate-fade-up">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 font-serif">
-            Buy! Sell! Connect! Grow Agriculture with{" "}
-            <span className="text-accent-gold">Agrivus</span>
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            Where farmers, buyers, and agricultural businesses connect and trade
-            efficiently.
-          </p>
-          <div className="flex flex-col gap-4 items-center">
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/register?role=farmer" className="w-48">
-                <Button variant="primary" size="lg" className="w-full">
-                  Sell Produce
-                </Button>
-              </Link>
-              <Link to="/marketplace" className="w-48">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full bg-accent-gold text-white hover:bg-yellow-500"
-                >
-                  Buy Produce
-                </Button>
-              </Link>
-              <Link to="/transport-offers" className="w-48">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full bg-white text-primary-green hover:bg-gray-100"
-                >
-                  Find Agricultural Services
-                </Button>
-              </Link>
-            </div>
-            <Link to="/register">
-              <Button
-                variant="outline"
-                size="lg"
-                className="bg-accent-gold text-yellow-500 hover:bg-yellow-500"
-              >
+        <div className="container mx-auto animate-fade-up">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="mt-6 text-4xl md:text-6xl font-bold font-serif leading-tight">
+                Buy! Sell! Connect!
+                <span className="block text-primary-green">
+                  Grow Agriculture with Agrivus
+                </span>
+              </h1>
+              <p className="mt-5 text-lg md:text-xl text-gray-700 max-w-xl">
+                Where farmers, buyers, and agricultural businesses connect and
+                trade efficiently.
+              </p>
+
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
+                <Link to="/register?role=farmer" className="w-full">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-primary-green text-white hover:bg-green-800"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 21v-6m0 0c-3 0-6-2-6-5 3 0 6-2 6-5 0 3 3 5 6 5 0 3-3 5-6 5zm0 0c3 0 6 2 6 5"
+                      />
+                    </svg>
+                    Sell Produce
+                  </Button>
+                </Link>
+                <Link to="/marketplace" className="w-full">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-accent-gold text-white hover:bg-yellow-600"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.2 6h12.4M7 13l1.8-8M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"
+                      />
+                    </svg>
+                    Buy Produce
+                  </Button>
+                </Link>
+                <Link to="/transport-offers" className="w-full">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full inline-flex items-center justify-center gap-2 border-primary-green text-primary-green bg-white hover:bg-green-50"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14.7 6.3l3 3m-7.4 7.4l-3-3m2.1-2.1l7.4-7.4a2 2 0 012.8 0l2.1 2.1a2 2 0 010 2.8l-7.4 7.4a2 2 0 01-2.8 0l-2.1-2.1a2 2 0 010-2.8z"
+                      />
+                    </svg>
+                    Find Agricultural Services
+                  </Button>
+                </Link>
+                <Link to="/register" className="w-full">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-green-100 text-primary-green border-primary-green/30 hover:bg-green-200"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Join Agrivus Network
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="mt-6 flex items-center gap-2 text-sm text-gray-600">
+                <span className="h-2 w-2 rounded-full bg-primary-green" />
+                Find Agricultural Services
+                <span className="text-gray-400">&bull;</span>
                 Join Agrivus Network
-              </Button>
-            </Link>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="relative rounded-2xl bg-white p-3 shadow-2xl">
+                <img
+                  src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80"
+                  alt="Smart farming"
+                  className="rounded-xl w-full h-auto object-cover"
+                />
+              </div>
+
+              <div className="absolute -top-6 right-6 bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-green-100 text-primary-green flex items-center justify-center">
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 19h16M4 15l4-4 4 4 8-8"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-lg font-bold">$2M+</div>
+                  <div className="text-xs text-gray-500">Trade Volume</div>
+                </div>
+              </div>
+
+              <div className="absolute -bottom-6 left-6 bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-green-100 text-primary-green flex items-center justify-center">
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-lg font-bold">10,000+</div>
+                  <div className="text-xs text-gray-500">Active Users</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
