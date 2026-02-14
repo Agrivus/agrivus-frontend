@@ -115,7 +115,7 @@ const CreateOrder: React.FC = () => {
       const response = await ordersService.createOrder(orderData);
 
       if (response.success) {
-        const orderId = response.data?.orderId || response.data?.id;
+        const orderId = response.data?.id;
         
         // If platform transport, show transporter selection modal
         if (formData.transportOption === "platform" && orderId) {

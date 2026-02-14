@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { safeDisplayText } from "../utils/textUtils";
-import { getErrorMessage } from "../utils/errorHandler";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import LoadingSpinner from "../components/common/LoadingSpinner";
