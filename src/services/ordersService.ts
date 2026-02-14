@@ -15,7 +15,10 @@ export const ordersService = {
     notes?: string;
     usesTransport?: boolean;
   }) => {
-    const response = await api.post<ApiResponse<Order>>("/orders", data);
+    const response = await api.post<ApiResponse<{ order: Order }>>(
+      "/orders",
+      data,
+    );
     return response.data;
   },
 
