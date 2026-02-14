@@ -19,7 +19,7 @@ const Home: React.FC = () => {
     <div>
       {/* Hero Section */}
       <section
-        className="relative bg-primary-green text-white py-32 px-4"
+        className="relative bg-primary-green text-white py-32"
         style={{
           backgroundImage:
             "linear-gradient(rgba(26, 92, 42, 0.9), rgba(26, 92, 42, 0.9)), url(https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80)",
@@ -27,7 +27,7 @@ const Home: React.FC = () => {
           backgroundPosition: "center",
         }}
       >
-        <div className="container mx-auto animate-fade-up">
+        <div className="container mx-auto animate-fade-up px-4 md:px-16 lg:px-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="mt-6 text-4xl md:text-6xl font-bold font-serif leading-tight">
@@ -36,7 +36,7 @@ const Home: React.FC = () => {
                   Grow Agriculture with Agrivus
                 </span>
               </h1>
-              <p className="mt-5 text-lg md:text-xl text-[rgb(186,167,143)]">
+              <p className="mt-5 text-lg md:text-xl text-[rgb(242, 237, 231)]">
                 Where farmers, buyers, and agricultural businesses connect and
                 trade efficiently.
               </p>
@@ -132,10 +132,10 @@ const Home: React.FC = () => {
                 </Link>
               </div>
 
-              <div className="mt-6 flex items-center gap-2 text-sm text-gray-600">
+              <div className="mt-6 flex items-center gap-2 text-sm text-white">
                 <span className="h-2 w-2 rounded-full bg-primary-green" />
                 Find Agricultural Services
-                <span className="text-gray-400">&bull;</span>
+                <span className="text-white">&bull;</span>
                 Join Agrivus Network
               </div>
             </div>
