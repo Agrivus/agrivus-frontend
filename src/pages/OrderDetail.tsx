@@ -8,7 +8,6 @@ import Card from "../components/common/Card";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { ordersService } from "../services/ordersService";
 import chatService from "../services/chatService";
-import type { TransporterMatch } from "../types";
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,16 +18,6 @@ const OrderDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-
-  // Transporter matching state
-  const [transporterMatches, setTransporterMatches] = useState<
-    TransporterMatch[]
-  >([]);
-  const [matchingLoading, setMatchingLoading] = useState(false);
-  const [selectedTransporter, setSelectedTransporter] = useState<string | null>(
-    null,
-  );
-  const [showTransporterModal, setShowTransporterModal] = useState(false);
 
   useEffect(() => {
     fetchOrderDetails();
@@ -45,57 +34,6 @@ const OrderDetail: React.FC = () => {
       setError(err.message || "Failed to load order details");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleMatchTransporter = async () => {
-    try {
-      setMatchingLoading(true);
-      const response = await ordersService.matchTransporter(id!);
-      if (response.success && response.data) {
-        setTransporterMatches(response.data.matches || []);
-        setShowTransporterModal(true);
-      }
-    } catch (err: any) {
-      alert(getErrorMessage(err, "Failed to find transporters"));
-    } finally {
-      setMatchingLoading(false);
-    }
-  };
-
-  const handleAssignTransporter = async () => {
-    if (!selectedTransporter) {
-      alert("Please select a transporter");
-      return;
-    }
-
-    const selected = transporterMatches.find(
-      (t) => t.transporterId === selectedTransporter,
-    );
-    if (!selected) return;
-
-    // Calculate estimated cost based on distance (simplified)
-    const estimatedCost = 15; // Base cost - in production this would be calculated
-
-    try {
-      setActionLoading(true);
-      const response = await ordersService.assignTransporter(id!, {
-        primaryTransporterId: selectedTransporter,
-        transportCost: estimatedCost.toString(),
-        pickupLocation: order.listing?.location,
-      });
-
-      if (response.success) {
-        alert("✅ Transporter assigned successfully!");
-        setShowTransporterModal(false);
-        setSelectedTransporter(null);
-        setTransporterMatches([]);
-        fetchOrderDetails();
-      }
-    } catch (err: any) {
-      alert(getErrorMessage(err, "Failed to assign transporter"));
-    } finally {
-      setActionLoading(false);
     }
   };
 
@@ -662,25 +600,21 @@ const OrderDetail: React.FC = () => {
                             ⏳ Waiting for Transporter Response
                           </p>
                           <p className="text-xs text-blue-700 mt-1">
-                            Your offer has been sent to a transporter. They will
+                            The buyer has sent offers to transporters. They will
                             accept or decline within 24 hours.
                           </p>
                         </div>
                       ) : (
                         <>
-                          <Button
-                            variant="primary"
-                            className="w-full"
-                            onClick={handleMatchTransporter}
-                            isLoading={matchingLoading}
-                            disabled={matchingLoading}
-                          >
-                            🔍 Find Transporters
-                          </Button>
-                          <p className="text-xs text-gray-600 mt-2">
-                            Match with available transporters using AI-powered
-                            recommendations.
-                          </p>
+                          <div className="bg-purple-50 border border-purple-200 rounded p-3 mb-4">
+                            <p className="text-sm text-purple-800 font-semibold">
+                              🔄 Buyer is Selecting Transporters
+                            </p>
+                            <p className="text-xs text-purple-700 mt-1">
+                              The buyer will choose transporters using AI matching.
+                              You'll be notified once a transporter accepts.
+                            </p>
+                          </div>
                         </>
                       )}
                     </>
@@ -884,150 +818,6 @@ const OrderDetail: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Transporter Selection Modal */}
-      {showTransporterModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-800">
-                  🚚 Select a Transporter
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowTransporterModal(false);
-                    setSelectedTransporter(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">
-                AI-matched transporters based on route and capacity
-              </p>
-            </div>
-
-            <div className="p-6 overflow-y-auto max-h-[50vh]">
-              {transporterMatches.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-600">
-                    No transporters available for this route.
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Try again later or contact support.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {transporterMatches.map((match) => (
-                    <label
-                      key={match.transporterId}
-                      className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                        selectedTransporter === match.transporterId
-                          ? "border-primary-green bg-green-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="transporter"
-                        value={match.transporterId}
-                        checked={selectedTransporter === match.transporterId}
-                        onChange={() =>
-                          setSelectedTransporter(match.transporterId)
-                        }
-                        className="sr-only"
-                      />
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900">
-                              {match.transporter.fullName}
-                            </span>
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
-                              {(match.matchScore * 100).toFixed(0)}% match
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            📍 {match.transporter.baseLocation}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            🚛 {match.transporter.vehicleType} • Capacity:{" "}
-                            {match.transporter.vehicleCapacity}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            ⭐ Rating: {match.transporter.rating || "New"} •{" "}
-                            {match.transporter.completedDeliveries || 0}{" "}
-                            deliveries
-                          </p>
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {match.matchReasons.highPlatformActivity && (
-                              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">
-                                Active
-                              </span>
-                            )}
-                            {match.matchReasons.serviceAreaMatch && (
-                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">
-                                Area Match
-                              </span>
-                            )}
-                            {match.matchReasons.goodRating && (
-                              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded">
-                                Top Rated
-                              </span>
-                            )}
-                            {match.matchReasons.experienced && (
-                              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">
-                                Experienced
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">
-                            On-time: {match.transporter.onTimeDeliveryRate}
-                          </p>
-                        </div>
-                      </div>
-                      {selectedTransporter === match.transporterId && (
-                        <div className="mt-2 pt-2 border-t">
-                          <span className="text-primary-green text-sm font-semibold">
-                            ✓ Selected
-                          </span>
-                        </div>
-                      )}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 border-t bg-gray-50 flex gap-4">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  setShowTransporterModal(false);
-                  setSelectedTransporter(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                className="flex-1"
-                onClick={handleAssignTransporter}
-                disabled={!selectedTransporter || actionLoading}
-                isLoading={actionLoading}
-              >
-                Assign Transporter
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

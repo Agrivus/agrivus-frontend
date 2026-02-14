@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Input, Card, LoadingSpinner } from "../components/common";
+import { BuyerTransporterSelectionModal } from "../components/orders/BuyerTransporterSelectionModal";
 import { listingsService } from "../services/listingsService";
 import { ordersService } from "../services/ordersService";
 import type { Listing } from "../types";
@@ -20,6 +21,10 @@ const CreateOrder: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Transporter selection modal state
+  const [showTransporterModal, setShowTransporterModal] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     quantity: "",
@@ -110,7 +115,16 @@ const CreateOrder: React.FC = () => {
       const response = await ordersService.createOrder(orderData);
 
       if (response.success) {
-        navigate("/orders");
+        const orderId = response.data?.orderId || response.data?.id;
+        
+        // If platform transport, show transporter selection modal
+        if (formData.transportOption === "platform" && orderId) {
+          setCreatedOrderId(orderId);
+          setShowTransporterModal(true);
+        } else {
+          // For self-pickup, go directly to orders page
+          navigate("/orders");
+        }
       }
     } catch (err: any) {
       setError(getOrderErrorMessage(err));
@@ -348,7 +362,11 @@ const CreateOrder: React.FC = () => {
                   <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
                     <li>Your order will be created with "pending" status</li>
                     <li>Payment will be held in secure escrow</li>
-                    <li>Farmer will assign a transporter using AI matching</li>
+                    {formData.transportOption === "platform" ? (
+                      <li>You'll select transporters using AI matching</li>
+                    ) : (
+                      <li>Arrange transport to collect from farm</li>
+                    )}
                     <li>You'll receive delivery notifications</li>
                     <li>Confirm delivery to release payment</li>
                   </ol>
@@ -443,6 +461,23 @@ const CreateOrder: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Transporter Selection Modal */}
+      {showTransporterModal && createdOrderId && (
+        <BuyerTransporterSelectionModal
+          orderId={createdOrderId}
+          pickupLocation={listing?.location || ""}
+          isOpen={showTransporterModal}
+          onSuccess={() => {
+            setShowTransporterModal(false);
+            navigate("/orders");
+          }}
+          onCancel={() => {
+            setShowTransporterModal(false);
+            navigate("/orders");
+          }}
+        />
+      )}
     </div>
   );
 };
