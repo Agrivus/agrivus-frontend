@@ -78,7 +78,7 @@ export const BuyerTransporterSelectionModal: React.FC<
       const feeData = response.data as
         | (typeof response.data & { minimumFee?: number })
         | undefined;
-      if (feeData?.minimumFee) {
+      if (feeData?.minimumFee && !isNaN(feeData.minimumFee)) {
         setMinimumFee(feeData.minimumFee);
         setProposedFee(feeData.minimumFee.toString());
       }
@@ -165,7 +165,7 @@ export const BuyerTransporterSelectionModal: React.FC<
           <div>
             <p className="text-gray-600">Score</p>
             <p className="font-semibold text-lg">
-              {t.transporter.platformScore}
+              {t.transporter.platformScore || 0}
             </p>
           </div>
           <div>
@@ -173,19 +173,21 @@ export const BuyerTransporterSelectionModal: React.FC<
             <div className="flex items-center gap-1">
               <span className="text-lg">⭐</span>
               <p className="font-semibold">
-                {typeof t.transporter.rating === "string"
-                  ? parseFloat(t.transporter.rating).toFixed(1)
-                  : t.transporter.rating.toFixed(1)}
+                {t.transporter.rating
+                  ? (typeof t.transporter.rating === "string"
+                      ? parseFloat(t.transporter.rating).toFixed(1)
+                      : t.transporter.rating.toFixed(1))
+                  : "N/A"}
               </p>
             </div>
           </div>
           <div>
             <p className="text-gray-600">Capacity</p>
-            <p className="font-semibold">{t.transporter.vehicleCapacity}</p>
+            <p className="font-semibold">{t.transporter.vehicleCapacity || "N/A"}</p>
           </div>
           <div>
             <p className="text-gray-600">Deliveries</p>
-            <p className="font-semibold">{t.transporter.completedDeliveries}</p>
+            <p className="font-semibold">{t.transporter.completedDeliveries || 0}</p>
           </div>
         </div>
 

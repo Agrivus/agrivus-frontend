@@ -67,9 +67,12 @@ const CreateOrder: React.FC = () => {
   };
 
   const calculateTotal = () => {
-    if (!listing || !formData.quantity) return 0;
+    if (!listing || !formData.quantity) return "0.00";
     const quantity = parseFloat(formData.quantity);
     const pricePerUnit = parseFloat(listing.pricePerUnit);
+    
+    if (isNaN(quantity) || isNaN(pricePerUnit)) return "0.00";
+    
     return (quantity * pricePerUnit).toFixed(2);
   };
 
