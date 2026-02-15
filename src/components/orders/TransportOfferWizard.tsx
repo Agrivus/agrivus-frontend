@@ -116,7 +116,7 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
     }
 
     if (feeValue < minimumFee) {
-      setFeeError(`Fee must be at least KES ${minimumFee.toFixed(2)}`);
+      setFeeError(`Fee must be at least $${minimumFee.toFixed(2)}`);
       return;
     }
 
@@ -492,7 +492,7 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
               <div className="p-4 bg-gray-100 rounded-lg space-y-2">
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-semibold text-gray-700">
-                    Proposed Transport Fee (KES)
+                    Proposed Transport Fee (USD)
                   </label>
                   <input
                     type="number"
@@ -500,10 +500,10 @@ export const TransportOfferWizard: React.FC<TransportOfferWizardProps> = ({
                     value={proposedFee}
                     onChange={(e) => setProposedFee(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder={`Minimum KES ${minimumFee.toFixed(2)}`}
+                    placeholder={`Minimum $${minimumFee.toFixed(2)}`}
                   />
                   <p className="text-xs text-gray-600">
-                    Minimum fee: KES {minimumFee.toFixed(2)} (based on distance
+                    Minimum fee: ${minimumFee.toFixed(2)} (based on distance
                     + weight)
                   </p>
                   {feeError && (

@@ -78,7 +78,7 @@ export const TransportOffers: React.FC<TransportOffersProps> = ({
   };
 
   const handleCounter = async (offerId: string) => {
-    const input = window.prompt("Enter your counter fee (KES):");
+    const input = window.prompt("Enter your counter fee (USD):");
     if (!input) return;
 
     const counterFee = parseFloat(input);
@@ -300,7 +300,7 @@ export const TransportOffers: React.FC<TransportOffersProps> = ({
 
                   <div className="text-right">
                     <p className="text-2xl font-bold text-gray-900">
-                      KES {parseFloat(offer.transportCost).toLocaleString()}
+                      ${parseFloat(offer.transportCost).toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-500">Transport Cost</p>
                   </div>
@@ -475,7 +475,7 @@ export const TransportOffers: React.FC<TransportOffersProps> = ({
                       {offer.status === "accepted"
                         ? "✅ Offer Accepted"
                         : offer.status === "countered"
-                          ? `💬 Countered: KES ${offer.counterFee || offer.transportCost}`
+                          ? `💬 Countered: $${offer.counterFee || offer.transportCost}`
                           : "❌ Offer Declined"}
                     </span>
                     {offer.respondedAt && (
