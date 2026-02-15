@@ -122,6 +122,11 @@ const CreateOrder: React.FC = () => {
         
         // If platform transport, show transporter selection modal
         if (formData.transportOption === "platform" && orderId) {
+          // Validate that we have a pickup location
+          if (!listing?.location) {
+            setError("Cannot assign transporters: listing location is missing");
+            return;
+          }
           setCreatedOrderId(orderId);
           setShowTransporterModal(true);
         } else {
@@ -466,10 +471,10 @@ const CreateOrder: React.FC = () => {
       </div>
 
       {/* Transporter Selection Modal */}
-      {showTransporterModal && createdOrderId && (
+      {showTransporterModal && createdOrderId && listing?.location && (
         <BuyerTransporterSelectionModal
           orderId={createdOrderId}
-          pickupLocation={listing?.location || ""}
+          pickupLocation={listing.location}
           isOpen={showTransporterModal}
           onSuccess={() => {
             setShowTransporterModal(false);
