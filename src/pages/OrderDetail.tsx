@@ -98,6 +98,25 @@ const OrderDetail: React.FC = () => {
     }
   };
 
+  const handleAcceptCounterOffer = async (offerId: string) => {
+    if (!window.confirm("Accept the transporter's counter offer? This will assign them to the order.")) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const response = await ordersService.acceptTransportCounter(offerId);
+      if (response.success) {
+        alert("✅ Counter offer accepted! Transporter has been assigned.");
+        fetchOrderDetails();
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to accept counter offer");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleMarkDelivered = async () => {
     const isPickup = !order?.order?.usesTransport;
     const message = isPickup
@@ -342,45 +361,126 @@ const OrderDetail: React.FC = () => {
                   </span>
                 </div>
                 {order.transporter ? (
-                  <>
-                    <div>
-                      <span className="text-gray-600">Transporter:</span>
-                      <span className="ml-2 font-semibold">
-                        {order.transporter.fullName}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Phone:</span>
-                      <span className="ml-2 font-semibold">
-                        {order.transporter.phone}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Vehicle:</span>
-                      <span className="ml-2 font-semibold">
-                        {order.transporter.vehicleType}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleMessageUser(order.transporter.id)}
-                      className="text-blue-600 hover:text-blue-700 flex items-center gap-2 mt-2"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                  isTransporter ? (
+                    /* Transporter sees farmer details (pickup point) */
+                    <>
+                      <div>
+                        <span className="text-gray-600">Pickup From:</span>
+                        <span className="ml-2 font-semibold">
+                          {order.farmer.fullName}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Phone:</span>
+                        <span className="ml-2 font-semibold">
+                          {order.farmer.phone}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Pickup Location:</span>
+                        <span className="ml-2 font-semibold">
+                          {order.listing?.location || "Farm location"}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleMessageUser(order.order.farmerId)}
+                        className="text-blue-600 hover:text-blue-700 flex items-center gap-2 mt-2"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        />
-                      </svg>
-                      Message Transporter
-                    </button>
-                  </>
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                          />
+                        </svg>
+                        Message Farmer
+                      </button>
+                    </>
+                  ) : (
+                    /* Buyer and Farmer see transporter details */
+                    <>
+                      <div>
+                        <span className="text-gray-600">Transporter:</span>
+                        <span className="ml-2 font-semibold">
+                          {order.transporter.fullName}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Phone:</span>
+                        <span className="ml-2 font-semibold">
+                          {order.transporter.phone}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Vehicle:</span>
+                        <span className="ml-2 font-semibold">
+                          {order.transporter.vehicleType}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleMessageUser(order.transporter.id)}
+                        className="text-blue-600 hover:text-blue-700 flex items-center gap-2 mt-2"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                          />
+                        </svg>
+                        Message Transporter
+                      </button>
+                    </>
+                  )
+                ) : order.transportOffer?.status === "countered" && isBuyer ? (
+                  <div className="p-4 bg-orange-50 border-2 border-orange-300 rounded-lg">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="font-bold text-orange-800 mb-1">💰 Counter Offer Received</h4>
+                        <p className="text-sm text-orange-700">
+                          {order.offerTransporter?.fullName || "Transporter"} has proposed a different price
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="bg-white p-3 rounded">
+                        <p className="text-xs text-gray-500 uppercase font-semibold">Your Offer</p>
+                        <p className="text-lg font-bold text-gray-700">
+                          ${parseFloat(order.transportOffer.transportCost).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-2 border-orange-400">
+                        <p className="text-xs text-orange-600 uppercase font-semibold">Counter Offer</p>
+                        <p className="text-lg font-bold text-orange-700">
+                          ${parseFloat(order.transportOffer.counterFee).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="primary"
+                      className="w-full bg-orange-600 hover:bg-orange-700"
+                      onClick={() => handleAcceptCounterOffer(order.transportOffer.id)}
+                      isLoading={actionLoading}
+                      disabled={actionLoading}
+                    >
+                      ✅ Accept Counter Offer
+                    </Button>
+                    <p className="text-xs text-gray-600 mt-2 text-center">
+                      Contact: {order.offerTransporter?.phone || "N/A"}
+                    </p>
+                  </div>
                 ) : (
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded">
                     <p className="text-sm text-blue-800">
@@ -404,59 +504,156 @@ const OrderDetail: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Contact Info */}
-            <Card className="p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">
-                {isBuyer ? "Seller Information" : "Buyer Information"}
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-gray-600 block text-sm">Name</span>
-                  <span className="font-semibold">
-                    {isBuyer ? order.farmer.fullName : order.buyer.fullName}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-600 block text-sm">Phone</span>
-                  <span className="font-semibold">
-                    {isBuyer ? order.farmer.phone : order.buyer.phone}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-600 block text-sm">Rating</span>
-                  <span className="font-semibold">
-                    ⭐{" "}
-                    {isBuyer
-                      ? order.farmer.platformScore
-                      : order.buyer.platformScore}
-                    /100
-                  </span>
-                </div>
-                <button
-                  onClick={() =>
-                    handleMessageUser(
-                      isBuyer ? order.order.farmerId : order.order.buyerId,
-                    )
-                  }
-                  className="w-full mt-2 text-blue-600 hover:text-blue-700 border border-blue-600 hover:border-blue-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+            {/* Contact Info - For Transporters, show both Buyer and Farmer */}
+            {isTransporter ? (
+              <>
+                {/* Buyer Contact Card */}
+                <Card className="p-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4">
+                    Buyer Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-gray-600 block text-sm">Name</span>
+                      <span className="font-semibold">
+                        {order.buyer.fullName}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 block text-sm">Phone</span>
+                      <span className="font-semibold">
+                        {order.buyer.phone}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 block text-sm">Rating</span>
+                      <span className="font-semibold">
+                        ⭐ {order.buyer.platformScore}/100
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleMessageUser(order.order.buyerId)}
+                      className="w-full mt-2 text-blue-600 hover:text-blue-700 border border-blue-600 hover:border-blue-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                      </svg>
+                      Message Buyer
+                    </button>
+                  </div>
+                </Card>
+
+                {/* Farmer Contact Card */}
+                <Card className="p-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4">
+                    Farmer Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-gray-600 block text-sm">Name</span>
+                      <span className="font-semibold">
+                        {order.farmer.fullName}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 block text-sm">Phone</span>
+                      <span className="font-semibold">
+                        {order.farmer.phone}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 block text-sm">Rating</span>
+                      <span className="font-semibold">
+                        ⭐ {order.farmer.platformScore}/100
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleMessageUser(order.order.farmerId)}
+                      className="w-full mt-2 text-blue-600 hover:text-blue-700 border border-blue-600 hover:border-blue-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 12h.01M12 12h.01M16 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                      </svg>
+                      Message Farmer
+                    </button>
+                  </div>
+                </Card>
+              </>
+            ) : (
+              /* Contact Info for Buyers and Farmers */
+              <Card className="p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">
+                  {isBuyer ? "Seller Information" : "Buyer Information"}
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-gray-600 block text-sm">Name</span>
+                    <span className="font-semibold">
+                      {isBuyer ? order.farmer.fullName : order.buyer.fullName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 block text-sm">Phone</span>
+                    <span className="font-semibold">
+                      {isBuyer ? order.farmer.phone : order.buyer.phone}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 block text-sm">Rating</span>
+                    <span className="font-semibold">
+                      ⭐{" "}
+                      {isBuyer
+                        ? order.farmer.platformScore
+                        : order.buyer.platformScore}
+                      /100
+                    </span>
+                  </div>
+                  <button
+                    onClick={() =>
+                      handleMessageUser(
+                        isBuyer ? order.order.farmerId : order.order.buyerId,
+                      )
+                    }
+                    className="w-full mt-2 text-blue-600 hover:text-blue-700 border border-blue-600 hover:border-blue-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  Message {isBuyer ? "Farmer" : "Buyer"}
-                </button>
-              </div>
-            </Card>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    Message {isBuyer ? "Farmer" : "Buyer"}
+                  </button>
+                </div>
+              </Card>
+            )}
 
             {/* Price Summary */}
             <Card className="p-6">

@@ -87,7 +87,7 @@ const Notifications: React.FC = () => {
 
     // Navigate based on notification data
     if (notification.data) {
-      console.log("Notification data:", notification.data);
+      console.log("Notification clicked - Type:", notification.type, "Data:", notification.data);
 
       // Admin cash deposit verification - check for any payment with requiresAction
       if (notification.data.requiresAction && user?.role === "admin") {
@@ -96,8 +96,38 @@ const Notifications: React.FC = () => {
         return;
       }
 
-      // Order details
+      // Transport offer notifications - route based on user role and notification type
+      if (
+        notification.type === "transport_offer" ||
+        notification.type === "transport_offer_sent" ||
+        notification.type === "transport_offer_accepted" ||
+        notification.type === "transport_offer_declined" ||
+        notification.type === "transport_offer_countered" ||
+        notification.type === "transport_offer_counter_accepted" ||
+        notification.type === "transport_assigned"
+      ) {
+        // Buyers receiving counter offers should go to order detail to accept
+        if (notification.type === "transport_offer_countered" && user?.role === "buyer") {
+          navigate(`/orders/${notification.data.orderId}`);
+          return;
+        }
+        // Transporters go to transport offers page
+        if (user?.role === "transporter") {
+          navigate("/transport-offers");
+          return;
+        }
+        // Default to transport offers page
+        navigate("/transport-offers");
+        return;
+      }
+
+      // Order details - but only if not a transporter viewing transport-related order
       if (notification.data.orderId) {
+        // If user is a transporter and this has an offerId, go to transport offers
+        if (user?.role === "transporter" && notification.data.offerId) {
+          navigate("/transport-offers");
+          return;
+        }
         navigate(`/orders/${notification.data.orderId}`);
         return;
       }
