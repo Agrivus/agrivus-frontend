@@ -146,6 +146,63 @@ export const rejectCashDeposit = async (
   return response.data;
 };
 
+// ── Moderator-specific API calls ──────────────────────────────────────────────
+
+export const getModeratorDashboard = async () => {
+  const response = await api.get("/admin/moderator/dashboard");
+  return response.data;
+};
+
+export const getModeratorActivityLog = async (page = 1, limit = 20) => {
+  const response = await api.get("/admin/moderator/activity-log", {
+    params: { page, limit },
+  });
+  return response.data;
+};
+
+export const flagListing = async (
+  listingId: string,
+  action: "flag" | "unflag",
+  reason?: string
+) => {
+  const response = await api.post(`/admin/listings/${listingId}/flag`, {
+    action,
+    reason,
+  });
+  return response.data;
+};
+
+export const verifyUserProfile = async (
+  userId: string,
+  verified: boolean,
+  verificationNotes?: string
+) => {
+  const response = await api.post(`/admin/users/${userId}/verify-profile`, {
+    verified,
+    verificationNotes,
+  });
+  return response.data;
+};
+
+export const getDisputedOrders = async (page = 1, limit = 20) => {
+  const response = await api.get("/admin/orders/disputed", {
+    params: { page, limit },
+  });
+  return response.data;
+};
+
+export const resolveDispute = async (
+  orderId: string,
+  outcome: "favour_buyer" | "favour_farmer" | "split" | "escalate_to_admin",
+  resolutionNotes: string
+) => {
+  const response = await api.post(`/admin/orders/${orderId}/resolve-dispute`, {
+    outcome,
+    resolutionNotes,
+  });
+  return response.data;
+};
+
 export const adminService = {
   getAdminStats,
   getAllUsers,
@@ -162,4 +219,11 @@ export const adminService = {
   getPendingCashDeposits,
   approveCashDeposit,
   rejectCashDeposit,
+  // Moderator functions
+  getModeratorDashboard,
+  getModeratorActivityLog,
+  flagListing,
+  verifyUserProfile,
+  getDisputedOrders,
+  resolveDispute,
 };

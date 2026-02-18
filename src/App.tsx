@@ -1,3 +1,4 @@
+import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationsProvider } from "./contexts/NotificationsContext";
@@ -39,6 +40,9 @@ import AdminTransactions from "./pages/AdminTransactions";
 import AdminSecurity from "./pages/AdminSecurity";
 import AdminReports from "./pages/AdminReports";
 import AdminCashDeposits from "./pages/AdminCashDeposits";
+
+// Moderator page (lazy loaded)
+const ModeratorDashboard = React.lazy(() => import("./pages/ModeratorDashboard"));
 
 // NEW: AgriMall pages
 import AgriMallProducts from "./pages/AgriMallProducts";
@@ -246,7 +250,7 @@ function App() {
                 <Route
                   path="/admin/users"
                   element={
-                    <ProtectedRoute allowedRoles={["admin"]}>
+                    <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
                       <AdminUsers />
                     </ProtectedRoute>
                   }
@@ -254,7 +258,7 @@ function App() {
                 <Route
                   path="/admin/users/:userId"
                   element={
-                    <ProtectedRoute allowedRoles={["admin"]}>
+                    <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
                       <AdminUserDetail />
                     </ProtectedRoute>
                   }
@@ -262,7 +266,7 @@ function App() {
                 <Route
                   path="/admin/orders"
                   element={
-                    <ProtectedRoute allowedRoles={["admin"]}>
+                    <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
                       <AdminOrders />
                     </ProtectedRoute>
                   }
@@ -270,7 +274,7 @@ function App() {
                 <Route
                   path="/admin/transactions"
                   element={
-                    <ProtectedRoute allowedRoles={["admin"]}>
+                    <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
                       <AdminTransactions />
                     </ProtectedRoute>
                   }
@@ -296,6 +300,24 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={["admin"]}>
                       <AdminReports />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Moderator Routes */}
+                <Route
+                  path="/moderator"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
+                      <ModeratorDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/moderator/activity-log"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
+                      <ModeratorDashboard />
                     </ProtectedRoute>
                   }
                 />

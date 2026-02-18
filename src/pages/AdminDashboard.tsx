@@ -13,7 +13,7 @@ const AdminDashboard: React.FC = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (user?.role !== "admin") {
+    if (user?.role !== "admin" && user?.role !== "support_moderator") {
       navigate("/dashboard");
       return;
     }
@@ -88,7 +88,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  if (user?.role !== "admin") {
+  if (user?.role !== "admin" && user?.role !== "support_moderator") {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
