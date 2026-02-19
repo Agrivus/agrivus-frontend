@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import NotificationBell from "./NotificationBell";
 import chatService from "../../services/chatService";
-import logoImage from "../../assets/logo.png";
+import logoImage from "../../assets/logo.jpg";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

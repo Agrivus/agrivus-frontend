@@ -131,8 +131,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         ) {
           new window.Notification(notification.title, {
             body: notification.message,
-            icon: "/logo.png",
-            badge: "/logo.png",
+            icon: "/icon.png",
+            badge: "/smallicon.png",
           });
         }
       });

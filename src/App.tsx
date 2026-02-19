@@ -4,61 +4,60 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationsProvider } from "./contexts/NotificationsContext";
 import { ChatProvider } from "./contexts/ChatContext";
 import { Layout, ProtectedRoute } from "./components/common";
-import Home from "./pages/Home";
-import Marketplace from "./pages/Marketplace";
-import Chat from "./pages/Chat";
-import ListingDetail from "./pages/ListingDetail";
-import CreateListing from "./pages/CreateListing";
-import MyListings from "./pages/MyListings";
-import CreateOrder from "./pages/CreateOrder";
-import Orders from "./pages/Orders";
-import OrderDetail from "./pages/OrderDetail";
-import TransportOffers from "./pages/TransportOffers";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import NotFound from "./pages/NotFound";
-import Wallet from "./pages/Wallet";
-import Notifications from "./pages/Notifications";
-import PaymentHistory from "./pages/PaymentHistory";
-import Recommendations from "./pages/Recommendations";
 
-// NEW: Auction pages
-import Auctions from "./pages/Auctions";
-import AuctionDetail from "./pages/AuctionDetail";
-import CreateAuction from "./pages/CreateAuction";
-import MyBids from "./pages/MyBids";
-import AuctionCheckout from "./pages/AuctionCheckout";
-import AuctionWinner from "./pages/AuctionWinner";
-
-// Admin pages
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminUsers from "./pages/AdminUsers";
-import AdminUserDetail from "./pages/AdminUserDetail";
-import AdminOrders from "./pages/AdminOrders";
-import AdminTransactions from "./pages/AdminTransactions";
-import AdminSecurity from "./pages/AdminSecurity";
-import AdminReports from "./pages/AdminReports";
-import AdminCashDeposits from "./pages/AdminCashDeposits";
-
-// Moderator page (lazy loaded)
+const Home = React.lazy(() => import("./pages/Home"));
+const Marketplace = React.lazy(() => import("./pages/Marketplace"));
+const Chat = React.lazy(() => import("./pages/Chat"));
+const ListingDetail = React.lazy(() => import("./pages/ListingDetail"));
+const CreateListing = React.lazy(() => import("./pages/CreateListing"));
+const MyListings = React.lazy(() => import("./pages/MyListings"));
+const CreateOrder = React.lazy(() => import("./pages/CreateOrder"));
+const Orders = React.lazy(() => import("./pages/Orders"));
+const OrderDetail = React.lazy(() => import("./pages/OrderDetail"));
+const TransportOffers = React.lazy(() => import("./pages/TransportOffers"));
+const Login = React.lazy(() => import("./pages/Login"));
+const Register = React.lazy(() => import("./pages/Register"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+const Wallet = React.lazy(() => import("./pages/Wallet"));
+const Notifications = React.lazy(() => import("./pages/Notifications"));
+const PaymentHistory = React.lazy(() => import("./pages/PaymentHistory"));
+const Recommendations = React.lazy(() => import("./pages/Recommendations"));
+const Auctions = React.lazy(() => import("./pages/Auctions"));
+const AuctionDetail = React.lazy(() => import("./pages/AuctionDetail"));
+const CreateAuction = React.lazy(() => import("./pages/CreateAuction"));
+const MyBids = React.lazy(() => import("./pages/MyBids"));
+const AuctionCheckout = React.lazy(() => import("./pages/AuctionCheckout"));
+const AuctionWinner = React.lazy(() => import("./pages/AuctionWinner"));
+const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard"));
+const AdminUsers = React.lazy(() => import("./pages/AdminUsers"));
+const AdminUserDetail = React.lazy(() => import("./pages/AdminUserDetail"));
+const AdminOrders = React.lazy(() => import("./pages/AdminOrders"));
+const AdminTransactions = React.lazy(() => import("./pages/AdminTransactions"));
+const AdminSecurity = React.lazy(() => import("./pages/AdminSecurity"));
+const AdminReports = React.lazy(() => import("./pages/AdminReports"));
+const AdminCashDeposits = React.lazy(
+  () => import("./pages/AdminCashDeposits"),
+);
 const ModeratorDashboard = React.lazy(() => import("./pages/ModeratorDashboard"));
-
-// NEW: AgriMall pages
-import AgriMallProducts from "./pages/AgriMallProducts";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import AgriMallOrders from "./pages/AgriMallOrders";
-import AgriMallOrderDetail from "./pages/AgriMallOrderDetail";
-
-// Export Gateway pages
-import ExportGateway from "./pages/ExportGateway";
-import ExportAssessment from "./pages/ExportAssessment";
-import ExportAssessmentResults from "./pages/ExportAssessmentResults";
-import ExportMarketIntelligence from "./pages/ExportMarketIntelligence";
-import ExportDocuments from "./pages/ExportDocuments";
-import ExportLogistics from "./pages/ExportLogistics";
-import MockPayment from "./pages/MockPayment";
+const AgriMallProducts = React.lazy(() => import("./pages/AgriMallProducts"));
+const Cart = React.lazy(() => import("./pages/Cart"));
+const Checkout = React.lazy(() => import("./pages/Checkout"));
+const AgriMallOrders = React.lazy(() => import("./pages/AgriMallOrders"));
+const AgriMallOrderDetail = React.lazy(
+  () => import("./pages/AgriMallOrderDetail"),
+);
+const ExportGateway = React.lazy(() => import("./pages/ExportGateway"));
+const ExportAssessment = React.lazy(() => import("./pages/ExportAssessment"));
+const ExportAssessmentResults = React.lazy(
+  () => import("./pages/ExportAssessmentResults"),
+);
+const ExportMarketIntelligence = React.lazy(
+  () => import("./pages/ExportMarketIntelligence"),
+);
+const ExportDocuments = React.lazy(() => import("./pages/ExportDocuments"));
+const ExportLogistics = React.lazy(() => import("./pages/ExportLogistics"));
+const MockPayment = React.lazy(() => import("./pages/MockPayment"));
 
 function App() {
   return (
@@ -67,10 +66,17 @@ function App() {
         <ChatProvider>
           <Router>
             <Layout>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/listings/:id" element={<ListingDetail />} />
+              <React.Suspense
+                fallback={
+                  <div className="min-h-[50vh] flex items-center justify-center text-gray-600">
+                    Loading...
+                  </div>
+                }
+              >
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/listings/:id" element={<ListingDetail />} />
                 <Route
                   path="/listings/create"
                   element={
@@ -396,8 +402,9 @@ function App() {
                   }
                 />
 
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </React.Suspense>
             </Layout>
           </Router>
         </ChatProvider>

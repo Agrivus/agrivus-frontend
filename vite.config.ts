@@ -15,5 +15,36 @@ export default defineConfig({
   build: {
     // Ensure the output is configured correctly
     outDir: "dist",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) {
+            return;
+          }
+
+          if (id.includes("react-router-dom")) {
+            return "router-vendor";
+          }
+
+          if (
+            id.includes("axios") ||
+            id.includes("socket.io-client") ||
+            id.includes("engine.io-client")
+          ) {
+            return "api-vendor";
+          }
+
+          if (id.includes("react-lazy-load-image-component")) {
+            return "image-vendor";
+          }
+
+          if (id.includes("react") || id.includes("scheduler")) {
+            return "react-vendor";
+          }
+
+          return "vendor";
+        },
+      },
+    },
   },
 });

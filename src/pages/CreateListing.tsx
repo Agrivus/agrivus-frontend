@@ -81,7 +81,13 @@ const CreateListing: React.FC = () => {
       const response = await listingsService.createListing(listingData);
 
       if (response.success) {
-        navigate("/dashboard");
+        const createdListingId = response.data?.id;
+        if (createdListingId) {
+          navigate(`/listings/${createdListingId}`);
+          return;
+        }
+
+        setError("Listing created, but we could not open its detail page.");
       }
     } catch (err: any) {
       setError(

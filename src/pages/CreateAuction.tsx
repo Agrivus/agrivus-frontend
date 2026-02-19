@@ -80,7 +80,7 @@ const CreateAuction: React.FC = () => {
       setSubmitting(true);
       setError("");
 
-      await createAuction({
+      const response = await createAuction({
         listingId: formData.listingId,
         startingPrice: parseFloat(formData.startingPrice),
         reservePrice: formData.reservePrice
@@ -91,8 +91,13 @@ const CreateAuction: React.FC = () => {
         autoExtend: formData.autoExtend,
       });
 
-      alert("Auction created successfully! 🎉");
-      navigate("/auctions");
+      const createdAuctionId = response?.data?.id;
+      if (createdAuctionId) {
+        navigate(`/auctions/${createdAuctionId}`);
+        return;
+      }
+
+      setError("Auction created, but we could not open its detail page.");
     } catch (err: any) {
       setError(getAuctionErrorMessage(err));
     } finally {
