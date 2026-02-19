@@ -114,11 +114,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Handle different types of errors with user-friendly messages
       if (error.response) {
         const status = error.response.status;
-        const data = error.response.data;
+        const responseData = error.response.data;
+        const serverMessage =
+          typeof responseData === "string"
+            ? responseData
+            : responseData?.message ||
+              responseData?.error ||
+              responseData?.details?.message;
 
         if (status === 429) {
           // Rate limiting error
-          const retryAfter = data.retryAfter || 900; // Default to 15 minutes
+          const retryAfter = responseData?.retryAfter || 900; // Default to 15 minutes
           const minutes = Math.ceil(retryAfter / 60);
           throw new Error(
             `Too many registration attempts. Please wait ${minutes} minute${minutes > 1 ? "s" : ""} before trying again.`,
@@ -131,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } else if (status === 400) {
           // Validation error
           throw new Error(
-            data.message || "Please check your information and try again.",
+            serverMessage || "Please check your information and try again.",
           );
         } else if (status >= 500) {
           // Server error
@@ -141,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } else {
           // Other errors with backend message
           throw new Error(
-            data.message || "Registration failed. Please try again.",
+            serverMessage || "Registration failed. Please try again.",
           );
         }
       } else if (error.request) {

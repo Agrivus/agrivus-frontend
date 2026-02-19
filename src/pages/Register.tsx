@@ -93,7 +93,10 @@ const Register: React.FC = () => {
       await register(registerData);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(getErrorMessage(err, "Registration failed. Please try again."));
+      setError(
+        err?.message ||
+          getErrorMessage(err, "Registration failed. Please try again."),
+      );
     } finally {
       setLoading(false);
     }
