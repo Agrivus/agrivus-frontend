@@ -63,7 +63,7 @@ const AuctionCheckout: React.FC = () => {
       setSubmitting(true);
       setError("");
 
-      await chooseTransport(id!, {
+      const response = await chooseTransport(id!, {
         deliveryLocation: formData.deliveryLocation,
         notes: formData.notes,
         usesTransport,
@@ -71,8 +71,13 @@ const AuctionCheckout: React.FC = () => {
         // For now, we're just doing self-pickup
       });
 
-      alert("Order created successfully! 🎉");
-      navigate("/orders");
+      const createdOrderId = response?.data?.order?.id;
+      if (createdOrderId) {
+        navigate(`/orders/${createdOrderId}`);
+        return;
+      }
+
+      setError("Order created, but we could not open its detail page.");
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create order");
     } finally {

@@ -31,12 +31,13 @@ export default function AgriMallProducts() {
 
   const handleAddToCart = async (productId: string) => {
     try {
+      setError("");
       setAddingToCart(productId);
       await agrimallService.addToCart(productId, 1);
       setSuccessMessage("Added to cart!");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to add to cart");
+      setError(err.response?.data?.message || "Failed to add to cart");
     } finally {
       setAddingToCart(null);
     }

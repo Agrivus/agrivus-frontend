@@ -19,6 +19,8 @@ const ListingDetail: React.FC = () => {
   const [farmer, setFarmer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [newQuantity, setNewQuantity] = useState("");
   const [quantityReason, setQuantityReason] = useState("");
@@ -53,13 +55,15 @@ const ListingDetail: React.FC = () => {
   };
 
   const handleOrderClick = () => {
+    setActionError("");
+
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
     if (user?.role !== "buyer" && user?.role !== "farmer") {
-      alert("Only buyers and farmers can place orders");
+      setActionError("Only buyers and farmers can place orders");
       return;
     }
 
@@ -67,14 +71,17 @@ const ListingDetail: React.FC = () => {
   };
 
   const handleUpdateQuantity = async () => {
+    setActionError("");
+    setSuccessMessage("");
+
     if (!newQuantity || isNaN(parseFloat(newQuantity))) {
-      alert("Please enter a valid quantity");
+      setActionError("Please enter a valid quantity");
       return;
     }
 
     const qty = parseFloat(newQuantity);
     if (qty < 0) {
-      alert("Quantity cannot be negative");
+      setActionError("Quantity cannot be negative");
       return;
     }
 
@@ -87,28 +94,31 @@ const ListingDetail: React.FC = () => {
       );
 
       if (response.success && response.data) {
-        alert("Quantity updated successfully!");
+        setSuccessMessage("Quantity updated successfully!");
         setListing(response.data);
         setShowQuantityModal(false);
         setNewQuantity("");
         setQuantityReason("");
       }
     } catch (err: any) {
-      alert(err.message || "Failed to update quantity");
+      setActionError(err.message || "Failed to update quantity");
     } finally {
       setUpdatingQuantity(false);
     }
   };
 
   const handleUpdatePrice = async () => {
+    setActionError("");
+    setSuccessMessage("");
+
     if (!newPrice || isNaN(parseFloat(newPrice))) {
-      alert("Please enter a valid price");
+      setActionError("Please enter a valid price");
       return;
     }
 
     const price = parseFloat(newPrice);
     if (price <= 0) {
-      alert("Price must be greater than zero");
+      setActionError("Price must be greater than zero");
       return;
     }
 
@@ -119,14 +129,14 @@ const ListingDetail: React.FC = () => {
       });
 
       if (response.success && response.data) {
-        alert("Price updated successfully!");
+        setSuccessMessage("Price updated successfully!");
         setListing(response.data);
         setShowPriceModal(false);
         setNewPrice("");
         setPriceReason("");
       }
     } catch (err: any) {
-      alert(err.message || "Failed to update price");
+      setActionError(err.message || "Failed to update price");
     } finally {
       setUpdatingPrice(false);
     }
@@ -136,17 +146,19 @@ const ListingDetail: React.FC = () => {
     if (!images || images.length === 0) return;
 
     try {
+      setActionError("");
+      setSuccessMessage("");
       const response = await listingsService.updateListing(id!, {
         images,
       });
 
       if (response.success && response.data) {
-        alert("Listing image updated successfully!");
+        setSuccessMessage("Listing image updated successfully!");
         setListing(response.data);
         setShowImageModal(false);
       }
     } catch (err: any) {
-      alert(err.message || "Failed to update listing image");
+      setActionError(err.message || "Failed to update listing image");
     }
   };
 
@@ -160,6 +172,7 @@ const ListingDetail: React.FC = () => {
 
     setStartingChat(true);
     try {
+      setActionError("");
       const response = await chatService.getOrCreateConversation(
         listing.farmerId,
       );
@@ -168,7 +181,7 @@ const ListingDetail: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to start chat:", error);
-      alert("Failed to start conversation. Please try again.");
+      setActionError("Failed to start conversation. Please try again.");
     } finally {
       setStartingChat(false);
     }
@@ -217,6 +230,18 @@ const ListingDetail: React.FC = () => {
           <span className="mx-2">/</span>
           <span className="text-gray-900">{listing.cropType}</span>
         </div>
+
+        {actionError && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {actionError}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            ✓ {successMessage}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}

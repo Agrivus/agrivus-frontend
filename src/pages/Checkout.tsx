@@ -20,6 +20,7 @@ export default function Checkout() {
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [buyerNotes, setBuyerNotes] = useState("");
   const [showTransporters, setShowTransporters] = useState(false);
+  const [confirmingCheckout, setConfirmingCheckout] = useState(false);
 
   useEffect(() => {
     loadCheckoutSummary();
@@ -42,8 +43,10 @@ export default function Checkout() {
   };
 
   const loadTransporters = async () => {
+    setError("");
+
     if (!deliveryAddress.trim()) {
-      alert("Please enter delivery address first");
+      setError("Please enter delivery address first");
       return;
     }
 
@@ -53,36 +56,40 @@ export default function Checkout() {
       setTransporters(response.data.transporters || []);
       setShowTransporters(true);
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to load transporters");
+      setError(err.response?.data?.message || "Failed to load transporters");
     } finally {
       setLoading(false);
     }
   };
 
   const selectTransporter = (transporter: Transporter) => {
+    setConfirmingCheckout(false);
     setSelectedTransporter(transporter.transporterId);
     setDeliveryFee(parseFloat(transporter.estimatedDeliveryFee));
     setShowTransporters(false);
   };
 
   const handleCheckout = async () => {
+    setError("");
+
     if (!deliveryAddress.trim()) {
-      alert("Please enter delivery address");
+      setConfirmingCheckout(false);
+      setError("Please enter delivery address");
       return;
     }
 
     if (!summary) return;
 
-    const total = parseFloat(summary.pricing.subtotal) + deliveryFee;
-
     if (!summary.wallet.sufficient) {
-      alert(
+      setConfirmingCheckout(false);
+      setError(
         `Insufficient wallet balance. You need $${summary.wallet.shortfall} more.`,
       );
       return;
     }
 
-    if (!confirm(`Complete checkout for $${total.toFixed(2)}?`)) {
+    if (!confirmingCheckout) {
+      setConfirmingCheckout(true);
       return;
     }
 
@@ -96,11 +103,18 @@ export default function Checkout() {
         buyerNotes: buyerNotes.trim() || undefined,
       });
 
-      alert(`✓ Order(s) created successfully! ${response.message}`);
+      const createdOrders = response?.data?.orders || [];
+      const firstCreatedOrderId = createdOrders[0]?.orderId;
+      if (createdOrders.length === 1 && firstCreatedOrderId) {
+        navigate(`/agrimall/orders/${firstCreatedOrderId}`);
+        return;
+      }
+
       navigate("/agrimall/orders");
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to process checkout");
+      setError(err.response?.data?.message || "Failed to process checkout");
     } finally {
+      setConfirmingCheckout(false);
       setProcessing(false);
     }
   };
@@ -182,7 +196,10 @@ export default function Checkout() {
                 </label>
                 <textarea
                   value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmingCheckout(false);
+                    setDeliveryAddress(e.target.value);
+                  }}
                   placeholder="Enter your full delivery address including city and landmarks"
                   rows={3}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -195,7 +212,10 @@ export default function Checkout() {
                 </label>
                 <textarea
                   value={buyerNotes}
-                  onChange={(e) => setBuyerNotes(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmingCheckout(false);
+                    setBuyerNotes(e.target.value);
+                  }}
                   placeholder="Special instructions for the vendor..."
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -233,6 +253,7 @@ export default function Checkout() {
                   </div>
                   <button
                     onClick={() => {
+                      setConfirmingCheckout(false);
                       setSelectedTransporter(null);
                       setDeliveryFee(0);
                     }}
@@ -377,6 +398,32 @@ export default function Checkout() {
               </p>
             </div>
 
+            {confirmingCheckout && !processing && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-900 mb-3">
+                  Confirm checkout for <strong>${totalAmount.toFixed(2)}</strong>?
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleCheckout}
+                  >
+                    Confirm Order
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setConfirmingCheckout(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <Button
               variant="primary"
               size="lg"
@@ -394,6 +441,8 @@ export default function Checkout() {
                   <LoadingSpinner size="sm" />
                   <span className="ml-2">Processing...</span>
                 </>
+              ) : confirmingCheckout ? (
+                `Confirm Order - $${totalAmount.toFixed(2)}`
               ) : (
                 `Place Order - $${totalAmount.toFixed(2)}`
               )}

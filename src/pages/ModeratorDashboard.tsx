@@ -130,7 +130,7 @@ const ModeratorDashboard: React.FC = () => {
       );
       fetchStats();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Verification action failed");
+      setError(err.response?.data?.message || "Verification action failed");
     } finally {
       setVerifyingId(null);
     }

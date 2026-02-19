@@ -16,6 +16,8 @@ const OrderDetail: React.FC = () => {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -46,14 +48,16 @@ const OrderDetail: React.FC = () => {
     }
 
     try {
+      setActionError("");
+      setSuccessMessage("");
       setActionLoading(true);
       const response = await ordersService.confirmDelivery(id!);
       if (response.success) {
-        alert("Delivery confirmed! Payment released to seller.");
+        setSuccessMessage("Delivery confirmed! Payment released to seller.");
         fetchOrderDetails();
       }
     } catch (err: any) {
-      alert(err.message || "Failed to confirm delivery");
+      setActionError(err.message || "Failed to confirm delivery");
     } finally {
       setActionLoading(false);
     }
@@ -61,13 +65,14 @@ const OrderDetail: React.FC = () => {
 
   const handleMessageUser = async (userId: string) => {
     try {
+      setActionError("");
       const response = await chatService.getOrCreateConversation(userId);
       if (response.success) {
         navigate("/chat", { state: { conversationId: response.data.id } });
       }
     } catch (error) {
       console.error("Failed to start chat:", error);
-      alert("Failed to start conversation. Please try again.");
+      setActionError("Failed to start conversation. Please try again.");
     }
   };
 
@@ -82,17 +87,19 @@ const OrderDetail: React.FC = () => {
     }
 
     try {
+      setActionError("");
+      setSuccessMessage("");
       setActionLoading(true);
       const response = await ordersService.updateOrderStatus(id!, "in_transit");
       if (response.success) {
         const successMsg = isPickup
           ? "✅ Goods marked as ready for pickup!"
           : "✅ Order marked as in transit!";
-        alert(successMsg);
+        setSuccessMessage(successMsg);
         fetchOrderDetails();
       }
     } catch (err: any) {
-      alert(err.message || "Failed to update order status");
+      setActionError(err.message || "Failed to update order status");
     } finally {
       setActionLoading(false);
     }
@@ -104,14 +111,16 @@ const OrderDetail: React.FC = () => {
     }
 
     try {
+      setActionError("");
+      setSuccessMessage("");
       setActionLoading(true);
       const response = await ordersService.acceptTransportCounter(offerId);
       if (response.success) {
-        alert("✅ Counter offer accepted! Transporter has been assigned.");
+        setSuccessMessage("✅ Counter offer accepted! Transporter has been assigned.");
         fetchOrderDetails();
       }
     } catch (err: any) {
-      alert(err.message || "Failed to accept counter offer");
+      setActionError(err.message || "Failed to accept counter offer");
     } finally {
       setActionLoading(false);
     }
@@ -128,17 +137,19 @@ const OrderDetail: React.FC = () => {
     }
 
     try {
+      setActionError("");
+      setSuccessMessage("");
       setActionLoading(true);
       const response = await ordersService.updateOrderStatus(id!, "delivered");
       if (response.success) {
         const successMsg = isPickup
           ? "✅ Collection confirmed! Waiting for buyer to confirm receipt."
           : "✅ Order marked as delivered! Waiting for buyer confirmation.";
-        alert(successMsg);
+        setSuccessMessage(successMsg);
         fetchOrderDetails();
       }
     } catch (err: any) {
-      alert(err.message || "Failed to update order status");
+      setActionError(err.message || "Failed to update order status");
     } finally {
       setActionLoading(false);
     }
@@ -208,6 +219,18 @@ const OrderDetail: React.FC = () => {
             Order ID: {order.order.id.substring(0, 8)}...
           </p>
         </div>
+
+        {actionError && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {actionError}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            {successMessage}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}

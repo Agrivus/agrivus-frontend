@@ -33,6 +33,7 @@ export default function Cart() {
     newQuantity: number,
   ) => {
     try {
+      setError("");
       setUpdating(productId);
       const response = await agrimallService.updateCartItem(
         productId,
@@ -40,7 +41,7 @@ export default function Cart() {
       );
       setCart(response.cart);
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to update quantity");
+      setError(err.response?.data?.message || "Failed to update quantity");
     } finally {
       setUpdating(null);
     }
@@ -50,11 +51,12 @@ export default function Cart() {
     if (!confirm("Remove this item from cart?")) return;
 
     try {
+      setError("");
       setUpdating(productId);
       const response = await agrimallService.removeFromCart(productId);
       setCart(response.cart);
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to remove item");
+      setError(err.response?.data?.message || "Failed to remove item");
     } finally {
       setUpdating(null);
     }
@@ -64,11 +66,12 @@ export default function Cart() {
     if (!confirm("Clear entire cart?")) return;
 
     try {
+      setError("");
       setLoading(true);
       await agrimallService.clearCart();
       await loadCart();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to clear cart");
+      setError(err.response?.data?.message || "Failed to clear cart");
       setLoading(false);
     }
   };

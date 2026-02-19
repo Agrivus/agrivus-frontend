@@ -119,9 +119,14 @@ const CreateOrder: React.FC = () => {
 
       if (response.success) {
         const orderId = response.data?.order?.id;
+
+        if (!orderId) {
+          setError("Order created, but we could not open its detail page.");
+          return;
+        }
         
         // If platform transport, show transporter selection modal
-        if (formData.transportOption === "platform" && orderId) {
+        if (formData.transportOption === "platform") {
           // Validate that we have a pickup location
           if (!listing?.location) {
             setError("Cannot assign transporters: listing location is missing");
@@ -130,8 +135,8 @@ const CreateOrder: React.FC = () => {
           setCreatedOrderId(orderId);
           setShowTransporterModal(true);
         } else {
-          // For self-pickup, go directly to orders page
-          navigate("/orders");
+          // For self-pickup, go directly to order detail page
+          navigate(`/orders/${orderId}`);
         }
       }
     } catch (err: any) {
@@ -478,11 +483,11 @@ const CreateOrder: React.FC = () => {
           isOpen={showTransporterModal}
           onSuccess={() => {
             setShowTransporterModal(false);
-            navigate("/orders");
+            navigate(`/orders/${createdOrderId}`);
           }}
           onCancel={() => {
             setShowTransporterModal(false);
-            navigate("/orders");
+            navigate(`/orders/${createdOrderId}`);
           }}
         />
       )}

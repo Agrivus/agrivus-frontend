@@ -16,6 +16,7 @@ const AuctionDetail: React.FC = () => {
   const [bids, setBids] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [bidAmount, setBidAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
@@ -96,13 +97,13 @@ const AuctionDetail: React.FC = () => {
     try {
       setSubmitting(true);
       setError("");
+      setSuccessMessage("");
       await placeBid(id!, { bidAmount: bidAmountNum });
 
       // Refresh auction details
       await fetchAuctionDetails();
 
-      // Show success message
-      alert("Bid placed successfully! 🎉");
+      setSuccessMessage("Bid placed successfully! 🎉");
     } catch (err: any) {
       setError(getAuctionErrorMessage(err));
     } finally {
@@ -130,6 +131,12 @@ const AuctionDetail: React.FC = () => {
       >
         ← Back to Auctions
       </button>
+
+      {successMessage && (
+        <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+          ✓ {successMessage}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}

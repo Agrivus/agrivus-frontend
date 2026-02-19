@@ -10,6 +10,8 @@ export default function AgriMallOrderDetail() {
   const [orderData, setOrderData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [processing, setProcessing] = useState(false);
 
   // Vendor actions
@@ -36,19 +38,21 @@ export default function AgriMallOrderDetail() {
 
   const handleUpdateStatus = async () => {
     if (!newStatus) {
-      alert("Please select a status");
+      setActionError("Please select a status");
       return;
     }
 
     try {
+      setActionError("");
+      setSuccessMessage("");
       setProcessing(true);
       await agrimallService.updateOrderStatus(orderId!, newStatus, vendorNotes);
-      alert("✓ Order status updated");
+      setSuccessMessage("Order status updated");
       setNewStatus("");
       setVendorNotes("");
       await loadOrder();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to update status");
+      setActionError(err.response?.data?.message || "Failed to update status");
     } finally {
       setProcessing(false);
     }
@@ -60,12 +64,16 @@ export default function AgriMallOrderDetail() {
     }
 
     try {
+      setActionError("");
+      setSuccessMessage("");
       setProcessing(true);
       await agrimallService.confirmDelivery(orderId!, 5, "Great service!");
-      alert("✓ Delivery confirmed! Funds released to vendor.");
+      setSuccessMessage("Delivery confirmed! Funds released to vendor.");
       await loadOrder();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to confirm delivery");
+      setActionError(
+        err.response?.data?.message || "Failed to confirm delivery"
+      );
     } finally {
       setProcessing(false);
     }
@@ -76,12 +84,14 @@ export default function AgriMallOrderDetail() {
     if (!reason) return;
 
     try {
+      setActionError("");
+      setSuccessMessage("");
       setProcessing(true);
       await agrimallService.cancelOrder(orderId!, reason);
-      alert("✓ Order cancelled");
+      setSuccessMessage("Order cancelled");
       await loadOrder();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to cancel order");
+      setActionError(err.response?.data?.message || "Failed to cancel order");
     } finally {
       setProcessing(false);
     }
@@ -148,6 +158,18 @@ export default function AgriMallOrderDetail() {
           </Button>
         </Link>
       </div>
+
+      {actionError && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+          {actionError}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+          ✓ {successMessage}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Order Details */}

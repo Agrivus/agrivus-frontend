@@ -72,6 +72,11 @@ export const getErrorMessage = (err: any, fallbackMessage?: string): string => {
     return serverMessage;
   }
 
+  // If app code already produced a friendly error message, preserve it
+  if (err?.message && typeof err.message === "string") {
+    return err.message;
+  }
+
   // Default fallback
   return defaultFallback;
 };

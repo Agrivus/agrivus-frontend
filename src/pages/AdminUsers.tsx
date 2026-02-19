@@ -27,6 +27,10 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [newAdmin, setNewAdmin] = useState({
     email: "",
     phone: "",
@@ -80,17 +84,18 @@ export default function AdminUsers() {
     );
 
     if (currentStatus && !reason) {
-      alert("Suspension reason is required");
+      setFeedback({ type: "error", message: "Suspension reason is required" });
       return;
     }
 
     try {
+      setFeedback(null);
       await updateUserStatus(userId, !currentStatus, reason || undefined);
-      alert(`User ${action}d successfully`);
+      setFeedback({ type: "success", message: `User ${action}d successfully` });
       loadUsers();
     } catch (error) {
       console.error(`Failed to ${action} user:`, error);
-      alert(`Failed to ${action} user`);
+      setFeedback({ type: "error", message: `Failed to ${action} user` });
     }
   };
 
@@ -102,26 +107,33 @@ export default function AdminUsers() {
       !newAdmin.password ||
       !newAdmin.fullName
     ) {
-      alert("All fields are required");
+      setFeedback({ type: "error", message: "All fields are required" });
       return;
     }
     if (newAdmin.password.length < 8) {
-      alert("Password must be at least 8 characters long");
+      setFeedback({
+        type: "error",
+        message: "Password must be at least 8 characters long",
+      });
       return;
     }
 
     setCreating(true);
     try {
+      setFeedback(null);
       const response = await createAdminUser(newAdmin);
       if (response.success) {
-        alert("Admin user created successfully!");
+        setFeedback({ type: "success", message: "Admin user created successfully!" });
         setShowCreateModal(false);
         setNewAdmin({ email: "", phone: "", password: "", fullName: "" });
         loadUsers();
       }
     } catch (error: any) {
       console.error("Failed to create admin:", error);
-      alert(error.response?.data?.message || "Failed to create admin user");
+      setFeedback({
+        type: "error",
+        message: error.response?.data?.message || "Failed to create admin user",
+      });
     } finally {
       setCreating(false);
     }
@@ -137,12 +149,16 @@ export default function AdminUsers() {
     }
 
     try {
+      setFeedback(null);
       await updateUserRole(userId, newRole);
-      alert(`User role updated to ${newRole}`);
+      setFeedback({ type: "success", message: `User role updated to ${newRole}` });
       loadUsers();
     } catch (error: any) {
       console.error("Failed to update role:", error);
-      alert(error.response?.data?.message || "Failed to update user role");
+      setFeedback({
+        type: "error",
+        message: error.response?.data?.message || "Failed to update user role",
+      });
     }
   };
 
@@ -194,6 +210,19 @@ export default function AdminUsers() {
           </Link>
         </div>
       </div>
+
+      {feedback && (
+        <div
+          className={`mb-6 px-4 py-3 rounded-lg border ${
+            feedback.type === "success"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-red-50 border-red-200 text-red-800"
+          }`}
+        >
+          {feedback.type === "success" ? "✓ " : ""}
+          {feedback.message}
+        </div>
+      )}
 
       {/* Create Admin Modal */}
       <Modal

@@ -9,6 +9,7 @@ export default function AgriMallOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
   useEffect(() => {
@@ -78,6 +79,12 @@ export default function AgriMallOrders() {
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+          ✓ {successMessage}
         </div>
       )}
 
@@ -212,11 +219,12 @@ export default function AgriMallOrders() {
                       size="sm"
                       onClick={async () => {
                         try {
+                          setError("");
                           await agrimallService.confirmDelivery(order.id, 5);
-                          alert("✓ Delivery confirmed!");
+                          setSuccessMessage("Delivery confirmed!");
                           loadOrders();
                         } catch (err: any) {
-                          alert(
+                          setError(
                             err.response?.data?.message || "Failed to confirm"
                           );
                         }
@@ -233,14 +241,15 @@ export default function AgriMallOrders() {
                       onClick={async () => {
                         if (!confirm("Cancel this order?")) return;
                         try {
+                          setError("");
                           await agrimallService.cancelOrder(
                             order.id,
                             "Changed my mind"
                           );
-                          alert("✓ Order cancelled");
+                          setSuccessMessage("Order cancelled");
                           loadOrders();
                         } catch (err: any) {
-                          alert(
+                          setError(
                             err.response?.data?.message || "Failed to cancel"
                           );
                         }
