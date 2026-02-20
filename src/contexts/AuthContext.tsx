@@ -121,6 +121,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             : responseData?.message ||
               responseData?.error ||
               responseData?.details?.message;
+        const fallbackStatusMessage =
+          status === 400
+            ? "Registration request was rejected. Please verify your details and try again."
+            : `Registration failed with status ${status}. Please try again.`;
 
         if (status === 429) {
           // Rate limiting error
@@ -137,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } else if (status === 400) {
           // Validation error
           throw new Error(
-            serverMessage || "Please check your information and try again.",
+            serverMessage || fallbackStatusMessage,
           );
         } else if (status >= 500) {
           // Server error
@@ -147,7 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } else {
           // Other errors with backend message
           throw new Error(
-            serverMessage || "Registration failed. Please try again.",
+            serverMessage || fallbackStatusMessage,
           );
         }
       } else if (error.request) {
