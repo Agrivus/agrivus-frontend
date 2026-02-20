@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Card, LoadingSpinner, BoostBadge } from "../components/common";
 import StatCard from "../components/common/StatCard";
@@ -31,6 +31,10 @@ const Dashboard: React.FC = () => {
         <LoadingSpinner size="lg" />
       </div>
     );
+  }
+
+  if (user?.role === "support_moderator") {
+    return <Navigate to="/moderator" replace />;
   }
 
   // Role-based dashboard content

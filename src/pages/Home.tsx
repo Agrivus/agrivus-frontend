@@ -1308,6 +1308,75 @@ const Home: React.FC = () => {
     </div>
   );
 
+  // Support Moderator Home
+  const ModeratorHome = () => (
+    <div>
+      <section className="py-20 bg-gray-900 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl font-bold mb-6 font-serif">
+            Welcome, {user?.fullName}! 👋
+          </h1>
+          <p className="text-xl mb-8 opacity-90">
+            Review user activity, manage reports, and support the community
+          </p>
+          <Link to="/moderator">
+            <Button variant="primary" size="lg">
+              Go to Moderator Dashboard →
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      <section className="py-14 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Manage Users
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Review user profiles and update account roles where needed.
+              </p>
+              <Link to="/admin/users">
+                <Button variant="outline" size="sm">
+                  Open Users
+                </Button>
+              </Link>
+            </Card>
+
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Monitor Orders
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Track platform orders and resolve user-facing issues quickly.
+              </p>
+              <Link to="/admin/orders">
+                <Button variant="outline" size="sm">
+                  View Orders
+                </Button>
+              </Link>
+            </Card>
+
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Review Activity
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Access moderation logs and investigate flagged platform actions.
+              </p>
+              <Link to="/moderator/activity-log">
+                <Button variant="outline" size="sm">
+                  Open Activity Log
+                </Button>
+              </Link>
+            </Card>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+
   // Render based on user role
   if (!isAuthenticated) {
     return <GuestHome />;
@@ -1323,6 +1392,8 @@ const Home: React.FC = () => {
     case "admin":
     case "agro_supplier":
       return <AdminHome />;
+    case "support_moderator":
+      return <ModeratorHome />;
     default:
       return <GuestHome />;
   }
