@@ -170,8 +170,10 @@ export default function AdminUsers() {
         return "bg-blue-100 text-blue-800";
       case "transporter":
         return "bg-yellow-100 text-yellow-800";
-      case "supplier":
+      case "agro_supplier":
         return "bg-purple-100 text-purple-800";
+      case "support_moderator":
+        return "bg-indigo-100 text-indigo-800";
       case "admin":
         return "bg-red-100 text-red-800";
       default:
@@ -342,7 +344,8 @@ export default function AdminUsers() {
               <option value="farmer">Farmer</option>
               <option value="buyer">Buyer</option>
               <option value="transporter">Transporter</option>
-              <option value="supplier">Supplier</option>
+              <option value="agro_supplier">Supplier</option>
+              <option value="support_moderator">Support</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -419,7 +422,9 @@ export default function AdminUsers() {
                         user.role
                       )}`}
                     >
-                      {user.role.toUpperCase()}
+                      {user.role === "support_moderator"
+                        ? "SUPPORT"
+                        : user.role.toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -476,6 +481,7 @@ export default function AdminUsers() {
                         <option value="transporter">Transporter</option>
                         <option value="agro_supplier">Supplier</option>
                         <option value="vendor">Vendor</option>
+                        <option value="support_moderator">Support</option>
                         <option value="admin">Admin</option>
                       </select>
                       <button
