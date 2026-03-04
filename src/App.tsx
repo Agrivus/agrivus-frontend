@@ -58,6 +58,7 @@ const ExportMarketIntelligence = React.lazy(
 const ExportDocuments = React.lazy(() => import("./pages/ExportDocuments"));
 const ExportLogistics = React.lazy(() => import("./pages/ExportLogistics"));
 const MockPayment = React.lazy(() => import("./pages/MockPayment"));
+const PaynowPayment = React.lazy(() => import("./pages/PaynowPayment"));
 
 function App() {
   return (
@@ -383,12 +384,19 @@ function App() {
                   path="/payment/mock/:paymentId"
                   element={<MockPayment />}
                 />
-
                 <Route
                   path="/payment/history"
                   element={
                     <ProtectedRoute>
                       <PaymentHistory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/payment/:paymentId"
+                  element={
+                    <ProtectedRoute>
+                      <PaynowPayment />
                     </ProtectedRoute>
                   }
                 />

@@ -25,6 +25,10 @@ const PaynowPayment: React.FC = () => {
 
   useEffect(() => {
     if (!paymentId) { navigate("/wallet"); return; }
+    if (paymentId === "history") {
+      navigate("/payment/history", { replace: true });
+      return;
+    }
     loadPayment();
   }, [paymentId]);
 

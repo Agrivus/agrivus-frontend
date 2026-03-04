@@ -142,15 +142,17 @@ const Wallet: React.FC = () => {
       setDepositAmount("");
 
       if (paymentUrl) {
-        // Paynow redirect (EcoCash prompt sent / ZimSwitch page)
-        // For mock payments this goes to /payment/mock/:id
-        // For real Paynow this goes to paynow.co.zw
-        window.location.href = paymentUrl;
+        if (paymentUrl.includes("/payment/mock/")) {
+          // Mock mode — extract ID and go to new PaynowPayment page
+          const mockId = paymentUrl.split("/payment/mock/")[1];
+          navigate(`/payment/${mockId}`);
+        } else {
+          // Real Paynow — external redirect
+          window.location.href = paymentUrl;
+        }
       } else if (instructions) {
-        // Manual methods (bank transfer etc.) — show inline instructions
         setManualInstructions({ reference, instructions, amount, method: selectedMethod });
       } else if (paymentId) {
-        // Cash deposit — navigate to confirmation page
         navigate(`/payment/${paymentId}`);
       }
     } catch (error: any) {
