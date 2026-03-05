@@ -57,7 +57,7 @@ const ExportMarketIntelligence = React.lazy(
 );
 const ExportDocuments = React.lazy(() => import("./pages/ExportDocuments"));
 const ExportLogistics = React.lazy(() => import("./pages/ExportLogistics"));
-const MockPayment = React.lazy(() => import("./pages/MockPayment"));
+const MockPayment = React.lazy(() => import("./pages/MockPayment.tsx"));
 const PaynowPayment = React.lazy(() => import("./pages/PaynowPayment"));
 
 function App() {
