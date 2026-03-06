@@ -339,10 +339,14 @@ const Wallet: React.FC = () => {
 
               {/* Amount */}
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="deposit-amount"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Amount (USD) *
                 </label>
                 <input
+                  id="deposit-amount"
                   type="number"
                   step="0.01"
                   min="1"

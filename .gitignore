@@ -22,4 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables
 .env
+.env.*
+!.env.example
+
+# Playwright E2E auth state (contains live JWT tokens — never commit)
+e2e/.auth/
+playwright-report/
+test-results/
+
