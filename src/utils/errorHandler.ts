@@ -6,8 +6,27 @@
 export const getErrorMessage = (err: any, fallbackMessage?: string): string => {
   const status = err?.response?.status;
   const serverMessage = err?.response?.data?.message;
+  const retryAfter = err?.response?.data?.retryAfter;
   const defaultFallback =
     fallbackMessage || "Something went wrong. Please try again.";
+
+  const formatRetryAfter = (seconds: number): string => {
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      return "a moment";
+    }
+
+    if (seconds >= 3600) {
+      const hours = Math.ceil(seconds / 3600);
+      return `${hours} hour${hours > 1 ? "s" : ""}`;
+    }
+
+    if (seconds >= 60) {
+      const minutes = Math.ceil(seconds / 60);
+      return `${minutes} minute${minutes > 1 ? "s" : ""}`;
+    }
+
+    return `${Math.ceil(seconds)} second${Math.ceil(seconds) > 1 ? "s" : ""}`;
+  };
 
   // Authentication errors
   if (status === 401) {
@@ -49,7 +68,11 @@ export const getErrorMessage = (err: any, fallbackMessage?: string): string => {
 
   // Rate limiting
   if (status === 429) {
-    return "Too many requests. Please wait a moment and try again.";
+    if (serverMessage) {
+      return serverMessage;
+    }
+
+    return `Too many requests. Please wait ${formatRetryAfter(Number(retryAfter))} and try again.`;
   }
 
   // Server errors (500+)
