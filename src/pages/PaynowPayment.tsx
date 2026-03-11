@@ -15,6 +15,7 @@ const PaynowPayment: React.FC = () => {
   const { paymentId }        = useParams<{ paymentId: string }>();
   const navigate              = useNavigate();
   const [searchParams]        = useSearchParams();
+  const isGatewayReturn       = paymentId === "return";
 
   const [stage, setStage]     = useState<Stage>("loading");
   const [payment, setPayment] = useState<PaymentStatus | null>(null);
@@ -25,7 +26,7 @@ const PaynowPayment: React.FC = () => {
 
   useEffect(() => {
     // Handle Paynow callback redirect: /payment/return?ref=WD-1234-ABCD
-    if (paymentId === "return") {
+    if (isGatewayReturn) {
       const ref = searchParams.get("ref");
       if (!ref) {
         setError("Invalid return from payment gateway. Missing payment reference.");
@@ -42,7 +43,7 @@ const PaynowPayment: React.FC = () => {
       return;
     }
     loadPayment(paymentId);
-  }, [paymentId, searchParams, navigate]);
+  }, [paymentId, searchParams, navigate, isGatewayReturn]);
 
   const loadPayment = async (targetPaymentId?: string) => {
     try {
@@ -60,8 +61,9 @@ const PaynowPayment: React.FC = () => {
       if (res.data.status === "failed")    { setStage("failed");  return; }
       if (res.data.status === "cancelled") { setStage("cancelled"); return; }
 
-      // If there is a paymentUrl (ZimSwitch / internet banking), redirect to Paynow
-      if (res.data.paymentUrl) {
+      // Only redirect to hosted checkout on the initial payment page.
+      // After Paynow sends the user back to /payment/return we must poll instead.
+      if (res.data.paymentUrl && !isGatewayReturn) {
         window.location.href = res.data.paymentUrl;
         return;
       }
@@ -78,24 +80,14 @@ const PaynowPayment: React.FC = () => {
 
   useEffect(() => {
     // Only trigger if we're not in the "return" route (already handled above)
-    if (paymentId === "return") return;
+    if (isGatewayReturn) return;
 
     const ref    = searchParams.get("ref");
     const status = searchParams.get("payment");
     if (status === "success" && ref) {
       setStage("polling");   // Confirm via polling even after redirect
     }
-  }, [searchParams, paymentId]);
-
-  // ── Auto-poll when redirected from Paynow callback ──────────────────────────
-
-  useEffect(() => {
-    // If we loaded payment from a Paynow callback (/payment/return?ref=...),
-    // auto-start polling when payment details are ready
-    if (paymentId === "return" && stage === "instructions" && payment) {
-      startPolling(payment.reference);
-    }
-  }, [paymentId, stage, payment]);
+  }, [searchParams, paymentId, isGatewayReturn]);
 
   // ── Polling ───────────────────────────────────────────────────────────────
 
@@ -127,6 +119,16 @@ const PaynowPayment: React.FC = () => {
         setStage("failed");
       });
   }, [paymentId]);
+
+  // ── Auto-poll when redirected from Paynow callback ──────────────────────────
+
+  useEffect(() => {
+    // If we loaded payment from a Paynow callback (/payment/return?ref=...),
+    // auto-start polling when payment details are ready
+    if (isGatewayReturn && stage === "instructions" && payment) {
+      startPolling(payment.reference);
+    }
+  }, [stage, payment, startPolling, isGatewayReturn]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
