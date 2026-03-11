@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useSearchParams,
+  useLocation,
+} from "react-router-dom";
 import { Card, Button, LoadingSpinner } from "../components/common";
 import paymentService, { type PaymentStatus, PAYMENT_METHODS } from "../services/paymentService";
 
@@ -14,8 +19,11 @@ type Stage =
 const PaynowPayment: React.FC = () => {
   const { paymentId }        = useParams<{ paymentId: string }>();
   const navigate              = useNavigate();
+  const location              = useLocation();
   const [searchParams]        = useSearchParams();
-  const isGatewayReturn       = paymentId === "return";
+  const normalizedPath        = location.pathname.replace(/\/+$/, "");
+  const isGatewayReturn       =
+    paymentId === "return" || normalizedPath === "/payment/return";
 
   const [stage, setStage]     = useState<Stage>("loading");
   const [payment, setPayment] = useState<PaymentStatus | null>(null);
