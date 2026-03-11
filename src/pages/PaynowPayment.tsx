@@ -24,6 +24,7 @@ const PaynowPayment: React.FC = () => {
 
   // ── Load initial payment details ─────────────────────────────────────────
 
+  
   useEffect(() => {
     // Handle Paynow callback redirect: /payment/return?ref=WD-1234-ABCD
     if (isGatewayReturn) {
