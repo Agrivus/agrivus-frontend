@@ -402,6 +402,15 @@ function App() {
                 />
 
                 <Route
+                  path="/payment/return"
+                  element={
+                    <ProtectedRoute>
+                      <PaynowPayment />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
                   path="/recommendations"
                   element={
                     <ProtectedRoute>
@@ -422,3 +431,4 @@ function App() {
 }
 
 export default App;
+

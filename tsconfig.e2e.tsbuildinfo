@@ -1,0 +1,1 @@
+{"root":["./e2e/agrimall.spec.ts","./e2e/auth.setup.ts","./e2e/auth.spec.ts","./e2e/marketplace.spec.ts","./e2e/navigation.spec.ts","./e2e/payment.spec.ts","./e2e/wallet.spec.ts","./playwright.config.ts"],"version":"5.9.3"}

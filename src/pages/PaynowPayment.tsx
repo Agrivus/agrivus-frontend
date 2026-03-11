@@ -24,17 +24,36 @@ const PaynowPayment: React.FC = () => {
   // ── Load initial payment details ─────────────────────────────────────────
 
   useEffect(() => {
+    // Handle Paynow callback redirect: /payment/return?ref=WD-1234-ABCD
+    if (paymentId === "return") {
+      const ref = searchParams.get("ref");
+      if (!ref) {
+        setError("Invalid return from payment gateway. Missing payment reference.");
+        setStage("failed");
+        return;
+      }
+      loadPayment(ref);
+      return;
+    }
+
     if (!paymentId) { navigate("/wallet"); return; }
     if (paymentId === "history") {
       navigate("/payment/history", { replace: true });
       return;
     }
-    loadPayment();
-  }, [paymentId]);
+    loadPayment(paymentId);
+  }, [paymentId, searchParams, navigate]);
 
-  const loadPayment = async () => {
+  const loadPayment = async (targetPaymentId?: string) => {
     try {
-      const res = await paymentService.checkStatus(paymentId!);
+      const idToLoad = targetPaymentId || paymentId;
+      if (!idToLoad) {
+        setError("No payment ID provided.");
+        setStage("failed");
+        return;
+      }
+
+      const res = await paymentService.checkStatus(idToLoad);
       setPayment(res.data);
 
       if (res.data.status === "completed") { setStage("success"); return; }
@@ -50,7 +69,7 @@ const PaynowPayment: React.FC = () => {
       // Mobile money — show instructions then start polling
       setStage("instructions");
     } catch (err) {
-      setError("Failed to load payment details.");
+      setError("Failed to load payment details. Please open payment history and check this transaction.");
       setStage("failed");
     }
   };
@@ -58,20 +77,40 @@ const PaynowPayment: React.FC = () => {
   // ── Return URL handling (Paynow redirects back here after card payment) ──
 
   useEffect(() => {
+    // Only trigger if we're not in the "return" route (already handled above)
+    if (paymentId === "return") return;
+
     const ref    = searchParams.get("ref");
     const status = searchParams.get("payment");
     if (status === "success" && ref) {
       setStage("polling");   // Confirm via polling even after redirect
     }
-  }, [searchParams]);
+  }, [searchParams, paymentId]);
+
+  // ── Auto-poll when redirected from Paynow callback ──────────────────────────
+
+  useEffect(() => {
+    // If we loaded payment from a Paynow callback (/payment/return?ref=...),
+    // auto-start polling when payment details are ready
+    if (paymentId === "return" && stage === "instructions" && payment) {
+      startPolling(payment.reference);
+    }
+  }, [paymentId, stage, payment]);
 
   // ── Polling ───────────────────────────────────────────────────────────────
 
-  const startPolling = useCallback(() => {
+  const startPolling = useCallback((targetPaymentId?: string) => {
+    const idToUse = targetPaymentId || paymentId;
+    if (!idToUse) {
+      setError("No payment ID to poll.");
+      setStage("failed");
+      return;
+    }
+
     setStage("polling");
     paymentService
       .pollPaymentStatus(
-        paymentId!,
+        idToUse,
         (status) => {
           setPayment(status);
           setPollCount((c) => c + 1);
@@ -283,7 +322,7 @@ const PaynowPayment: React.FC = () => {
             variant="primary"
             size="lg"
             className="w-full"
-            onClick={startPolling}
+            onClick={() => startPolling()}
           >
             I've Paid — Check Status
           </Button>
