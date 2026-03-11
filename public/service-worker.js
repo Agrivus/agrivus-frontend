@@ -1,4 +1,4 @@
-const CACHE_NAME = "agrivus-2026-03-05";
+const CACHE_NAME = "agrivus-2026-03-11";
 const urlsToCache = ["/manifest.json"];
 
 // Install event - cache essential files
@@ -23,13 +23,23 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Never intercept unsupported schemes, API calls, or cross-origin requests.
+  // This avoids cache errors from extension requests and keeps payment/API flows network-driven.
+  if (
+    request.method !== "GET" ||
+    (url.protocol !== "http:" && url.protocol !== "https:") ||
+    url.origin !== self.location.origin ||
+    url.pathname.startsWith("/api/")
+  ) {
+    return;
+  }
+
   // Network-only strategy for HTML/JS/assets to avoid stale index+asset mismatch
   if (
-    request.method === "GET" &&
-    (url.pathname === "/" ||
-      url.pathname.endsWith(".html") ||
-      url.pathname.endsWith(".js") ||
-      url.pathname.includes("/assets/"))
+    url.pathname === "/" ||
+    url.pathname.endsWith(".html") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.includes("/assets/")
   ) {
     event.respondWith(
       fetch(request)
@@ -67,7 +77,9 @@ self.addEventListener("fetch", (event) => {
 
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, responseToCache);
+          cache.put(request, responseToCache).catch((err) => {
+            console.log("Cache put skipped:", err);
+          });
         });
 
         return response;
