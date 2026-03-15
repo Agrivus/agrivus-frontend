@@ -5,6 +5,7 @@ import { safeDisplayText } from "../utils/textUtils";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import { BuyerTransporterSelectionModal } from "../components/orders/BuyerTransporterSelectionModal";
 import { ordersService } from "../services/ordersService";
 import chatService from "../services/chatService";
 
@@ -19,6 +20,8 @@ const OrderDetail: React.FC = () => {
   const [actionError, setActionError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [showTransporterSelection, setShowTransporterSelection] =
+    useState(false);
 
   useEffect(() => {
     fetchOrderDetails();
@@ -254,6 +257,11 @@ const OrderDetail: React.FC = () => {
   const isFarmer = user?.id === order.order.farmerId;
   const isTransporter =
     order.transport && user?.id === order.transport.transporterId;
+  const canBuyerSelectTransporter =
+    isBuyer &&
+    order.order.status === "paid" &&
+    order.order.usesTransport &&
+    !order.transporter;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -840,6 +848,29 @@ const OrderDetail: React.FC = () => {
                       </p>
                     </div>
                   </Card>
+                ) : canBuyerSelectTransporter ? (
+                  <Card className="p-6">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4">
+                      Transport Selection Required
+                    </h3>
+                    <div className="bg-purple-50 border border-purple-200 rounded p-4 text-center">
+                      <p className="text-2xl mb-2">🚚</p>
+                      <p className="text-sm text-purple-800 font-semibold">
+                        Farmer Approved - Select Transporters
+                      </p>
+                      <p className="text-xs text-purple-700 mt-2 mb-4">
+                        Your order is approved and funds are secured in escrow.
+                        Select transporters now so delivery can begin.
+                      </p>
+                      <Button
+                        variant="primary"
+                        className="w-full"
+                        onClick={() => setShowTransporterSelection(true)}
+                      >
+                        🚛 Select Transporters
+                      </Button>
+                    </div>
+                  </Card>
                 ) : order.order.status === "paid" ||
                   order.order.status === "assigned" ? (
                   <Card className="p-6">
@@ -1144,6 +1175,20 @@ const OrderDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <BuyerTransporterSelectionModal
+        orderId={order.order.id}
+        pickupLocation={order.listing?.location || ""}
+        isOpen={showTransporterSelection}
+        onCancel={() => setShowTransporterSelection(false)}
+        onSuccess={() => {
+          setShowTransporterSelection(false);
+          setSuccessMessage(
+            "✅ Transporter offers sent. You'll be notified when one accepts.",
+          );
+          fetchOrderDetails();
+        }}
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import NotificationBell from "./NotificationBell";
@@ -10,14 +10,26 @@ const Header: React.FC = () => {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const unreadRequestVersionRef = useRef(0);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setUnreadChatCount(0);
+      return;
+    }
+
+    let isDisposed = false;
+
     const loadUnreadCount = async () => {
-      if (!isAuthenticated) return;
+      const requestVersion = ++unreadRequestVersionRef.current;
 
       try {
         const response = await chatService.getUnreadConversationsCount();
-        if (response.success) {
+        if (
+          !isDisposed &&
+          requestVersion === unreadRequestVersionRef.current &&
+          response.success
+        ) {
           setUnreadChatCount(response.data.count);
         }
       } catch (error) {
@@ -37,15 +49,36 @@ const Header: React.FC = () => {
       loadUnreadCount();
     };
 
+    const handleMessagesRead = () => {
+      loadUnreadCount();
+    };
+
+    const handleWindowFocus = () => {
+      loadUnreadCount();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadUnreadCount();
+      }
+    };
+
     window.addEventListener("chat:new-message", handleNewMessage);
     window.addEventListener("chat:message-read", handleMessageRead);
+    window.addEventListener("chat:messages-read", handleMessagesRead);
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // Poll for updates every 30 seconds as fallback
     const pollInterval = setInterval(loadUnreadCount, 30000);
 
     return () => {
+      isDisposed = true;
       window.removeEventListener("chat:new-message", handleNewMessage);
       window.removeEventListener("chat:message-read", handleMessageRead);
+      window.removeEventListener("chat:messages-read", handleMessagesRead);
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearInterval(pollInterval);
     };
   }, [isAuthenticated]);
