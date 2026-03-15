@@ -42,6 +42,7 @@ const Orders: React.FC = () => {
     const colors: Record<string, string> = {
       pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
       paid: "bg-blue-100 text-blue-800 border-blue-300",
+      pending_transport: "bg-cyan-100 text-cyan-800 border-cyan-300",
       assigned: "bg-purple-100 text-purple-800 border-purple-300",
       in_transit: "bg-indigo-100 text-indigo-800 border-indigo-300",
       delivered: "bg-green-100 text-green-800 border-green-300",
@@ -71,7 +72,7 @@ const Orders: React.FC = () => {
         case "pending":
           return (
             <div className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 px-3 py-2 rounded">
-              ⏳ Awaiting payment
+              ⏳ Awaiting your approval
             </div>
           );
         case "delivered":
@@ -123,6 +124,7 @@ const Orders: React.FC = () => {
               <option value="">All Orders</option>
               <option value="pending">Pending</option>
               <option value="paid">Paid</option>
+              <option value="pending_transport">Pending Transport</option>
               <option value="in_transit">In Transit</option>
               <option value="delivered">Delivered</option>
               <option value="confirmed">Confirmed</option>

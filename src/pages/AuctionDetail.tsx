@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getAuctionDetails, placeBid } from "../services/auctionsService";
 import { safeDisplayText } from "../utils/textUtils";
+import OptimizedImage from "../components/common/OptimizedImage";
 import { Card, LoadingSpinner, Button } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 import { getAuctionErrorMessage } from "../utils/errorHandler";
@@ -122,6 +123,19 @@ const AuctionDetail: React.FC = () => {
     ? parseFloat(auction.currentPrice) >= parseFloat(auction.reservePrice)
     : true;
 
+  const cropType = listing?.cropType?.trim();
+  const cropName = listing?.cropName?.trim();
+  const listingDisplayName = !cropType
+    ? cropName
+      ? safeDisplayText(cropName)
+      : "Crop Auction"
+    : !cropName || cropType.toLowerCase() === cropName.toLowerCase()
+      ? safeDisplayText(cropType)
+      : `${safeDisplayText(cropType)} (${safeDisplayText(cropName)})`;
+  const listingImage = listing?.images?.find(
+    (image: string) => image.trim().length > 0,
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Back Button */}
@@ -167,14 +181,37 @@ const AuctionDetail: React.FC = () => {
             </div>
 
             {/* Listing Info */}
-            <div className="h-64 bg-gradient-to-br from-primary-green to-secondary-green rounded-lg mb-6 flex items-center justify-center">
-              <span className="text-white text-9xl">
-                {listing?.cropType?.charAt(0) || "🌾"}
-              </span>
+            <div className="h-64 rounded-lg mb-6 overflow-hidden bg-gray-100">
+              {listingImage ? (
+                <OptimizedImage
+                  src={listingImage}
+                  alt={listingDisplayName}
+                  className="w-full h-full object-cover"
+                  width="100%"
+                  height={256}
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center">
+                  <svg
+                    className="w-24 h-24 text-gray-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              )}
             </div>
 
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              {listing?.cropType || "Crop Auction"}
+              {listingDisplayName}
             </h1>
             <p className="text-gray-600 mb-4">
               📍 {listing?.location || "Location"} • 👨‍🌾 {farmer?.fullName}

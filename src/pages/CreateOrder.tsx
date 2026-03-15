@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Input, Card, LoadingSpinner } from "../components/common";
-import { BuyerTransporterSelectionModal } from "../components/orders/BuyerTransporterSelectionModal";
 import { listingsService } from "../services/listingsService";
 import { ordersService } from "../services/ordersService";
 import type { Listing } from "../types";
@@ -21,10 +20,6 @@ const CreateOrder: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-
-  // Transporter selection modal state
-  const [showTransporterModal, setShowTransporterModal] = useState(false);
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     quantity: "",
@@ -124,20 +119,9 @@ const CreateOrder: React.FC = () => {
           setError("Order created, but we could not open its detail page.");
           return;
         }
-        
-        // If platform transport, show transporter selection modal
-        if (formData.transportOption === "platform") {
-          // Validate that we have a pickup location
-          if (!listing?.location) {
-            setError("Cannot assign transporters: listing location is missing");
-            return;
-          }
-          setCreatedOrderId(orderId);
-          setShowTransporterModal(true);
-        } else {
-          // For self-pickup, go directly to order detail page
-          navigate(`/orders/${orderId}`);
-        }
+
+        // Order now waits for farmer approval before payment/transport flow.
+        navigate(`/orders/${orderId}`);
       }
     } catch (err: any) {
       setError(getOrderErrorMessage(err));
@@ -374,9 +358,10 @@ const CreateOrder: React.FC = () => {
                   </h4>
                   <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
                     <li>Your order will be created with "pending" status</li>
-                    <li>Payment will be held in secure escrow</li>
+                    <li>Farmer approves or declines your request</li>
+                    <li>Payment is moved to secure escrow only after approval</li>
                     {formData.transportOption === "platform" ? (
-                      <li>You'll select transporters using AI matching</li>
+                      <li>After approval, transporters are matched for delivery</li>
                     ) : (
                       <li>Arrange transport to collect from farm</li>
                     )}
@@ -467,30 +452,13 @@ const CreateOrder: React.FC = () => {
                   <li>✓ Bank Transfer</li>
                 </ul>
                 <p className="mt-3 text-xs text-gray-600">
-                  Payment will be held securely until delivery confirmation.
+                  Payment will only be held after farmer approval, then released on delivery confirmation.
                 </p>
               </div>
             </Card>
           </div>
         </div>
       </div>
-
-      {/* Transporter Selection Modal */}
-      {showTransporterModal && createdOrderId && listing?.location && (
-        <BuyerTransporterSelectionModal
-          orderId={createdOrderId}
-          pickupLocation={listing.location}
-          isOpen={showTransporterModal}
-          onSuccess={() => {
-            setShowTransporterModal(false);
-            navigate(`/orders/${createdOrderId}`);
-          }}
-          onCancel={() => {
-            setShowTransporterModal(false);
-            navigate(`/orders/${createdOrderId}`);
-          }}
-        />
-      )}
     </div>
   );
 };

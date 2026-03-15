@@ -63,6 +63,58 @@ const OrderDetail: React.FC = () => {
     }
   };
 
+  const handleApproveOrder = async () => {
+    if (
+      !window.confirm(
+        "Approve this order? Buyer funds will then be held in escrow.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setActionError("");
+      setSuccessMessage("");
+      setActionLoading(true);
+      const response = await ordersService.updateOrderStatus(id!, "paid");
+      if (response.success) {
+        setSuccessMessage(
+          "✅ Order approved. Buyer funds are now secured in escrow.",
+        );
+        fetchOrderDetails();
+      }
+    } catch (err: any) {
+      setActionError(err.message || "Failed to approve order");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeclineOrder = async () => {
+    if (
+      !window.confirm(
+        "Decline this order? No payment will be processed for the buyer.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setActionError("");
+      setSuccessMessage("");
+      setActionLoading(true);
+      const response = await ordersService.updateOrderStatus(id!, "cancelled");
+      if (response.success) {
+        setSuccessMessage("✅ Order declined. Buyer was notified.");
+        fetchOrderDetails();
+      }
+    } catch (err: any) {
+      setActionError(err.message || "Failed to decline order");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleMessageUser = async (userId: string) => {
     try {
       setActionError("");
@@ -167,6 +219,9 @@ const OrderDetail: React.FC = () => {
   };
 
   const getStatusText = (status: string, usesTransport: boolean) => {
+    if (status === "pending") {
+      return "AWAITING FARMER APPROVAL";
+    }
     if (status === "in_transit") {
       return usesTransport ? "IN TRANSIT" : "READY FOR COLLECTION";
     }
@@ -716,7 +771,9 @@ const OrderDetail: React.FC = () => {
                     💰 Payment Protection
                   </p>
                   <p className="text-blue-800 text-xs">
-                    Funds are held in escrow until delivery is confirmed.
+                    {order.order.status === "pending"
+                      ? "No funds have been charged yet. Payment will be held in escrow only after farmer approval."
+                      : "Funds are held in escrow until delivery is confirmed."}
                   </p>
                 </div>
               )}
@@ -797,8 +854,58 @@ const OrderDetail: React.FC = () => {
                       </p>
                     </div>
                   </Card>
+                ) : order.order.status === "pending" ? (
+                  <Card className="p-6">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-center">
+                      <p className="text-2xl mb-2">⏳</p>
+                      <p className="text-sm text-yellow-800 font-semibold">
+                        Waiting for Farmer Approval
+                      </p>
+                      <p className="text-xs text-yellow-700 mt-2">
+                        Your order has been sent to the farmer. No payment has
+                        been processed yet.
+                      </p>
+                    </div>
+                  </Card>
                 ) : null}
               </>
+            )}
+
+            {/* Farmer Approval Actions */}
+            {isFarmer && order.order.status === "pending" && (
+              <Card className="p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Actions</h3>
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+                  <p className="text-sm text-yellow-800 font-semibold">
+                    Approval Required
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    Approve to secure buyer payment in escrow, or decline if the
+                    stock is no longer available.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button
+                    variant="primary"
+                    className="w-full"
+                    onClick={handleApproveOrder}
+                    isLoading={actionLoading}
+                    disabled={actionLoading}
+                  >
+                    ✅ Approve Order
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full border-red-300 text-red-700 hover:bg-red-50"
+                    onClick={handleDeclineOrder}
+                    isLoading={actionLoading}
+                    disabled={actionLoading}
+                  >
+                    ❌ Decline Order
+                  </Button>
+                </div>
+              </Card>
             )}
 
             {/* Farmer Actions */}
