@@ -54,8 +54,13 @@ export const BuyerTransporterSelectionModal: React.FC<
   const [tertiarySelected, setTertiarySelected] = useState<string | null>(null);
 
   const [proposedFee, setProposedFee] = useState<string>("");
-  const [minimumFee, setMinimumFee] = useState<number>(187.5);
+  const [suggestedFee, setSuggestedFee] = useState<number>(187.5);
   const [feeError, setFeeError] = useState<string | null>(null);
+  const parsedProposedFee = parseFloat(proposedFee);
+  const isBelowSuggestedFee =
+    !Number.isNaN(parsedProposedFee) &&
+    parsedProposedFee > 0 &&
+    parsedProposedFee < suggestedFee;
   const isSingleTransporter = transporters.length <= 1;
   const steps = isSingleTransporter
     ? ["select-primary", "summary"]
@@ -76,11 +81,12 @@ export const BuyerTransporterSelectionModal: React.FC<
         setTransporters(response.data.matches);
       }
       const feeData = response.data as
-        | (typeof response.data & { minimumFee?: number })
+        | (typeof response.data & { suggestedFee?: number; minimumFee?: number })
         | undefined;
-      if (feeData?.minimumFee && !isNaN(feeData.minimumFee)) {
-        setMinimumFee(feeData.minimumFee);
-        setProposedFee(feeData.minimumFee.toString());
+      const suggested = feeData?.suggestedFee ?? feeData?.minimumFee;
+      if (suggested && !Number.isNaN(suggested)) {
+        setSuggestedFee(suggested);
+        setProposedFee(suggested.toString());
       }
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load transporters"));
@@ -111,8 +117,8 @@ export const BuyerTransporterSelectionModal: React.FC<
       return;
     }
 
-    if (feeValue < minimumFee) {
-      setFeeError(`Fee must be at least $${minimumFee.toFixed(2)}`);
+    if (feeValue <= 0) {
+      setFeeError("Fee must be greater than 0");
       return;
     }
 
@@ -509,16 +515,22 @@ export const BuyerTransporterSelectionModal: React.FC<
                         </label>
                         <input
                           type="number"
-                          min={minimumFee}
                           value={proposedFee}
                           onChange={(e) => setProposedFee(e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                          placeholder={`Minimum $${minimumFee.toFixed(2)}`}
+                          placeholder={`Suggested $${suggestedFee.toFixed(2)}`}
                         />
                         <p className="text-xs text-gray-600">
-                          Minimum fee: ${minimumFee.toFixed(2)} (based on
-                          distance + weight)
+                          Suggested fee: ${suggestedFee.toFixed(2)} (based on
+                          distance + weight). You can still send offers below
+                          this estimate.
                         </p>
+                        {isBelowSuggestedFee && (
+                          <p className="text-xs text-amber-700">
+                            This fee is below the platform suggestion, but it
+                            can still be sent.
+                          </p>
+                        )}
                         {feeError && (
                           <p className="text-xs text-red-600">{feeError}</p>
                         )}
