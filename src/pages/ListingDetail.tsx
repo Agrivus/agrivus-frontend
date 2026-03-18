@@ -62,11 +62,6 @@ const ListingDetail: React.FC = () => {
       return;
     }
 
-    if (user?.role !== "buyer" && user?.role !== "farmer") {
-      setActionError("Only buyers and farmers can place orders");
-      return;
-    }
-
     navigate(`/orders/create?listingId=${id}`);
   };
 

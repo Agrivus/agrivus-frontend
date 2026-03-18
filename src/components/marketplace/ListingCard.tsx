@@ -14,7 +14,7 @@ interface ListingCardProps {
 const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
   const { listing: listingData, farmer } = listing;
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [messagingFarmer, setMessagingFarmer] = useState(false);
 
   const handleQuickMessage = async (e: React.MouseEvent) => {
@@ -41,11 +41,6 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
 
     if (!isAuthenticated) {
       navigate("/login");
-      return;
-    }
-
-    if (user?.role !== "buyer" && user?.role !== "farmer") {
-      alert("Only buyers and farmers can place orders");
       return;
     }
 

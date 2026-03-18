@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
 import { Button, Input, Card, LoadingSpinner } from "../components/common";
 import { listingsService } from "../services/listingsService";
 import { ordersService } from "../services/ordersService";
@@ -11,7 +10,6 @@ import {
 } from "../utils/errorHandler";
 
 const CreateOrder: React.FC = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const listingId = searchParams.get("listingId");
@@ -129,25 +127,6 @@ const CreateOrder: React.FC = () => {
       setSubmitting(false);
     }
   };
-
-  // Redirect if not a buyer or farmer
-  if (user?.role !== "buyer" && user?.role !== "farmer") {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <Card className="p-8 text-center max-w-md">
-          <h2 className="text-2xl font-bold text-warning mb-4">
-            Access Denied
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Only buyers and farmers can place orders.
-          </p>
-          <Button variant="primary" onClick={() => navigate("/marketplace")}>
-            Go to Marketplace
-          </Button>
-        </Card>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
