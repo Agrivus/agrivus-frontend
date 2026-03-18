@@ -125,10 +125,7 @@ const Header: React.FC = () => {
       authenticatedLinks.push({ to: "/my-bids", label: "My Bids" });
     }
 
-    // Don't add wallet for admin or moderator staff roles
-    if (user?.role !== "admin" && user?.role !== "support_moderator") {
-      authenticatedLinks.push({ to: "/wallet", label: "Wallet" });
-    }
+    authenticatedLinks.push({ to: "/wallet", label: "Wallet" });
 
     authenticatedLinks.push(
       { to: "/orders", label: "Orders" },

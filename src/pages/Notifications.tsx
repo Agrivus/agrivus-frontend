@@ -145,11 +145,10 @@ const Notifications: React.FC = () => {
       }
     }
 
-    // Default to wallet only for non-admins
+    // Default payment/account alerts to wallet for all account roles.
     if (
-      user?.role !== "admin" &&
-      (notification.type === "payment_received" ||
-        notification.type === "account_alert")
+      notification.type === "payment_received" ||
+      notification.type === "account_alert"
     ) {
       navigate("/wallet");
     }

@@ -69,8 +69,8 @@ const NotificationBell: React.FC = () => {
         break;
 
       case "payment_received":
-        // Navigate to wallet (regular users) or admin deposits (admins)
-        if (user?.role === "admin") {
+        // Admin cash-deposit verification notices go to admin queue.
+        if (user?.role === "admin" && notification.data?.requiresAction) {
           navigate("/admin/cash-deposits");
         } else {
           navigate("/wallet");
