@@ -16,6 +16,7 @@ const Orders = React.lazy(() => import("./pages/Orders"));
 const OrderDetail = React.lazy(() => import("./pages/OrderDetail"));
 const TransportOffers = React.lazy(() => import("./pages/TransportOffers"));
 const Login = React.lazy(() => import("./pages/Login"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
 const Register = React.lazy(() => import("./pages/Register"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
@@ -128,6 +129,7 @@ function App() {
                 />
 
                 <Route path="/login" element={<Login />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/register" element={<Register />} />
                 <Route
                   path="/dashboard"
