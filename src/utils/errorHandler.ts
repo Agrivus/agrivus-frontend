@@ -77,6 +77,10 @@ export const getErrorMessage = (err: any, fallbackMessage?: string): string => {
 
   // Server errors (500+)
   if (status >= 500) {
+    if (serverMessage && typeof serverMessage === "string") {
+      return serverMessage;
+    }
+
     return "Our servers are having trouble. Please try again later.";
   }
 
