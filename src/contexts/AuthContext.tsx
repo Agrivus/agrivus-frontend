@@ -18,6 +18,11 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  loginWithGoogle: (data: {
+    token: string;
+    refreshToken?: string;
+    user: Pick<User, "id" | "email" | "fullName" | "role"> & Partial<User>;
+  }) => void;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -166,10 +171,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const loginWithGoogle: AuthContextType["loginWithGoogle"] = (data) => {
+    const nowIso = new Date().toISOString();
+
+    const normalizedUser: User = {
+      ...data.user,
+      id: data.user.id,
+      email: data.user.email,
+      fullName: data.user.fullName,
+      role: data.user.role,
+      phone: data.user.phone ?? "",
+      isVerified: data.user.isVerified ?? true,
+      platformScore: data.user.platformScore ?? 0,
+      totalTransactions: data.user.totalTransactions ?? 0,
+      totalVolume: data.user.totalVolume ?? "0",
+      createdAt: data.user.createdAt ?? nowIso,
+    };
+
+    setUser(normalizedUser);
+    setToken(data.token);
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
+
+    if (data.refreshToken) {
+      localStorage.setItem("refreshToken", data.refreshToken);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     clearCache(); // Clear cached requests on logout
   };
@@ -199,6 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     token,
     loading,
     login,
+    loginWithGoogle,
     register,
     logout,
     refreshUser,
