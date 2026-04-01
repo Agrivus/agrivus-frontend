@@ -176,6 +176,8 @@ export default function AdminUsers() {
         return "bg-indigo-100 text-indigo-800";
       case "admin":
         return "bg-red-100 text-red-800";
+        case "accounts_officer":
+  return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -346,6 +348,7 @@ export default function AdminUsers() {
               <option value="transporter">Transporter</option>
               <option value="agro_supplier">Supplier</option>
               <option value="support_moderator">Support</option>
+              <option value="accounts_officer">Accounts Officer</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -482,6 +485,7 @@ export default function AdminUsers() {
                         <option value="agro_supplier">Supplier</option>
                         <option value="vendor">Vendor</option>
                         <option value="support_moderator">Support</option>
+                        <option value="accounts_officer">Accounts Officer</option>
                         <option value="admin">Admin</option>
                       </select>
                       <button
