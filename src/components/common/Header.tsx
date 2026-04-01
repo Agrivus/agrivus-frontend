@@ -22,7 +22,6 @@ const Header: React.FC = () => {
 
     const loadUnreadCount = async () => {
       const requestVersion = ++unreadRequestVersionRef.current;
-
       try {
         const response = await chatService.getUnreadConversationsCount();
         if (
@@ -39,45 +38,28 @@ const Header: React.FC = () => {
 
     loadUnreadCount();
 
-    // Listen for new messages to update count
-    const handleNewMessage = () => {
-      loadUnreadCount();
-    };
-
-    // Listen for messages being read to update count
-    const handleMessageRead = () => {
-      loadUnreadCount();
-    };
-
-    const handleMessagesRead = () => {
-      loadUnreadCount();
-    };
-
-    const handleWindowFocus = () => {
-      loadUnreadCount();
-    };
-
+    const handleNewMessage     = () => loadUnreadCount();
+    const handleMessageRead    = () => loadUnreadCount();
+    const handleMessagesRead   = () => loadUnreadCount();
+    const handleWindowFocus    = () => loadUnreadCount();
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadUnreadCount();
-      }
+      if (document.visibilityState === "visible") loadUnreadCount();
     };
 
-    window.addEventListener("chat:new-message", handleNewMessage);
-    window.addEventListener("chat:message-read", handleMessageRead);
+    window.addEventListener("chat:new-message",   handleNewMessage);
+    window.addEventListener("chat:message-read",  handleMessageRead);
     window.addEventListener("chat:messages-read", handleMessagesRead);
-    window.addEventListener("focus", handleWindowFocus);
+    window.addEventListener("focus",              handleWindowFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Poll for updates every 30 seconds as fallback
     const pollInterval = setInterval(loadUnreadCount, 30000);
 
     return () => {
       isDisposed = true;
-      window.removeEventListener("chat:new-message", handleNewMessage);
-      window.removeEventListener("chat:message-read", handleMessageRead);
+      window.removeEventListener("chat:new-message",   handleNewMessage);
+      window.removeEventListener("chat:message-read",  handleMessageRead);
       window.removeEventListener("chat:messages-read", handleMessagesRead);
-      window.removeEventListener("focus", handleWindowFocus);
+      window.removeEventListener("focus",              handleWindowFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearInterval(pollInterval);
     };
@@ -88,7 +70,6 @@ const Header: React.FC = () => {
     navigate("/");
   };
 
-  // Get navigation links based on user role
   const getNavLinks = () => {
     const baseLinks = [
       { to: "/", label: "Home" },
@@ -107,33 +88,51 @@ const Header: React.FC = () => {
       { to: "/recommendations", label: "Insights" },
     ];
 
-    // Add Export Gateway for farmers only
     if (user?.role === "farmer") {
       authenticatedLinks.push({ to: "/export", label: "Export Gateway" });
     }
 
-    // Add Transport Offers for transporters only
     if (user?.role === "transporter") {
-      authenticatedLinks.push({
-        to: "/transport-offers",
-        label: "Transport Offers",
-      });
+      authenticatedLinks.push({ to: "/transport-offers", label: "Transport Offers" });
     }
 
-    // Add role-specific links
     if (user?.role === "buyer" || user?.role === "transporter") {
       authenticatedLinks.push({ to: "/my-bids", label: "My Bids" });
     }
 
-    authenticatedLinks.push({ to: "/wallet", label: "Wallet" });
+    // Accounts officer gets direct links to finance pages
+    if (user?.role === "accounts_officer") {
+      authenticatedLinks.push(
+        { to: "/admin/transactions",    label: "Transactions" },
+        { to: "/admin/cash-deposits",   label: "Cash Deposits" },
+        { to: "/admin/revenue-report",  label: "Revenue" },
+      );
+    }
 
     authenticatedLinks.push(
+      { to: "/wallet", label: "Wallet" },
       { to: "/orders", label: "Orders" },
-      { to: "/about", label: "About" },
+      { to: "/about",  label: "About" },
     );
 
     return authenticatedLinks;
   };
+
+  // Determine top-bar staff link based on role
+  const getStaffLink = () => {
+    if (user?.role === "admin") {
+      return { to: "/admin", label: "Admin", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" };
+    }
+    if (user?.role === "support_moderator") {
+      return { to: "/moderator", label: "Moderator", icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" };
+    }
+    if (user?.role === "accounts_officer") {
+      return { to: "/admin/transactions", label: "Finance", icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" };
+    }
+    return null;
+  };
+
+  const staffLink = getStaffLink();
 
   return (
     <>
@@ -141,24 +140,22 @@ const Header: React.FC = () => {
       <div className="bg-dark-green text-white py-2">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center text-sm">
-            {/* Contact info - hidden on mobile */}
             <div className="hidden md:flex gap-4">
               <span>📞 +263 78 256 2211</span>
               <span>📧 agrivus438@gmail.com</span>
             </div>
-            {/* Spacer on mobile */}
             <div className="md:hidden"></div>
 
             <div className="flex gap-4 items-center">
               {isAuthenticated ? (
                 <>
-                  {/* Welcome text - hidden on mobile */}
                   <span className="hidden md:inline text-accent-gold">
                     Welcome, {user?.fullName}
                   </span>
-                  {user?.role === "admin" ? (
+
+                  {staffLink ? (
                     <Link
-                      to="/admin"
+                      to={staffLink.to}
                       className="hover:text-accent-gold transition-colors flex items-center gap-1"
                     >
                       <svg
@@ -172,31 +169,10 @@ const Header: React.FC = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          d={staffLink.icon}
                         />
                       </svg>
-                      Admin
-                    </Link>
-                  ) : user?.role === "support_moderator" ? (
-                    <Link
-                      to="/moderator"
-                      className="hover:text-accent-gold transition-colors flex items-center gap-1"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                        />
-                      </svg>
-                      Moderator
+                      {staffLink.label}
                     </Link>
                   ) : (
                     <Link
@@ -206,6 +182,7 @@ const Header: React.FC = () => {
                       Dashboard
                     </Link>
                   )}
+
                   <button
                     onClick={handleLogout}
                     className="hover:text-accent-gold transition-colors"
@@ -215,18 +192,8 @@ const Header: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Link
-                    to="/login"
-                    className="hover:text-accent-gold transition-colors"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="hover:text-accent-gold transition-colors"
-                  >
-                    Register
-                  </Link>
+                  <Link to="/login"    className="hover:text-accent-gold transition-colors">Login</Link>
+                  <Link to="/register" className="hover:text-accent-gold transition-colors">Register</Link>
                 </>
               )}
             </div>
@@ -236,10 +203,8 @@ const Header: React.FC = () => {
 
       {/* Main Header */}
       <header className="bg-white shadow-md sticky top-0 z-50">
-        {/* Logo Section */}
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center py-4">
-            {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
               <img
                 src={logoImage}
@@ -253,48 +218,29 @@ const Header: React.FC = () => {
               </div>
             </Link>
 
-            {/* Mobile Menu Button */}
             <button
               className="md:hidden text-primary-green"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMenuOpen}
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 {isMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 )}
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Divider Line */}
         <div className="border-t border-gray-200"></div>
 
-        {/* Desktop Navigation Row */}
+        {/* Desktop Navigation */}
         <div className="hidden md:block bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="flex justify-end items-center py-3 gap-8">
-              {/* Navigation Links */}
               <nav className="flex items-center gap-6">
                 {getNavLinks().map((link) => (
                   <Link
@@ -308,28 +254,16 @@ const Header: React.FC = () => {
                 ))}
               </nav>
 
-              {/* Chat and Notifications Icons (far right) */}
               {isAuthenticated && (
                 <div className="flex items-center gap-4">
                   <NotificationBell />
-
-                  {/* Messages link */}
                   <Link
                     to="/chat"
                     className="relative text-gray-700 hover:text-green-600 transition-colors"
                     aria-label="Messages"
                   >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                         d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                       />
                     </svg>
@@ -367,17 +301,8 @@ const Header: React.FC = () => {
                       className="text-gray-700 hover:text-primary-green font-semibold transition-colors flex items-center gap-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                           d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                         />
                       </svg>
@@ -388,17 +313,8 @@ const Header: React.FC = () => {
                       className="text-gray-700 hover:text-primary-green font-semibold transition-colors flex items-center gap-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                         />
                       </svg>
