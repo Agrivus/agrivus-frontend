@@ -251,7 +251,7 @@ function App() {
                   <Route
                     path="/admin/users"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
+                      <ProtectedRoute allowedRoles={["admin", "support_moderator", "accounts_officer"]}>
                         <AdminUsers />
                       </ProtectedRoute>
                     }
@@ -259,7 +259,7 @@ function App() {
                   <Route
                     path="/admin/users/:userId"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
+                      <ProtectedRoute allowedRoles={["admin", "support_moderator", "accounts_officer"]}>
                         <AdminUserDetail />
                       </ProtectedRoute>
                     }
@@ -267,7 +267,7 @@ function App() {
                   <Route
                     path="/admin/orders"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
+                      <ProtectedRoute allowedRoles={["admin", "support_moderator", "accounts_officer"]}>
                         <AdminOrders />
                       </ProtectedRoute>
                     }
@@ -304,6 +304,15 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
+                  <Route
+  path="/admin/revenue-report"
+  element={
+    <ProtectedRoute allowedRoles={["admin", "accounts_officer"]}>
+      <AdminReports />
+    </ProtectedRoute>
+  }
+/>
 
                   {/* Moderator Routes */}
                   <Route
