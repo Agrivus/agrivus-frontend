@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Input, Card } from "../components/common";
 import { getErrorMessage } from "../utils/errorHandler";
+import { getRoleLandingRoute } from "../utils/roleLandingRoute";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "https://api.agrivus.com";
 
@@ -26,7 +27,7 @@ const Login: React.FC = () => {
   // Redirect after successful login
   useEffect(() => {
     if (user) {
-      navigate(user.role === "admin" ? "/admin" : "/dashboard");
+      navigate(getRoleLandingRoute(user.role));
     }
   }, [user, navigate]);
 

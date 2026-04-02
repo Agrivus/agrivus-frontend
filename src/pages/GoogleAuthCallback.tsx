@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { getRoleLandingRoute } from "../utils/roleLandingRoute";
 
 /**
  * This page handles the redirect from the backend after Google OAuth.
@@ -41,14 +42,8 @@ const GoogleAuthCallback: React.FC = () => {
       },
     });
 
-    // New Google users (no phone yet) go to complete-profile, others to dashboard
-    const needsPhone = !searchParams.get("phone");
-    if (needsPhone && role === "buyer") {
-      navigate("/dashboard");
-    } else {
-      navigate("/dashboard");
-    }
-  }, []);
+    navigate(getRoleLandingRoute(role));
+  }, [loginWithGoogle, navigate, searchParams]);
 
   if (error) {
     return (

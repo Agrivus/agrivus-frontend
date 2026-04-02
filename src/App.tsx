@@ -275,7 +275,7 @@ function App() {
                   <Route
                     path="/admin/transactions"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
+                      <ProtectedRoute allowedRoles={["admin", "support_moderator", "accounts_officer"]}>
                         <AdminTransactions />
                       </ProtectedRoute>
                     }
@@ -283,7 +283,7 @@ function App() {
                   <Route
                     path="/admin/cash-deposits"
                     element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "accounts_officer"]}>
                         <AdminCashDeposits />
                       </ProtectedRoute>
                     }
