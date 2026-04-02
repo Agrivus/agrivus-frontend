@@ -17,6 +17,20 @@ interface Transaction {
   role: string;
 }
 
+const toDisplayText = (value: unknown, fallback = "N/A") => {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+};
+
+const toNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number.parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
 export default function AdminTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,13 +66,13 @@ export default function AdminTransactions() {
       });
 
       if (response.success) {
-        const allTransactions = response.data.transactions;
+        const allTransactions = response.data.transactions || [];
         const stats = {
-          totalTransactions: response.data.pagination.total,
+          totalTransactions: response.data.pagination?.total ?? 0,
           totalVolume: allTransactions
             .filter((t: Transaction) => t.status === "completed")
             .reduce(
-              (sum: number, t: Transaction) => sum + parseFloat(t.amount),
+              (sum: number, t: Transaction) => sum + toNumber(t.amount),
               0,
             ),
           creditsCount: allTransactions.filter(
@@ -85,8 +99,15 @@ export default function AdminTransactions() {
       });
 
       if (response.success) {
-        setTransactions(response.data.transactions);
-        setPagination(response.data.pagination);
+        setTransactions(response.data.transactions || []);
+        setPagination(
+          response.data.pagination || {
+            page: 1,
+            limit: 1000,
+            total: 0,
+            totalPages: 0,
+          },
+        );
       }
     } catch (error) {
       console.error("Failed to load transactions:", error);
@@ -251,19 +272,31 @@ export default function AdminTransactions() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {transactions.map((txn) => (
-                <tr key={txn.id} className="hover:bg-gray-50">
+              {transactions.map((txn, index) => {
+                const transactionId = toDisplayText(txn?.id, "");
+                const description = toDisplayText(txn?.description);
+                const referenceId = toDisplayText(txn?.reference_id, "");
+                const role = toDisplayText(txn?.role);
+                const type = toDisplayText(txn?.type, "unknown").toLowerCase();
+                const status = toDisplayText(txn?.status, "unknown").toLowerCase();
+                const amount = toNumber(txn?.amount);
+                const createdAt = txn?.created_at
+                  ? new Date(txn.created_at).toLocaleString()
+                  : "N/A";
+
+                return (
+                <tr key={transactionId || `txn-${index}`} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="font-medium text-gray-900">
-                        #{txn.id.substring(0, 8)}
+                        #{transactionId ? transactionId.substring(0, 8) : "UNKNOWN"}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {txn.description}
+                        {description}
                       </div>
-                      {txn.reference_id && (
+                      {referenceId && (
                         <div className="text-xs text-gray-400">
-                          Ref: {txn.reference_id.substring(0, 8)}
+                          Ref: {referenceId.substring(0, 8)}
                         </div>
                       )}
                     </div>
@@ -274,35 +307,35 @@ export default function AdminTransactions() {
                         {txn.user_name}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {txn.user_email}
+                        {toDisplayText(txn?.user_email)}
                       </div>
                       <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                        {txn.role}
+                        {role}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeColor(
-                        txn.type,
+                        type,
                       )}`}
                     >
-                      {txn.type.replace(/_/g, " ").toUpperCase()}
+                      {type.replace(/_/g, " ").toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div
                       className={`text-sm font-bold ${
-                        txn.type === "credit" || txn.type === "escrow_release"
+                        type === "credit" || type === "escrow_release"
                           ? "text-green-600"
                           : "text-red-600"
                       }`}
                     >
-                      {txn.type === "credit" || txn.type === "escrow_release"
+                      {type === "credit" || type === "escrow_release"
                         ? "+"
                         : "-"}
                       $
-                      {parseFloat(txn.amount).toLocaleString(undefined, {
+                      {amount.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -311,17 +344,17 @@ export default function AdminTransactions() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        txn.status,
+                        status,
                       )}`}
                     >
-                      {txn.status.toUpperCase()}
+                      {status.toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(txn.created_at).toLocaleString()}
+                    {createdAt}
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
