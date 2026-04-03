@@ -53,6 +53,7 @@ const ExportDocuments = React.lazy(() => import("./pages/ExportDocuments"));
 const ExportLogistics = React.lazy(() => import("./pages/ExportLogistics"));
 const MockPayment = React.lazy(() => import("./pages/MockPayment.tsx"));
 const PaynowPayment = React.lazy(() => import("./pages/PaynowPayment"));
+const AccountsOfficerDashboard = React.lazy(() => import("./pages/AccountsOfficerDashboard"));
 
 function App() {
   return (
@@ -136,6 +137,14 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+  path="/accounts"
+  element={
+    <ProtectedRoute allowedRoles={["accounts_officer"]}>
+      <AccountsOfficerDashboard />
+    </ProtectedRoute>
+  }
+/>
                   <Route
                     path="/wallet"
                     element={
