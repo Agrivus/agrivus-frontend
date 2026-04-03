@@ -54,6 +54,7 @@ const ExportLogistics = React.lazy(() => import("./pages/ExportLogistics"));
 const MockPayment = React.lazy(() => import("./pages/MockPayment.tsx"));
 const PaynowPayment = React.lazy(() => import("./pages/PaynowPayment"));
 const AccountsOfficerDashboard = React.lazy(() => import("./pages/AccountsOfficerDashboard"));
+const AdminCropTracker = React.lazy(() => import("./pages/AdminCropTracker"));
 
 function App() {
   return (
@@ -297,6 +298,14 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+  path="/admin/crop-tracker"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCropTracker />
+    </ProtectedRoute>
+  }
+/>
                   <Route
                     path="/admin/security"
                     element={

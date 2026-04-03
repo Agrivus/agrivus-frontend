@@ -403,6 +403,15 @@ const AdminDashboard: React.FC = () => {
               </button>
 
               <button
+                onClick={() => navigate("/admin/crop-tracker")}
+                className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow border-2 border-transparent hover:border-primary-green"
+              >
+                <div className="text-4xl mb-2">🌾</div>
+                <h3 className="font-bold text-gray-800">Crop Tracker</h3>
+                <p className="text-sm text-gray-600">Track farmer harvests</p>
+              </button>
+
+              <button
                 onClick={() => navigate("/admin/transactions")}
                 className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow border-2 border-transparent hover:border-primary-green"
               >
