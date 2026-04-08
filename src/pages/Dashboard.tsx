@@ -2,12 +2,20 @@ import React, { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Card, LoadingSpinner, BoostBadge } from "../components/common";
+import ClaimPendingBanner from "../components/common/ClaimPendingBanner";
 import StatCard from "../components/common/StatCard";
 
 const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
+  const [claimMatch, setClaimMatch] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("claimMatch") ?? "null");
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     // Refresh user data to get latest stats
@@ -470,6 +478,16 @@ const Dashboard: React.FC = () => {
             Role: <span className="font-semibold capitalize">{user?.role}</span>
           </p>
         </div>
+
+        {claimMatch && user?.role === "farmer" && (
+          <ClaimPendingBanner
+            claimMatch={claimMatch}
+            onDismiss={() => {
+              localStorage.removeItem("claimMatch");
+              setClaimMatch(null);
+            }}
+          />
+        )}
 
         {/* Dashboard Content */}
         {renderDashboardContent()}

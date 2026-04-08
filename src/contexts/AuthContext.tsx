@@ -61,6 +61,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setToken(userToken);
 
         localStorage.setItem("token", userToken);
+        if (response.data.data.claimPending && response.data.data.claimMatch) {
+          localStorage.setItem(
+            "claimMatch",
+            JSON.stringify(response.data.data.claimMatch),
+          );
+        }
         localStorage.setItem("user", JSON.stringify(userData));
       }
     } catch (error: any) {

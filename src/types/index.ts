@@ -199,6 +199,11 @@ export interface AuthResponse {
     user: User;
     token: string;
     refreshToken: string;
+    claimPending?: boolean;
+    claimMatch?: {
+      unregisteredFarmerName: string;
+      matchedBy: string;
+    } | null;
   };
 }
 
