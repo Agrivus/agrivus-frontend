@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, Card } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 
 const Home: React.FC = () => {
   const { user, isAuthenticated, refreshUser } = useAuth();
+  const [isPromoMuted, setIsPromoMuted] = useState(true);
 
   // Refresh user data on page load to get latest stats
   useEffect(() => {
@@ -102,11 +103,22 @@ const Home: React.FC = () => {
 
             <div className="relative">
               <div className="relative rounded-2xl bg-white p-3 shadow-2xl">
-                <img
-                  src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80"
-                  alt="Smart farming"
+                <video
                   className="rounded-xl w-full h-auto object-cover"
+                  src="/promo.mp4"
+                  muted={isPromoMuted}
+                  autoPlay
+                  loop
+                  playsInline
                 />
+                <button
+                  type="button"
+                  onClick={() => setIsPromoMuted((current) => !current)}
+                  className="absolute bottom-5 right-5 rounded-full bg-black/70 text-white text-xs font-semibold px-4 py-2 hover:bg-black/80 transition"
+                  aria-label={isPromoMuted ? "Unmute promo video" : "Mute promo video"}
+                >
+                  {isPromoMuted ? "Unmute" : "Mute"}
+                </button>
               </div>
 
               <div className="absolute -top-6 right-6 bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">

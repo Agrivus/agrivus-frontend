@@ -10,8 +10,8 @@ describe("getRoleLandingRoute", () => {
     expect(getRoleLandingRoute("support_moderator")).toBe("/moderator");
   });
 
-  it("should redirect accounts_officer to /admin/transactions", () => {
-    expect(getRoleLandingRoute("accounts_officer")).toBe("/admin/transactions");
+  it("should redirect accounts_officer to /accounts", () => {
+    expect(getRoleLandingRoute("accounts_officer")).toBe("/accounts");
   });
 
   it("should redirect farmer to /dashboard", () => {

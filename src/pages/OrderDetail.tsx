@@ -8,6 +8,7 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 import { BuyerTransporterSelectionModal } from "../components/orders/BuyerTransporterSelectionModal";
 import { ordersService } from "../services/ordersService";
 import chatService from "../services/chatService";
+import api from "../services/api";
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,9 +24,32 @@ const OrderDetail: React.FC = () => {
   const [showTransporterSelection, setShowTransporterSelection] =
     useState(false);
 
+  // ── Handoff state ──────────────────────────────────────────────────────────
+  const [showHandoffModal, setShowHandoffModal]         = useState(false);
+  const [handoffPassword, setHandoffPassword]           = useState("");
+  const [handoffError, setHandoffError]                 = useState("");
+  const [handoffLoading, setHandoffLoading]             = useState(false);
+  const [handoffSuccess, setHandoffSuccess]             = useState(false);
+
+  // ── Delivery password setup state (buyer) ──────────────────────────────────
+  const [showPasswordSetup, setShowPasswordSetup]       = useState(false);
+  const [hasDeliveryPassword, setHasDeliveryPassword]   = useState<boolean | null>(null);
+  const [newPassword, setNewPassword]                   = useState("");
+  const [currentPassword, setCurrentPassword]           = useState("");
+  const [passwordSetupError, setPasswordSetupError]     = useState("");
+  const [passwordSetupLoading, setPasswordSetupLoading] = useState(false);
+  const [passwordSetupSuccess, setPasswordSetupSuccess] = useState("");
+
   useEffect(() => {
     fetchOrderDetails();
   }, [id]);
+
+  useEffect(() => {
+    // Check if buyer has a delivery password set
+    if (user?.role === "buyer" || user?.role === "farmer" || user?.role === "agro_supplier") {
+      checkDeliveryPasswordStatus();
+    }
+  }, [user]);
 
   const fetchOrderDetails = async () => {
     try {
@@ -40,6 +64,15 @@ const OrderDetail: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const checkDeliveryPasswordStatus = async () => {
+    try {
+      const res = await api.get("/auth/delivery-password/status");
+      if (res.data.success) setHasDeliveryPassword(res.data.data.hasDeliveryPassword);
+    } catch { /* non-critical */ }
+  };
+
+  // ── Standard buyer confirm ─────────────────────────────────────────────────
 
   const handleConfirmDelivery = async () => {
     if (
@@ -63,6 +96,63 @@ const OrderDetail: React.FC = () => {
       setActionError(err.message || "Failed to confirm delivery");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // ── Handoff confirm (seller-initiated, buyer enters password) ──────────────
+
+  const handleHandoffConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!handoffPassword.trim()) {
+      setHandoffError("Please enter the buyer's delivery password");
+      return;
+    }
+    try {
+      setHandoffError(""); setHandoffLoading(true);
+      const res = await api.post(`/orders/${id}/handoff-confirm`, {
+        deliveryPassword: handoffPassword,
+      });
+      if (res.data.success) {
+        setHandoffSuccess(true);
+        setSuccessMessage("✅ Handoff confirmed. Funds released to all parties.");
+        fetchOrderDetails();
+        setTimeout(() => setShowHandoffModal(false), 2000);
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message ?? "Incorrect password or handoff failed";
+      if (err.response?.data?.data?.fallbackRequired) {
+        setHandoffError("The buyer hasn't set a delivery password yet. Ask them to confirm delivery from their account instead.");
+      } else {
+        setHandoffError(msg);
+      }
+    } finally {
+      setHandoffLoading(false);
+    }
+  };
+
+  // ── Delivery password setup ────────────────────────────────────────────────
+
+  const handleSetDeliveryPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 4) {
+      setPasswordSetupError("Password must be at least 4 characters");
+      return;
+    }
+    try {
+      setPasswordSetupError(""); setPasswordSetupLoading(true);
+      const payload: any = { password: newPassword };
+      if (hasDeliveryPassword) payload.currentPassword = currentPassword;
+      const res = await api.put("/auth/delivery-password", payload);
+      if (res.data.success) {
+        setPasswordSetupSuccess(res.data.message);
+        setHasDeliveryPassword(true);
+        setNewPassword(""); setCurrentPassword("");
+        setTimeout(() => { setShowPasswordSetup(false); setPasswordSetupSuccess(""); }, 2000);
+      }
+    } catch (err: any) {
+      setPasswordSetupError(err.response?.data?.message ?? "Failed to set password");
+    } finally {
+      setPasswordSetupLoading(false);
     }
   };
 
@@ -263,6 +353,9 @@ const OrderDetail: React.FC = () => {
     order.order.usesTransport &&
     !order.transporter;
 
+  // Handoff button visible to farmer or transporter when order is delivered
+  const canInitiateHandoff = (isFarmer || isTransporter) && order.order.status === "delivered";
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-5xl">
@@ -292,6 +385,25 @@ const OrderDetail: React.FC = () => {
         {successMessage && (
           <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
             {successMessage}
+          </div>
+        )}
+
+        {/* Buyer delivery password prompt */}
+        {isBuyer && hasDeliveryPassword === false && (
+          <div className="mb-6 bg-amber-50 border border-amber-300 rounded-xl p-4 flex items-start gap-3">
+            <div className="text-2xl">🔑</div>
+            <div className="flex-1">
+              <p className="font-semibold text-amber-900">Set your delivery password</p>
+              <p className="text-sm text-amber-800 mt-1">
+                Set a delivery password so the farmer or transporter can confirm receipt on your behalf when they hand over goods — no phone needed.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowPasswordSetup(true)}
+              className="shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Set Password
+            </button>
           </div>
         )}
 
@@ -787,6 +899,42 @@ const OrderDetail: React.FC = () => {
               )}
             </Card>
 
+            {/* Buyer delivery password management */}
+            {isBuyer && hasDeliveryPassword !== null && (
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-lg font-bold text-gray-800">🔑 Delivery Password</h3>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${hasDeliveryPassword ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                    {hasDeliveryPassword ? "Set" : "Not set"}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">
+                  Used by the farmer or transporter to confirm receipt on your behalf at handoff.
+                </p>
+                <button onClick={() => setShowPasswordSetup(true)} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  {hasDeliveryPassword ? "Change Password" : "Set Password"}
+                </button>
+              </Card>
+            )}
+
+            {/* ── HANDOFF CONFIRM CARD (farmer or transporter) ── */}
+            {canInitiateHandoff && (
+              <Card className="p-6 border-2 border-green-300 bg-green-50">
+                <h3 className="text-lg font-bold text-gray-800 mb-2">📱 Handoff Confirmation</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Hand your phone to the buyer. They enter their delivery password to instantly release payment — no app-switching needed.
+                </p>
+                <Button variant="primary" className="w-full" onClick={() => { setShowHandoffModal(true); setHandoffPassword(""); setHandoffError(""); setHandoffSuccess(false); }}>
+                  🔑 Confirm Handoff with Buyer's Password
+                </Button>
+                {isBuyer && (
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Or the buyer can <button className="text-green-600 underline" onClick={handleConfirmDelivery}>confirm from their own account</button>
+                  </p>
+                )}
+              </Card>
+            )}
+
             {/* Buyer Actions - Delivery Confirmation */}
             {isBuyer && (
               <>
@@ -1175,6 +1323,94 @@ const OrderDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ── HANDOFF MODAL ── */}
+      {showHandoffModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            {handoffSuccess ? (
+              <div className="text-center py-4">
+                <div className="text-5xl mb-3">✅</div>
+                <h2 className="text-xl font-bold text-green-700">Payment Released!</h2>
+                <p className="text-gray-600 text-sm mt-2">Transaction complete. Thank you!</p>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-gray-900 mb-1 text-center">Buyer Confirmation</h2>
+                <p className="text-sm text-gray-500 text-center mb-5">
+                  Hand this phone to the buyer. They enter their delivery password to release payment.
+                </p>
+
+                <form onSubmit={handleHandoffConfirm} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 text-center">
+                      🔑 Delivery Password
+                    </label>
+                    <input
+                      type="password"
+                      value={handoffPassword}
+                      onChange={(e) => setHandoffPassword(e.target.value)}
+                      placeholder="Enter your delivery password"
+                      autoComplete="off"
+                      autoFocus
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-center text-lg tracking-widest focus:border-green-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {handoffError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm text-center">
+                      {handoffError}
+                    </div>
+                  )}
+
+                  <Button type="submit" variant="primary" className="w-full py-3 text-base" isLoading={handoffLoading} disabled={handoffLoading}>
+                    ✅ Confirm & Release Payment
+                  </Button>
+
+                  <button type="button" onClick={() => setShowHandoffModal(false)} className="w-full text-gray-500 hover:text-gray-700 text-sm py-2">
+                    Cancel
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── DELIVERY PASSWORD SETUP MODAL ── */}
+      {showPasswordSetup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">🔑 {hasDeliveryPassword ? "Change" : "Set"} Delivery Password</h2>
+            <p className="text-sm text-gray-500 mb-5">
+              This password is only used at the point of delivery — the farmer or transporter will enter it on your behalf.
+            </p>
+
+            <form onSubmit={handleSetDeliveryPassword} className="space-y-4">
+              {hasDeliveryPassword && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                  <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required placeholder="Enter current delivery password" className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required placeholder="At least 4 characters" minLength={4} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              </div>
+
+              {passwordSetupError && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">{passwordSetupError}</div>}
+              {passwordSetupSuccess && <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg text-sm">{passwordSetupSuccess}</div>}
+
+              <div className="flex gap-3">
+                <button type="button" onClick={() => { setShowPasswordSetup(false); setPasswordSetupError(""); setPasswordSetupSuccess(""); }} className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition-colors">Cancel</button>
+                <button type="submit" disabled={passwordSetupLoading} className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+                  {passwordSetupLoading ? "Saving..." : "Save Password"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <BuyerTransporterSelectionModal
         orderId={order.order.id}

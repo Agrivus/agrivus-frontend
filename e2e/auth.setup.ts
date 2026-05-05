@@ -23,7 +23,7 @@ const ADMIN_STATE = path.join(__dirname, ".auth/admin.json");
 const API_BASE_URL = (
   process.env.PLAYWRIGHT_API_BASE_URL ??
   process.env.VITE_API_BASE_URL ??
-  "http://localhost:5000"
+  "http://127.0.0.1:5000"
 ).replace(/\/$/, "");
 const AUTO_REGISTER_BUYER =
   process.env.E2E_AUTO_REGISTER_BUYER === "true" ||
