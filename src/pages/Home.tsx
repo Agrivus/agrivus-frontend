@@ -19,16 +19,26 @@ const Home: React.FC = () => {
   const GuestHome = () => (
     <div>
       {/* Hero Section */}
-      <section
-        className="relative bg-primary-green text-white py-32"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(26, 92, 42, 0.9), rgba(26, 92, 42, 0.9)), url(https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="container mx-auto animate-fade-up px-4 md:px-16 lg:px-32">
+      <section className="relative overflow-hidden bg-primary-green text-white py-32">
+        <div className="absolute inset-0 z-0">
+          <video
+            className="h-full w-full object-cover"
+            src="/promo.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            aria-hidden="true"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(26, 92, 42, 0.9), rgba(26, 92, 42, 0.9))",
+            }}
+          />
+        </div>
+        <div className="container mx-auto animate-fade-up px-4 md:px-16 lg:px-32 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="mt-6 text-4xl md:text-6xl font-bold font-serif leading-tight">
