@@ -8,6 +8,7 @@ interface Plan {
   name: string;
   billing_cycle: "monthly" | "annual";
   price_usd: string;
+  plan_type: string;
   is_active: boolean;
   created_by_name: string;
   created_at: string;
@@ -43,7 +44,7 @@ export default function AdminFarmLogPlans() {
   const [activeTab,     setActiveTab]     = useState<"plans" | "subscribers">("plans");
   const [modalOpen,     setModalOpen]     = useState(false);
   const [editingId,     setEditingId]     = useState<string | null>(null);
-  const [form,          setForm]          = useState({ name: "", billing_cycle: "monthly", price_usd: "" });
+  const [form,          setForm]          = useState({ name: "", billing_cycle: "monthly", price_usd: "", plan_type: "farm_log" });
   const [subFilter,     setSubFilter]     = useState("");
 
   useEffect(() => { loadPlans(); loadSubscriptions(); }, []);
@@ -75,13 +76,13 @@ export default function AdminFarmLogPlans() {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm({ name: "", billing_cycle: "monthly", price_usd: "" });
+    setForm({ name: "", billing_cycle: "monthly", price_usd: "", plan_type: "farm_log" });
     setModalOpen(true);
   };
 
   const openEdit = (plan: Plan) => {
     setEditingId(plan.id);
-    setForm({ name: plan.name, billing_cycle: plan.billing_cycle, price_usd: plan.price_usd });
+    setForm({ name: plan.name, billing_cycle: plan.billing_cycle, price_usd: plan.price_usd, plan_type: plan.plan_type ?? "farm_log" });
     setModalOpen(true);
   };
 
@@ -95,7 +96,12 @@ export default function AdminFarmLogPlans() {
         await api.put(`/admin/farm-log/plans/${editingId}`, { name: form.name, price_usd: Number(form.price_usd) });
         flash("success", "Plan updated");
       } else {
-        await api.post("/admin/farm-log/plans", { name: form.name, billing_cycle: form.billing_cycle, price_usd: Number(form.price_usd) });
+        await api.post("/admin/farm-log/plans", {
+          name: form.name,
+          billing_cycle: form.billing_cycle,
+          price_usd: Number(form.price_usd),
+          plan_type: form.plan_type ?? "farm_log",
+        });
         flash("success", "Plan created");
       }
       setModalOpen(false);
@@ -287,6 +293,16 @@ export default function AdminFarmLogPlans() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500">
                     <option value="monthly">Monthly</option>
                     <option value="annual">Annual</option>
+                  </select>
+                </div>
+              )}
+              {!editingId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Plan Type</label>
+                  <select value={form.plan_type ?? "farm_log"} onChange={(e) => setForm((f) => ({ ...f, plan_type: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500">
+                    <option value="farm_log">Farm Log</option>
+                    <option value="farm_os">Farm OS</option>
                   </select>
                 </div>
               )}

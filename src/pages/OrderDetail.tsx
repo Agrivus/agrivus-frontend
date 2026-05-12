@@ -45,8 +45,7 @@ const OrderDetail: React.FC = () => {
   }, [id]);
 
   useEffect(() => {
-    // Check if buyer has a delivery password set
-    if (user?.role === "buyer" || user?.role === "farmer" || user?.role === "agro_supplier") {
+    if (user) {
       checkDeliveryPasswordStatus();
     }
   }, [user]);
@@ -456,13 +455,15 @@ const OrderDetail: React.FC = () => {
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${
                         order.order.status === "in_transit" ||
-                        order.order.status === "delivered"
+                        order.order.status === "delivered" ||
+                        order.order.status === "confirmed"
                           ? "bg-green-500"
                           : "bg-gray-300"
                       }`}
                     >
                       {order.order.status === "in_transit" ||
-                      order.order.status === "delivered"
+                      order.order.status === "delivered" ||
+                      order.order.status === "confirmed"
                         ? "✓"
                         : "○"}
                     </div>
@@ -478,12 +479,16 @@ const OrderDetail: React.FC = () => {
                 <div className="flex items-center">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${
-                      order.order.status === "delivered"
+                      order.order.status === "delivered" ||
+                      order.order.status === "confirmed"
                         ? "bg-green-500"
                         : "bg-gray-300"
                     }`}
                   >
-                    {order.order.status === "delivered" ? "✓" : "○"}
+                    {order.order.status === "delivered" ||
+                    order.order.status === "confirmed"
+                      ? "✓"
+                      : "○"}
                   </div>
                   <div className="ml-4">
                     <p className="font-semibold">
@@ -885,7 +890,8 @@ const OrderDetail: React.FC = () => {
                 </div>
               </div>
 
-              {order.order.status !== "delivered" && (
+              {order.order.status !== "delivered" &&
+                order.order.status !== "confirmed" && (
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
                   <p className="font-semibold text-blue-900 mb-1">
                     💰 Payment Protection

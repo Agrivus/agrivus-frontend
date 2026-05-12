@@ -91,6 +91,7 @@ const Header: React.FC = () => {
     if (user?.role === "farmer") {
       authenticatedLinks.push({ to: "/export", label: "Export Gateway" });
       authenticatedLinks.push({ to: "/farm-log", label: "Farm Log" });
+      authenticatedLinks.push({ to: "/farm-os", label: "Farm OS" });
     }
 
     if (user?.role === "transporter") {

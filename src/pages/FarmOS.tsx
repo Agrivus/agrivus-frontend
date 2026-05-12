@@ -1,0 +1,3313 @@
+import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import api from "../services/api";
+import { Card, LoadingSpinner } from "../components/common";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface Farm {
+  id: string;
+  name: string;
+  location: string | null;
+  total_area_ha: string | null;
+  water_sources: string | null;
+  notes: string | null;
+  field_count: number;
+  worker_count: number;
+  active_crops: number;
+  livestock_groups: number;
+}
+
+interface Field {
+  id: string;
+  name: string;
+  area_ha: string | null;
+  soil_type: string | null;
+  irrigation_type: string | null;
+  current_use: string | null;
+  current_crop_type: string | null;
+  status: string;
+  notes: string | null;
+}
+
+interface Worker {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  role: string;
+  daily_wage_usd: string | null;
+  is_active: boolean;
+  total_wages_paid: string | null;
+  total_days_worked: string | null;
+}
+
+interface CropPlan {
+  id: string;
+  crop_type: string;
+  variety: string | null;
+  field_name: string | null;
+  planned_area_ha: string | null;
+  planting_date: string | null;
+  expected_harvest_date: string | null;
+  status: string;
+  expected_yield_kg: string | null;
+  activity_count: number;
+}
+
+interface LivestockGroup {
+  id: string;
+  species: string;
+  breed: string | null;
+  count: number;
+  purpose: string | null;
+  field_name: string | null;
+  total_cost: string | null;
+  activity_count: number;
+}
+
+interface InventoryItem {
+  id: string;
+  item_type: string;
+  name: string;
+  quantity: string;
+  unit: string | null;
+  unit_cost_usd: string | null;
+  reorder_level: string | null;
+  expiry_date: string | null;
+  low_stock: boolean;
+  expiring_soon: boolean;
+}
+
+interface LabourSummary {
+  total_entries: number;
+  workers_active: number;
+  total_hours: string;
+  total_wages: string;
+  total_area: string;
+}
+
+interface AIInsight {
+  id: string;
+  insight_type: string;
+  title: string;
+  content: string;
+  generated_at: string;
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const NAV = [
+  { key: "overview", label: "Overview", icon: "📊" },
+  { key: "fields", label: "Fields", icon: "🌍" },
+  { key: "crops", label: "Crop Plans", icon: "🌱" },
+  { key: "livestock", label: "Livestock", icon: "🐄" },
+  { key: "labour", label: "Labour", icon: "👷" },
+  { key: "inventory", label: "Inventory", icon: "📦" },
+  { key: "calendar", label: "Calendar", icon: "📅" },
+  { key: "reports", label: "Reports", icon: "📈" },
+  { key: "insights", label: "AI Insights", icon: "🤖" },
+] as const;
+
+type Section = (typeof NAV)[number]["key"];
+
+const CROP_STATUS_COLOR: Record<string, string> = {
+  planned: "bg-blue-100 text-blue-800",
+  active: "bg-green-100 text-green-800",
+  harvested: "bg-yellow-100 text-yellow-800",
+  failed: "bg-red-100 text-red-800",
+  cancelled: "bg-gray-100 text-gray-700",
+};
+
+const SPECIES_EMOJI: Record<string, string> = {
+  cattle: "🐄",
+  goat: "🐐",
+  sheep: "🐑",
+  poultry: "🐔",
+  pig: "🐷",
+  fish: "🐟",
+  bees: "🐝",
+  other: "🐾",
+};
+
+const INSIGHT_BORDER: Record<string, string> = {
+  labour: "border-blue-400",
+  crops: "border-green-400",
+  livestock: "border-yellow-400",
+  inventory: "border-orange-400",
+  financial: "border-purple-400",
+  risk: "border-red-400",
+  general: "border-gray-300",
+};
+
+const inputCls =
+  "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent";
+
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function FarmOS() {
+  // Subscription
+  const [subLoading, setSubLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [subscribing, setSubscribing] = useState(false);
+  const [subMsg, setSubMsg] = useState("");
+
+  // Data
+  const [farm, setFarm] = useState<Farm | null>(null);
+  const [fields, setFields] = useState<Field[]>([]);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [cropPlans, setCropPlans] = useState<CropPlan[]>([]);
+  const [livestock, setLivestock] = useState<LivestockGroup[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [alerts, setAlerts] = useState<InventoryItem[]>([]);
+  const [labourSummary, setLabourSummary] = useState<LabourSummary | null>(null);
+  const [insights, setInsights] = useState<AIInsight[]>([]);
+  const [calendar, setCalendar] = useState<any[]>([]);
+  const [plantingNow, setPlantingNow] = useState<any[]>([]);
+  const [weeklyReport, setWeeklyReport] = useState<any>(null);
+  const [monthlyReport, setMonthlyReport] = useState<any>(null);
+
+  // UI
+  const [section, setSection] = useState<Section>("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
+  const [genInsights, setGenInsights] = useState(false);
+
+  // Modal
+  const [modal, setModal] = useState<{ type: string | null; editing?: any }>(
+    { type: null }
+  );
+  const [form, setForm] = useState<Record<string, any>>({});
+
+  // ── Subscription ──────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    checkSub();
+  }, []);
+
+  const checkSub = async () => {
+    try {
+      setSubLoading(true);
+      const res = await api.get("/farm-os/subscription");
+      if (res.data.success) {
+        setHasAccess(res.data.data.access === "active");
+        setPlans(res.data.data.plans || []);
+      }
+    } catch {
+      setHasAccess(false);
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  // ── Load data ─────────────────────────────────────────────────────────────
+
+  const loadAll = useCallback(async () => {
+    if (!hasAccess) return;
+    setLoading(true);
+    try {
+      const results = await Promise.allSettled([
+        api.get("/farm-os/farm"),
+        api.get("/farm-os/fields"),
+        api.get("/farm-os/workers"),
+        api.get("/farm-os/crop-plans"),
+        api.get("/farm-os/livestock"),
+        api.get("/farm-os/inventory"),
+        api.get("/farm-os/labour"),
+        api.get("/farm-os/insights"),
+        api.get("/farm-os/calendar"),
+      ]);
+
+      const [
+        farmR,
+        fieldsR,
+        workersR,
+        cropsR,
+        lsR,
+        invR,
+        labR,
+        insR,
+        calR,
+      ] = results;
+
+      if (farmR.status === "fulfilled" && farmR.value.data.success)
+        setFarm(farmR.value.data.data.farm);
+      if (fieldsR.status === "fulfilled" && fieldsR.value.data.success)
+        setFields(fieldsR.value.data.data.fields);
+      if (workersR.status === "fulfilled" && workersR.value.data.success)
+        setWorkers(workersR.value.data.data.workers);
+      if (cropsR.status === "fulfilled" && cropsR.value.data.success)
+        setCropPlans(cropsR.value.data.data.cropPlans);
+      if (lsR.status === "fulfilled" && lsR.value.data.success)
+        setLivestock(lsR.value.data.data.groups);
+      if (invR.status === "fulfilled" && invR.value.data.success) {
+        setInventory(invR.value.data.data.inventory);
+        setAlerts(invR.value.data.data.alerts || []);
+      }
+      if (labR.status === "fulfilled" && labR.value.data.success)
+        setLabourSummary(labR.value.data.data.summary);
+      if (insR.status === "fulfilled" && insR.value.data.success)
+        setInsights(insR.value.data.data.insights);
+      if (calR.status === "fulfilled" && calR.value.data.success) {
+        setCalendar(calR.value.data.data.calendar);
+        setPlantingNow(calR.value.data.data.plantingNow);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [hasAccess]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  useEffect(() => {
+    if (section !== "reports" || !hasAccess) return;
+    Promise.allSettled([
+      api.get("/farm-os/reports/weekly"),
+      api.get("/farm-os/reports/monthly"),
+    ]).then(([w, m]) => {
+      if (w.status === "fulfilled" && w.value.data.success)
+        setWeeklyReport(w.value.data.data);
+      if (m.status === "fulfilled" && m.value.data.success)
+        setMonthlyReport(m.value.data.data);
+    });
+  }, [section, hasAccess]);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  const flash = (type: "success" | "error", msg: string) => {
+    setFeedback({ type, msg });
+    setTimeout(() => setFeedback(null), 4000);
+  };
+
+  const openModal = (type: string, editing?: any) => {
+    setModal({ type, editing });
+    setForm(editing ? { ...editing } : {});
+  };
+
+  const closeModal = () => {
+    setModal({ type: null });
+    setForm({});
+  };
+
+  const navigate = (s: Section) => {
+    setSection(s);
+    setSidebarOpen(false);
+  };
+
+  const handleSubscribe = async (planId: string) => {
+    try {
+      setSubscribing(true);
+      setSubMsg("");
+      const r = await api.post("/farm-os/subscribe/wallet", { planId });
+      if (r.data.success) {
+        setSubMsg("Subscription activated!");
+        checkSub();
+      }
+    } catch (e: any) {
+      setSubMsg(e.response?.data?.message ?? "Payment failed");
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { type, editing } = modal;
+    try {
+      switch (type) {
+        case "farm":
+          await api.post("/farm-os/farm", form);
+          flash("success", "Farm profile saved");
+          loadAll();
+          break;
+        case "field":
+          editing?.id
+            ? await api.put(`/farm-os/fields/${editing.id}`, form)
+            : await api.post("/farm-os/fields", form);
+          flash("success", editing?.id ? "Field updated" : "Field created");
+          {
+            const fr = await api.get("/farm-os/fields");
+            if (fr.data.success) setFields(fr.data.data.fields);
+          }
+          break;
+        case "worker":
+          editing?.id
+            ? await api.put(`/farm-os/workers/${editing.id}`, form)
+            : await api.post("/farm-os/workers", form);
+          flash("success", editing?.id ? "Worker updated" : "Worker added");
+          {
+            const wr = await api.get("/farm-os/workers");
+            if (wr.data.success) setWorkers(wr.data.data.workers);
+          }
+          break;
+        case "crop":
+          editing?.id
+            ? await api.put(`/farm-os/crop-plans/${editing.id}`, form)
+            : await api.post("/farm-os/crop-plans", form);
+          flash(
+            "success",
+            editing?.id ? "Crop plan updated" : "Crop plan created"
+          );
+          {
+            const cr = await api.get("/farm-os/crop-plans");
+            if (cr.data.success) setCropPlans(cr.data.data.cropPlans);
+          }
+          break;
+        case "crop-activity":
+          await api.post("/farm-os/crop-activities", form);
+          flash("success", "Activity logged");
+          break;
+        case "livestock":
+          editing?.id
+            ? await api.put(`/farm-os/livestock/${editing.id}`, form)
+            : await api.post("/farm-os/livestock", form);
+          flash("success", editing?.id ? "Updated" : "Livestock group created");
+          {
+            const lr = await api.get("/farm-os/livestock");
+            if (lr.data.success) setLivestock(lr.data.data.groups);
+          }
+          break;
+        case "livestock-activity":
+          await api.post("/farm-os/livestock-activities", form);
+          flash("success", "Activity logged");
+          {
+            const lr2 = await api.get("/farm-os/livestock");
+            if (lr2.data.success) setLivestock(lr2.data.data.groups);
+          }
+          break;
+        case "labour":
+          await api.post("/farm-os/labour", form);
+          flash("success", "Labour day logged");
+          {
+            const labR = await api.get("/farm-os/labour");
+            if (labR.data.success) setLabourSummary(labR.data.data.summary);
+          }
+          break;
+        case "inventory":
+          editing?.id
+            ? await api.put(`/farm-os/inventory/${editing.id}`, form)
+            : await api.post("/farm-os/inventory", form);
+          flash("success", editing?.id ? "Item updated" : "Item added");
+          {
+            const ir = await api.get("/farm-os/inventory");
+            if (ir.data.success) {
+              setInventory(ir.data.data.inventory);
+              setAlerts(ir.data.data.alerts || []);
+            }
+          }
+          break;
+        case "calendar":
+          await api.post("/farm-os/calendar", form);
+          flash("success", "Calendar entry added");
+          {
+            const calR = await api.get("/farm-os/calendar");
+            if (calR.data.success) {
+              setCalendar(calR.data.data.calendar);
+              setPlantingNow(calR.data.data.plantingNow);
+            }
+          }
+          break;
+      }
+      closeModal();
+    } catch (err: any) {
+      flash("error", err.response?.data?.message ?? "Failed to save");
+    }
+  };
+
+  const handleGenerateInsights = async () => {
+    try {
+      setGenInsights(true);
+      const r = await api.post("/farm-os/insights/generate");
+      if (r.data.success) {
+        setInsights(r.data.data.insights);
+        flash("success", "AI insights generated");
+      }
+    } catch (err: any) {
+      flash("error", err.response?.data?.message ?? "Failed to generate insights");
+    } finally {
+      setGenInsights(false);
+    }
+  };
+
+  // ── Gates ─────────────────────────────────────────────────────────────────
+
+  if (subLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+
+  if (!hasAccess)
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-3">🚜</div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Farm OS</h1>
+            <p className="text-gray-600 text-lg">
+              The complete digital operating system for your farm.
+            </p>
+          </div>
+          <Card className="mb-6">
+            <h2 className="font-bold text-gray-900 mb-3">
+              Everything in one place
+            </h2>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                "👷 Labour & payroll",
+                "🌱 Crop planning",
+                "🐄 Livestock management",
+                "📦 Inventory & alerts",
+                "📊 Weekly/monthly reports",
+                "🤖 AI farm insights",
+                "🌍 Field management",
+                "📅 Cropping calendar",
+              ].map((f) => (
+                <div
+                  key={f}
+                  className="flex items-center gap-2 text-sm text-gray-700"
+                >
+                  <span className="text-green-500">✓</span>
+                  {f}
+                </div>
+              ))}
+            </div>
+          </Card>
+          {subMsg && (
+            <div
+              className={`mb-4 px-4 py-3 rounded-lg text-sm border ${
+                subMsg.includes("activated")
+                  ? "bg-green-50 border-green-200 text-green-800"
+                  : "bg-red-50 border-red-200 text-red-800"
+              }`}
+            >
+              {subMsg}
+            </div>
+          )}
+          {plans.length === 0 ? (
+            <Card>
+              <p className="text-center text-gray-500 py-6">
+                No Farm OS plans available. Contact support.
+              </p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {plans.map((plan: any) => (
+                <Card
+                  key={plan.id}
+                  className={`border-2 ${
+                    plan.billing_cycle === "annual"
+                      ? "border-green-500"
+                      : "border-gray-200"
+                  }`}
+                >
+                  {plan.billing_cycle === "annual" && (
+                    <div className="text-xs font-bold text-green-600 mb-1 uppercase tracking-wider">
+                      Best Value
+                    </div>
+                  )}
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {plan.name}
+                  </h3>
+                  <div className="text-3xl font-bold text-green-600 my-2">
+                    ${parseFloat(plan.price_usd).toFixed(2)}
+                    <span className="text-sm font-normal text-gray-500">
+                      /{plan.billing_cycle === "monthly" ? "mo" : "yr"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={subscribing}
+                    className="w-full mt-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+                  >
+                    {subscribing ? "Processing..." : "Pay from Wallet"}
+                  </button>
+                </Card>
+              ))}
+            </div>
+          )}
+          <div className="mt-6 text-center">
+            <Link
+              to="/dashboard"
+              className="text-green-600 hover:text-green-700 text-sm"
+            >
+              ← Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+
+  if (!farm && !loading)
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4">
+        <div className="max-w-lg mx-auto">
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-3">🏡</div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Set Up Your Farm
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Enter your farm details to get started.
+            </p>
+          </div>
+          <Card>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  await api.post("/farm-os/farm", form);
+                  loadAll();
+                } catch (err: any) {
+                  flash("error", err.response?.data?.message ?? "Failed");
+                }
+              }}
+              className="space-y-4"
+            >
+              <Field label="Farm Name" required>
+                <input
+                  type="text"
+                  value={form.name ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  required
+                  placeholder="e.g. Mukasa Family Farm"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Location">
+                <input
+                  type="text"
+                  value={form.location ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, location: e.target.value }))
+                  }
+                  placeholder="e.g. Mazowe, Mashonaland"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Total Size (hectares)">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={form.total_area_ha ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      total_area_ha: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. 50"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Water Sources">
+                <input
+                  type="text"
+                  value={form.water_sources ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      water_sources: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. Borehole, River, Dam"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Notes">
+                <textarea
+                  value={form.notes ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, notes: e.target.value }))
+                  }
+                  rows={2}
+                  className={inputCls + " resize-none"}
+                />
+              </Field>
+              <button
+                type="submit"
+                className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Save Farm Profile →
+              </button>
+            </form>
+          </Card>
+        </div>
+      </div>
+    );
+
+  // ── Main layout ───────────────────────────────────────────────────────────
+
+  const activeCrops = cropPlans.filter((c) => c.status === "active").length;
+  const totalLivestock = livestock.reduce((s, g) => s + g.count, 0);
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Top bar */}
+      <div className="bg-dark-green text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-md">
+        <div className="flex items-center gap-3">
+          {/* Hamburger — mobile */}
+          <button
+            onClick={() => setSidebarOpen((o) => !o)}
+            className="md:hidden text-white p-1"
+            aria-label="Toggle menu"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+          <div>
+            <div className="font-bold text-lg leading-tight">
+              🚜 {farm?.name ?? "Farm OS"}
+            </div>
+            <div className="text-xs text-green-200">
+              {farm?.location ?? ""}
+              {farm?.total_area_ha
+                ? ` · ${parseFloat(farm.total_area_ha).toLocaleString()} ha`
+                : ""}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 text-sm">
+          <button
+            onClick={() => openModal("farm", farm)}
+            className="text-green-200 hover:text-white transition-colors"
+          >
+            Edit Farm
+          </button>
+          <Link
+            to="/dashboard"
+            className="text-green-200 hover:text-white transition-colors"
+          >
+            ← Dashboard
+          </Link>
+        </div>
+      </div>
+
+      {feedback && (
+        <div
+          className={`mx-4 mt-3 px-4 py-3 rounded-lg border text-sm font-medium ${
+            feedback.type === "success"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-red-50 border-red-200 text-red-800"
+          }`}
+        >
+          {feedback.msg}
+        </div>
+      )}
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <aside
+          className={`${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0 fixed md:static inset-y-0 left-0 z-30 w-56 bg-white border-r border-gray-200 flex flex-col transition-transform duration-200 ease-in-out pt-16 md:pt-0`}
+        >
+          <nav className="flex-1 py-4 overflow-y-auto">
+            {NAV.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => navigate(item.key)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors text-left ${
+                  section === item.key
+                    ? "bg-green-50 text-primary-green border-r-2 border-primary-green"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+              >
+                <span className="text-base">{item.icon}</span>
+                {item.label}
+                {item.key === "inventory" && alerts.length > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                    {alerts.length}
+                  </span>
+                )}
+                {item.key === "insights" && insights.length > 0 && (
+                  <span className="ml-auto text-xs text-gray-400">
+                    {insights.length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+          {/* Quick log actions at bottom of sidebar */}
+          <div className="p-3 border-t border-gray-200 space-y-2">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-1 mb-2">
+              Quick Log
+            </p>
+            {[
+              {
+                label: "Labour Day",
+                action: () => {
+                  navigate("labour");
+                  openModal("labour");
+                },
+              },
+              {
+                label: "Crop Activity",
+                action: () => {
+                  navigate("crops");
+                  openModal("crop-activity");
+                },
+              },
+              {
+                label: "Livestock",
+                action: () => {
+                  navigate("livestock");
+                  openModal("livestock-activity");
+                },
+              },
+            ].map((a) => (
+              <button
+                key={a.label}
+                onClick={a.action}
+                className="w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-green-50 hover:text-primary-green rounded-lg transition-colors"
+              >
+                + {a.label}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* Sidebar overlay — mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-20 bg-black bg-opacity-30 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          {/* ── OVERVIEW ── */}
+          {section === "overview" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900">Farm Overview</h2>
+
+              {/* KPIs */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  {
+                    label: "Fields",
+                    value: farm?.field_count ?? 0,
+                    icon: "🌍",
+                    color: "bg-blue-50 text-blue-700",
+                    onClick: () => navigate("fields"),
+                  },
+                  {
+                    label: "Active Crops",
+                    value: activeCrops,
+                    icon: "🌱",
+                    color: "bg-green-50 text-green-700",
+                    onClick: () => navigate("crops"),
+                  },
+                  {
+                    label: "Livestock",
+                    value: totalLivestock,
+                    icon: "🐄",
+                    color: "bg-yellow-50 text-yellow-700",
+                    onClick: () => navigate("livestock"),
+                  },
+                  {
+                    label: "Workers",
+                    value: farm?.worker_count ?? 0,
+                    icon: "👷",
+                    color: "bg-purple-50 text-purple-700",
+                    onClick: () => navigate("labour"),
+                  },
+                ].map((kpi) => (
+                  <button
+                    key={kpi.label}
+                    onClick={kpi.onClick}
+                    className={`${kpi.color} rounded-xl p-4 text-center hover:shadow-md transition-shadow w-full`}
+                  >
+                    <div className="text-3xl mb-1">{kpi.icon}</div>
+                    <div className="text-2xl font-bold">{kpi.value}</div>
+                    <div className="text-sm font-medium">{kpi.label}</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Labour this month */}
+              {labourSummary && (
+                <Card>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900">
+                      Labour This Month
+                    </h3>
+                    <button
+                      onClick={() => navigate("labour")}
+                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                    >
+                      View all →
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      {
+                        label: "Man-Days",
+                        value: labourSummary.total_entries,
+                      },
+                      {
+                        label: "Hours",
+                        value: `${parseFloat(
+                          labourSummary.total_hours || "0"
+                        ).toFixed(0)}h`,
+                      },
+                      {
+                        label: "Wages Paid",
+                        value: `$${parseFloat(
+                          labourSummary.total_wages || "0"
+                        ).toFixed(2)}`,
+                      },
+                      {
+                        label: "Area (ha)",
+                        value: parseFloat(
+                          labourSummary.total_area || "0"
+                        ).toFixed(1),
+                      },
+                    ].map((s) => (
+                      <div
+                        key={s.label}
+                        className="bg-gray-50 rounded-lg p-3 text-center"
+                      >
+                        <div className="text-xl font-bold text-gray-900">
+                          {s.value}
+                        </div>
+                        <div className="text-xs text-gray-500">{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Two-column: Alerts + Planting now */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Inventory alerts */}
+                <Card>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-gray-900">
+                      ⚠️ Inventory Alerts
+                    </h3>
+                    <button
+                      onClick={() => navigate("inventory")}
+                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                    >
+                      View all →
+                    </button>
+                  </div>
+                  {alerts.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-4 text-center">
+                      All stock levels OK ✓
+                    </p>
+                  ) : (
+                    alerts.slice(0, 4).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                      >
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">
+                            {item.name}
+                          </span>
+                          <span className="ml-2 text-xs text-gray-400">
+                            {item.item_type}
+                          </span>
+                        </div>
+                        <div className="flex gap-1">
+                          {item.low_stock && (
+                            <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                              Low
+                            </span>
+                          )}
+                          {item.expiring_soon && (
+                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                              Expiring
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </Card>
+
+                {/* Planting now */}
+                <Card>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-gray-900">
+                      🌱 Planting This Month
+                    </h3>
+                    <button
+                      onClick={() => navigate("calendar")}
+                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                    >
+                      Calendar →
+                    </button>
+                  </div>
+                  {plantingNow.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-4 text-center">
+                      No calendar entries for this month
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {plantingNow.map((e: any) => (
+                        <span
+                          key={e.id}
+                          className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium"
+                        >
+                          {e.crop_type}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </div>
+
+              {/* Active crops summary */}
+              {cropPlans.filter((c) => c.status === "active").length > 0 && (
+                <Card>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900">
+                      Active Crop Plans
+                    </h3>
+                    <button
+                      onClick={() => navigate("crops")}
+                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                    >
+                      View all →
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {cropPlans
+                      .filter((c) => c.status === "active")
+                      .slice(0, 3)
+                      .map((plan) => (
+                        <div
+                          key={plan.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div>
+                            <span className="font-medium text-gray-900">
+                              {plan.crop_type}
+                            </span>
+                            {plan.variety && (
+                              <span className="text-sm text-gray-500 ml-1">
+                                ({plan.variety})
+                              </span>
+                            )}
+                            {plan.field_name && (
+                              <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                {plan.field_name}
+                              </span>
+                            )}
+                          </div>
+                          {plan.expected_harvest_date && (
+                            <span className="text-sm text-gray-600">
+                              Harvest:{" "}
+                              {new Date(
+                                plan.expected_harvest_date
+                              ).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* ── FIELDS ── */}
+          {section === "fields" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Fields & Zones
+                </h2>
+                <button
+                  onClick={() => openModal("field")}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  + Add Field
+                </button>
+              </div>
+              {fields.length === 0 ? (
+                <Card>
+                  <div className="py-16 text-center">
+                    <div className="text-5xl mb-3">🌍</div>
+                    <p className="font-medium text-gray-700">No fields yet</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Add fields or zones to organise your farm
+                    </p>
+                    <button
+                      onClick={() => openModal("field")}
+                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                    >
+                      Add First Field
+                    </button>
+                  </div>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {fields.map((field) => (
+                    <Card key={field.id}>
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="font-bold text-gray-900 text-lg">
+                          {field.name}
+                        </h3>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            field.status === "active"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {field.status}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5 text-sm text-gray-600">
+                        {field.area_ha && (
+                          <div className="flex justify-between">
+                            <span>Size</span>
+                            <span className="font-medium">
+                              {parseFloat(field.area_ha).toLocaleString()} ha
+                            </span>
+                          </div>
+                        )}
+                        {field.current_use && (
+                          <div className="flex justify-between">
+                            <span>Use</span>
+                            <span className="font-medium capitalize">
+                              {field.current_use}
+                            </span>
+                          </div>
+                        )}
+                        {field.current_crop_type && (
+                          <div className="flex justify-between">
+                            <span>Crop</span>
+                            <span className="font-medium text-green-700">
+                              {field.current_crop_type}
+                            </span>
+                          </div>
+                        )}
+                        {field.soil_type && (
+                          <div className="flex justify-between">
+                            <span>Soil</span>
+                            <span className="font-medium">
+                              {field.soil_type}
+                            </span>
+                          </div>
+                        )}
+                        {field.irrigation_type && (
+                          <div className="flex justify-between">
+                            <span>Irrigation</span>
+                            <span className="font-medium">
+                              {field.irrigation_type}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => openModal("field", field)}
+                        className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                      >
+                        Edit field →
+                      </button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── CROPS ── */}
+          {section === "crops" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Crop Plans</h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openModal("crop-activity")}
+                    className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    + Log Activity
+                  </button>
+                  <button
+                    onClick={() => openModal("crop")}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    + New Crop Plan
+                  </button>
+                </div>
+              </div>
+
+              {/* Filter tabs */}
+              <div className="flex gap-2 mb-4 flex-wrap">
+                {["all", "active", "planned", "harvested"].map((s) => {
+                  const count =
+                    s === "all"
+                      ? cropPlans.length
+                      : cropPlans.filter((c) => c.status === s).length;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setForm((f) => ({ ...f, _cropFilter: s }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        (form._cropFilter || "all") === s
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {s.charAt(0).toUpperCase() + s.slice(1)} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {cropPlans.length === 0 ? (
+                <Card>
+                  <div className="py-16 text-center">
+                    <div className="text-5xl mb-3">🌱</div>
+                    <p className="font-medium text-gray-700">No crop plans yet</p>
+                    <button
+                      onClick={() => openModal("crop")}
+                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                    >
+                      Create First Plan
+                    </button>
+                  </div>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {cropPlans
+                    .filter(
+                      (c) =>
+                        (form._cropFilter || "all") === "all" ||
+                        c.status === form._cropFilter
+                    )
+                    .map((plan) => (
+                      <Card key={plan.id}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                              <span className="font-bold text-gray-900 text-lg">
+                                {plan.crop_type}
+                              </span>
+                              {plan.variety && (
+                                <span className="text-sm text-gray-500">
+                                  ({plan.variety})
+                                </span>
+                              )}
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                  CROP_STATUS_COLOR[plan.status]
+                                }`}
+                              >
+                                {plan.status.toUpperCase()}
+                              </span>
+                              {plan.field_name && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                  {plan.field_name}
+                                </span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-gray-600">
+                              {plan.planned_area_ha && (
+                                <div>
+                                  Area:{" "}
+                                  <strong>
+                                    {parseFloat(
+                                      plan.planned_area_ha
+                                    ).toLocaleString()} ha
+                                  </strong>
+                                </div>
+                              )}
+                              {plan.planting_date && (
+                                <div>
+                                  Planted:{" "}
+                                  <strong>
+                                    {new Date(
+                                      plan.planting_date
+                                    ).toLocaleDateString("en-GB", {
+                                      day: "2-digit",
+                                      month: "short",
+                                    })}
+                                  </strong>
+                                </div>
+                              )}
+                              {plan.expected_harvest_date && (
+                                <div>
+                                  Harvest:{" "}
+                                  <strong>
+                                    {new Date(
+                                      plan.expected_harvest_date
+                                    ).toLocaleDateString("en-GB", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })}
+                                  </strong>
+                                </div>
+                              )}
+                              {plan.expected_yield_kg && (
+                                <div>
+                                  Expected:{" "}
+                                  <strong>
+                                    {parseFloat(
+                                      plan.expected_yield_kg
+                                    ).toLocaleString()} kg
+                                  </strong>
+                                </div>
+                              )}
+                            </div>
+                            {plan.activity_count > 0 && (
+                              <div className="mt-1.5 text-xs text-gray-400">
+                                {plan.activity_count} activities logged
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => openModal("crop", plan)}
+                            className="text-xs text-blue-600 hover:text-blue-700 font-medium shrink-0"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </Card>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── LIVESTOCK ── */}
+          {section === "livestock" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Livestock</h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openModal("livestock-activity")}
+                    className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium"
+                  >
+                    + Log Activity
+                  </button>
+                  <button
+                    onClick={() => openModal("livestock")}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                  >
+                    + Add Group
+                  </button>
+                </div>
+              </div>
+              {livestock.length === 0 ? (
+                <Card>
+                  <div className="py-16 text-center">
+                    <div className="text-5xl mb-3">🐄</div>
+                    <p className="font-medium text-gray-700">
+                      No livestock recorded
+                    </p>
+                    <button
+                      onClick={() => openModal("livestock")}
+                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                    >
+                      Add Livestock
+                    </button>
+                  </div>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {livestock.map((group) => (
+                    <Card key={group.id}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-3xl">
+                            {SPECIES_EMOJI[group.species] ?? "🐾"}
+                          </span>
+                          <div>
+                            <div className="font-bold text-gray-900 capitalize">
+                              {group.species}
+                            </div>
+                            {group.breed && (
+                              <div className="text-xs text-gray-500">
+                                {group.breed}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-bold text-gray-900">
+                            {group.count}
+                          </div>
+                          <div className="text-xs text-gray-500">head</div>
+                        </div>
+                      </div>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        {group.purpose && (
+                          <div className="flex justify-between">
+                            <span>Purpose</span>
+                            <span className="font-medium capitalize">
+                              {group.purpose}
+                            </span>
+                          </div>
+                        )}
+                        {group.field_name && (
+                          <div className="flex justify-between">
+                            <span>Location</span>
+                            <span className="font-medium">
+                              {group.field_name}
+                            </span>
+                          </div>
+                        )}
+                        {group.total_cost && parseFloat(group.total_cost) > 0 && (
+                          <div className="flex justify-between">
+                            <span>Total costs</span>
+                            <span className="font-medium">
+                              ${parseFloat(group.total_cost).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        {group.activity_count > 0 && (
+                          <div className="flex justify-between">
+                            <span>Activities</span>
+                            <span className="font-medium">
+                              {group.activity_count}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => openModal("livestock", group)}
+                        className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                      >
+                        Edit group →
+                      </button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── LABOUR ── */}
+          {section === "labour" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Labour Tracking
+                </h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openModal("worker")}
+                    className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium"
+                  >
+                    + Add Worker
+                  </button>
+                  <button
+                    onClick={() => openModal("labour")}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                  >
+                    + Log Labour Day
+                  </button>
+                </div>
+              </div>
+
+              {labourSummary && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  {[
+                    {
+                      label: "Man-Days (month)",
+                      value: labourSummary.total_entries,
+                    },
+                    {
+                      label: "Total Hours",
+                      value: `${parseFloat(
+                        labourSummary.total_hours || "0"
+                      ).toFixed(0)}h`,
+                    },
+                    {
+                      label: "Wages Paid",
+                      value: `$${parseFloat(
+                        labourSummary.total_wages || "0"
+                      ).toFixed(2)}`,
+                    },
+                    {
+                      label: "Area Covered (ha)",
+                      value: parseFloat(
+                        labourSummary.total_area || "0"
+                      ).toFixed(2),
+                    },
+                  ].map((s) => (
+                    <Card key={s.label} className="bg-blue-50">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-700">
+                          {s.value}
+                        </div>
+                        <div className="text-xs text-gray-600">{s.label}</div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              <Card>
+                <h3 className="font-bold text-gray-900 mb-4">
+                  Workers ({workers.length})
+                </h3>
+                {workers.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 text-sm">No workers added yet.</p>
+                    <button
+                      onClick={() => openModal("worker")}
+                      className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium"
+                    >
+                      + Add Worker
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {workers.map((worker) => (
+                      <div
+                        key={worker.id}
+                        className={`flex items-center justify-between p-3 rounded-lg ${
+                          worker.is_active ? "bg-gray-50" : "bg-red-50 opacity-60"
+                        }`}
+                      >
+                        <div>
+                          <span className="font-medium text-gray-900 text-sm">
+                            {worker.full_name}
+                          </span>
+                          <span
+                            className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                              worker.role === "manager"
+                                ? "bg-purple-100 text-purple-700"
+                                : "bg-gray-200 text-gray-600"
+                            }`}
+                          >
+                            {worker.role}
+                          </span>
+                          {worker.phone && (
+                            <span className="ml-2 text-xs text-gray-400">
+                              {worker.phone}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                          {worker.daily_wage_usd && (
+                            <span>
+                              ${parseFloat(worker.daily_wage_usd).toFixed(2)}/day
+                            </span>
+                          )}
+                          {worker.total_days_worked && (
+                            <span>{worker.total_days_worked} days</span>
+                          )}
+                          <button
+                            onClick={() => openModal("worker", worker)}
+                            className="text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {/* ── INVENTORY ── */}
+          {section === "inventory" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Inventory</h2>
+                <button
+                  onClick={() => openModal("inventory")}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                >
+                  + Add Item
+                </button>
+              </div>
+              {alerts.length > 0 && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800 font-medium">
+                  ⚠️ {alerts.length} item{alerts.length !== 1 ? "s" : ""} need
+                  attention
+                </div>
+              )}
+              {inventory.length === 0 ? (
+                <Card>
+                  <div className="py-16 text-center">
+                    <div className="text-5xl mb-3">📦</div>
+                    <p className="font-medium text-gray-700">No inventory items</p>
+                    <button
+                      onClick={() => openModal("inventory")}
+                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                    >
+                      Add First Item
+                    </button>
+                  </div>
+                </Card>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full bg-white rounded-xl shadow-sm">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        {[
+                          "Item",
+                          "Type",
+                          "Stock",
+                          "Unit Cost",
+                          "Total Value",
+                          "Status",
+                          "",
+                        ].map((h) => (
+                          <th
+                            key={h}
+                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {inventory.map((item) => (
+                        <tr
+                          key={item.id}
+                          className={`hover:bg-gray-50 ${
+                            item.low_stock || item.expiring_soon
+                              ? "bg-red-50"
+                              : ""
+                          }`}
+                        >
+                          <td className="px-4 py-3">
+                            <div className="font-medium text-gray-900 text-sm">
+                              {item.name}
+                            </div>
+                            {item.expiry_date && (
+                              <div className="text-xs text-gray-400">
+                                Exp: {new Date(item.expiry_date).toLocaleDateString("en-GB")}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600 capitalize">
+                            {item.item_type}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium">
+                            {parseFloat(item.quantity).toLocaleString()} {item.unit}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {item.unit_cost_usd
+                              ? `$${parseFloat(item.unit_cost_usd).toFixed(2)}`
+                              : "—"}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium">
+                            {item.unit_cost_usd
+                              ? `$${(
+                                  parseFloat(item.quantity) *
+                                  parseFloat(item.unit_cost_usd)
+                                ).toFixed(2)}`
+                              : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-1">
+                              {item.low_stock && (
+                                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                                  Low
+                                </span>
+                              )}
+                              {item.expiring_soon && (
+                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                                  Expiring
+                                </span>
+                              )}
+                              {!item.low_stock && !item.expiring_soon && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                  OK
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => openModal("inventory", item)}
+                              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── CALENDAR ── */}
+          {section === "calendar" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Cropping Calendar
+                </h2>
+                <button
+                  onClick={() => openModal("calendar")}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                >
+                  + Add Entry
+                </button>
+              </div>
+              {plantingNow.length > 0 && (
+                <Card className="mb-4 bg-green-50 border border-green-200">
+                  <h3 className="font-bold text-green-900 mb-2">
+                    🌱 Plant This Month
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {plantingNow.map((e: any) => (
+                      <span
+                        key={e.id}
+                        className="bg-green-200 text-green-900 text-sm px-3 py-1 rounded-full font-medium"
+                      >
+                        {e.crop_type}
+                        {e.expected_harvest_weeks
+                          ? ` (${e.expected_harvest_weeks}wks)`
+                          : ""}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+              )}
+              <div className="overflow-x-auto">
+                <table className="w-full bg-white rounded-xl shadow-sm">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      {[
+                        "Crop",
+                        "Region",
+                        "Plant (months)",
+                        "Harvest (weeks)",
+                        "Soil",
+                        "Water",
+                        "Pests",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {calendar.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-4 py-12 text-center text-gray-500"
+                        >
+                          No calendar entries yet
+                        </td>
+                      </tr>
+                    ) : (
+                      calendar.map((e: any) => (
+                        <tr key={e.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 font-medium text-gray-900 text-sm">
+                            {e.crop_type}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {e.region ?? "—"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {e.recommended_planting_start &&
+                            e.recommended_planting_end
+                              ? `${e.recommended_planting_start}–${e.recommended_planting_end}`
+                              : "—"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {e.expected_harvest_weeks ?? "—"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+                            {e.soil_requirements ?? "—"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+                            {e.water_requirements ?? "—"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+                            {e.common_pests ?? "—"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── REPORTS ── */}
+          {section === "reports" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900">Reports</h2>
+              {!weeklyReport && !monthlyReport ? (
+                <div className="py-16 flex justify-center">
+                  <LoadingSpinner />
+                </div>
+              ) : (
+                <>
+                  {monthlyReport && (
+                    <Card>
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">
+                        Monthly Summary —{" "}
+                        {new Date(
+                          monthlyReport.period.year,
+                          monthlyReport.period.month - 1
+                        ).toLocaleDateString("en-GB", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        {[
+                          {
+                            label: "Man-Days",
+                            value: monthlyReport.summary.totalManDays,
+                          },
+                          {
+                            label: "Wages",
+                            value: `$${parseFloat(
+                              monthlyReport.summary.totalWages || "0"
+                            ).toFixed(2)}`,
+                          },
+                          {
+                            label: "Input Costs",
+                            value: `$${parseFloat(
+                              monthlyReport.summary.totalInputs || "0"
+                            ).toFixed(2)}`,
+                          },
+                          {
+                            label: "Total Cost",
+                            value: `$${parseFloat(
+                              monthlyReport.summary.totalCost || "0"
+                            ).toFixed(2)}`,
+                          },
+                        ].map((s) => (
+                          <div
+                            key={s.label}
+                            className="bg-gray-50 rounded-lg p-3 text-center"
+                          >
+                            <div className="text-xl font-bold text-gray-900">
+                              {s.value}
+                            </div>
+                            <div className="text-xs text-gray-600">{s.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {monthlyReport.labour.byTask.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="font-semibold text-gray-800 mb-2 text-sm">
+                            Labour by Task
+                          </h4>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-gray-200">
+                                  {[
+                                    "Task",
+                                    "Man-Days",
+                                    "Hours",
+                                    "Area (ha)",
+                                    "Wages",
+                                  ].map((h) => (
+                                    <th
+                                      key={h}
+                                      className={`py-2 ${
+                                        h === "Task" ? "text-left" : "text-right"
+                                      } text-gray-500 font-medium`}
+                                    >
+                                      {h}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {monthlyReport.labour.byTask.map((row: any) => (
+                                  <tr
+                                    key={row.task_category}
+                                    className="border-b border-gray-100"
+                                  >
+                                    <td className="py-2 capitalize">
+                                      {row.task_category.replace("_", " ")}
+                                    </td>
+                                    <td className="py-2 text-right font-medium">
+                                      {row.man_days}
+                                    </td>
+                                    <td className="py-2 text-right">
+                                      {parseFloat(row.total_hours || "0").toFixed(
+                                        0
+                                      )}
+                                    </td>
+                                    <td className="py-2 text-right">
+                                      {parseFloat(
+                                        row.area_covered || "0"
+                                      ).toFixed(2)}
+                                    </td>
+                                    <td className="py-2 text-right text-red-600">
+                                      ${parseFloat(
+                                        row.total_wages || "0"
+                                      ).toFixed(2)}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                      {monthlyReport.inventory.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-gray-800 mb-2 text-sm">
+                            Inputs Consumed
+                          </h4>
+                          <div className="space-y-1">
+                            {monthlyReport.inventory.map((row: any) => (
+                              <div
+                                key={row.name}
+                                className="flex items-center justify-between text-sm py-1 border-b border-gray-100"
+                              >
+                                <span>
+                                  {row.name}{" "}
+                                  <span className="text-gray-400 text-xs">
+                                    ({row.item_type})
+                                  </span>
+                                </span>
+                                <span className="font-medium">
+                                  {parseFloat(row.total_used).toLocaleString()} {row.unit}
+                                </span>
+                                <span className="text-red-600">
+                                  ${parseFloat(row.total_cost || "0").toFixed(2)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  )}
+                  {weeklyReport && (
+                    <Card>
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">
+                        Weekly Summary — {weeklyReport.period.startDate} to{" "}
+                        {weeklyReport.period.endDate}
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="bg-gray-50 rounded p-3 text-center">
+                          <div className="text-xl font-bold text-blue-700">
+                            {weeklyReport.labour?.total_entries ?? 0}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            Labour Entries
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 rounded p-3 text-center">
+                          <div className="text-xl font-bold text-red-600">
+                            ${
+                              parseFloat(
+                                weeklyReport.labour?.total_wages ?? "0"
+                              ).toFixed(2)
+                            }
+                          </div>
+                          <div className="text-xs text-gray-600">Wages Paid</div>
+                        </div>
+                        <div className="bg-gray-50 rounded p-3 text-center">
+                          <div className="text-xl font-bold text-green-700">
+                            {weeklyReport.cropActivities?.length ?? 0}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            Crop Activities
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ── AI INSIGHTS ── */}
+          {section === "insights" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    AI Farm Insights
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Powered by Claude AI — analysed from your farm data
+                  </p>
+                </div>
+                <button
+                  onClick={handleGenerateInsights}
+                  disabled={genInsights}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  {genInsights ? "Analysing..." : "🤖 Generate Insights"}
+                </button>
+              </div>
+              {genInsights && (
+                <Card className="mb-4">
+                  <div className="flex items-center gap-3 py-4">
+                    <LoadingSpinner />
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        Analysing your farm data...
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        This takes about 15 seconds
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              )}
+              {insights.length === 0 && !genInsights ? (
+                <Card>
+                  <div className="py-16 text-center">
+                    <div className="text-5xl mb-3">🤖</div>
+                    <p className="font-medium text-gray-700">No insights yet</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Add farm data then click Generate Insights
+                    </p>
+                    <button
+                      onClick={handleGenerateInsights}
+                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                    >
+                      Generate First Insights
+                    </button>
+                  </div>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {insights.map((insight) => (
+                    <div
+                      key={insight.id}
+                      className={`border-l-4 bg-white rounded-xl p-5 shadow-sm ${
+                        INSIGHT_BORDER[insight.insight_type] ??
+                        INSIGHT_BORDER.general
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-bold text-gray-900">
+                          {insight.title}
+                        </h3>
+                        <span className="text-xs text-gray-400 shrink-0 ml-3">
+                          {new Date(insight.generated_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {insight.content}
+                      </p>
+                      <span className="mt-2 inline-block text-xs font-medium capitalize text-gray-400">
+                        {insight.insight_type}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* ── MODAL ──────────────────────────────────────────────────────────── */}
+      {modal.type && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+              <h2 className="text-lg font-bold text-gray-900">
+                {(
+                  {
+                    farm: "Farm Profile",
+                    field: modal.editing ? "Edit Field" : "Add Field",
+                    worker: modal.editing ? "Edit Worker" : "Add Worker",
+                    crop: modal.editing ? "Edit Crop Plan" : "New Crop Plan",
+                    "crop-activity": "Log Crop Activity",
+                    livestock: modal.editing ? "Edit Livestock" : "Add Livestock",
+                    "livestock-activity": "Log Livestock Activity",
+                    labour: "Log Labour Day",
+                    inventory: modal.editing ? "Edit Item" : "Add Inventory Item",
+                    calendar: "Add Calendar Entry",
+                  } as Record<string, string>
+                )[modal.type!] ?? modal.type}
+              </h2>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSave} className="px-6 py-5 space-y-4">
+              {modal.type === "farm" && (
+                <>
+                  <Field label="Farm Name" required>
+                    <input
+                      type="text"
+                      value={form.name ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, name: e.target.value }))
+                      }
+                      required
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="Location">
+                    <input
+                      type="text"
+                      value={form.location ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, location: e.target.value }))
+                      }
+                      placeholder="e.g. Mazowe"
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="Total Area (ha)">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={form.total_area_ha ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          total_area_ha: e.target.value,
+                        }))
+                      }
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="Water Sources">
+                    <input
+                      type="text"
+                      value={form.water_sources ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          water_sources: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. Borehole, Dam"
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="Notes">
+                    <textarea
+                      value={form.notes ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, notes: e.target.value }))
+                      }
+                      rows={2}
+                      className={inputCls + " resize-none"}
+                    />
+                  </Field>
+                </>
+              )}
+
+              {modal.type === "field" && (
+                <>
+                  <Field label="Field Name" required>
+                    <input
+                      type="text"
+                      value={form.name ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, name: e.target.value }))
+                      }
+                      required
+                      placeholder="e.g. Block A"
+                      className={inputCls}
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Area (ha)">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={form.area_ha ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            area_ha: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Current Use">
+                      <select
+                        value={form.current_use ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            current_use: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      >
+                        <option value="">Select...</option>
+                        {[
+                          "crop",
+                          "livestock",
+                          "fallow",
+                          "infrastructure",
+                          "other",
+                        ].map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Soil Type">
+                      <input
+                        type="text"
+                        value={form.soil_type ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            soil_type: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g. Sandy loam"
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Irrigation">
+                      <input
+                        type="text"
+                        value={form.irrigation_type ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            irrigation_type: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g. Drip"
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Notes">
+                    <textarea
+                      value={form.notes ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, notes: e.target.value }))
+                      }
+                      rows={2}
+                      className={inputCls + " resize-none"}
+                    />
+                  </Field>
+                </>
+              )}
+
+              {modal.type === "worker" && (
+                <>
+                  <Field label="Full Name" required>
+                    <input
+                      type="text"
+                      value={form.full_name ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, full_name: e.target.value }))
+                      }
+                      required
+                      placeholder="e.g. John Moyo"
+                      className={inputCls}
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Phone">
+                      <input
+                        type="tel"
+                        value={form.phone ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, phone: e.target.value }))
+                        }
+                        placeholder="+263..."
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Role">
+                      <select
+                        value={form.role ?? "worker"}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, role: e.target.value }))
+                        }
+                        className={inputCls}
+                      >
+                        {["worker", "manager", "owner"].map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+                  <Field label="Daily Wage (USD)">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.daily_wage_usd ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          daily_wage_usd: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. 5.00"
+                      className={inputCls}
+                    />
+                  </Field>
+                  {modal.editing && (
+                    <Field label="Active">
+                      <select
+                        value={
+                          form.is_active !== undefined
+                            ? String(form.is_active)
+                            : "true"
+                        }
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            is_active: e.target.value === "true",
+                          }))
+                        }
+                        className={inputCls}
+                      >
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                      </select>
+                    </Field>
+                  )}
+                </>
+              )}
+
+              {modal.type === "crop" && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Crop Type" required>
+                      <input
+                        type="text"
+                        value={form.crop_type ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            crop_type: e.target.value,
+                          }))
+                        }
+                        required
+                        placeholder="e.g. Tomatoes"
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Variety">
+                      <input
+                        type="text"
+                        value={form.variety ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            variety: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g. Heinz 1370"
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Field">
+                      <select
+                        value={form.field_id ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            field_id: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      >
+                        <option value="">No field</option>
+                        {fields.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.name}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Area (ha)">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={form.planned_area_ha ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            planned_area_ha: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Planting Date">
+                      <input
+                        type="date"
+                        value={form.planting_date ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            planting_date: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Expected Harvest">
+                      <input
+                        type="date"
+                        value={form.expected_harvest_date ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            expected_harvest_date: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Expected Yield (kg)">
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.expected_yield_kg ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            expected_yield_kg: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Season">
+                      <input
+                        type="text"
+                        value={form.season ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, season: e.target.value }))
+                        }
+                        placeholder="e.g. 2025/26"
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  {modal.editing && (
+                    <Field label="Status">
+                      <select
+                        value={form.status ?? "planned"}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, status: e.target.value }))
+                        }
+                        className={inputCls}
+                      >
+                        {[
+                          "planned",
+                          "active",
+                          "harvested",
+                          "failed",
+                          "cancelled",
+                        ].map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+                  <Field label="Notes">
+                    <textarea
+                      value={form.notes ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, notes: e.target.value }))
+                      }
+                      rows={2}
+                      className={inputCls + " resize-none"}
+                    />
+                  </Field>
+                </>
+              )}
+
+              {modal.type === "crop-activity" && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Activity Type" required>
+                      <select
+                        value={form.activity_type ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            activity_type: e.target.value,
+                          }))
+                        }
+                        required
+                        className={inputCls}
+                      >
+                        <option value="">Select...</option>
+                        {[
+                          "planting",
+                          "fertilising",
+                          "spraying",
+                          "irrigation",
+                          "weeding",
+                          "pruning",
+                          "harvesting",
+                          "inspection",
+                          "other",
+                        ].map((a) => (
+                          <option key={a} value={a}>
+                            {a}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Date">
+                      <input
+                        type="date"
+                        value={
+                          form.activity_date ??
+                          new Date().toISOString().split("T")[0]
+                        }
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            activity_date: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Crop Plan">
+                      <select
+                        value={form.crop_plan_id ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            crop_plan_id: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      >
+                        <option value="">None</option>
+                        {cropPlans.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.crop_type}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Field">
+                      <select
+                        value={form.field_id ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            field_id: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      >
+                        <option value="">None</option>
+                        {fields.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.name}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+                  <Field label="Area Covered (ha)">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={form.area_covered_ha ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          area_covered_ha: e.target.value,
+                        }))
+                      }
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="Description">
+                    <textarea
+                      value={form.description ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          description: e.target.value,
+                        }))
+                      }
+                      rows={2}
+                      placeholder="What was done..."
+                      className={inputCls + " resize-none"}
+                    />
+                  </Field>
+                  <Field label="Logged By">
+                    <select
+                      value={form.logged_by ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          logged_by: e.target.value,
+                        }))
+                      }
+                      className={inputCls}
+                    >
+                      <option value="">Owner / Self</option>
+                      {workers.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </>
+              )}
+
+              {modal.type === "livestock" && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    {modal.editing ? (
+                      <Field label="Species">
+                        <input
+                          type="text"
+                          value={form.species ?? ""}
+                          disabled
+                          className={inputCls + " bg-gray-100"}
+                        />
+                      </Field>
+                    ) : (
+                      <Field label="Species" required>
+                        <select
+                          value={form.species ?? ""}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              species: e.target.value,
+                            }))
+                          }
+                          required
+                          className={inputCls}
+                        >
+                          <option value="">Select...</option>
+                          {[
+                            "cattle",
+                            "goat",
+                            "sheep",
+                            "poultry",
+                            "pig",
+                            "fish",
+                            "bees",
+                            "other",
+                          ].map((s) => (
+                            <option key={s} value={s}>
+                              {SPECIES_EMOJI[s]} {s}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    )}
+                    <Field label="Breed">
+                      <input
+                        type="text"
+                        value={form.breed ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, breed: e.target.value }))
+                        }
+                        placeholder="e.g. Brahman"
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Count" required>
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.count ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, count: e.target.value }))
+                        }
+                        required
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Purpose">
+                      <select
+                        value={form.purpose ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, purpose: e.target.value }))
+                        }
+                        className={inputCls}
+                      >
+                        <option value="">Select...</option>
+                        {[
+                          "beef",
+                          "dairy",
+                          "eggs",
+                          "wool",
+                          "breeding",
+                          "honey",
+                          "other",
+                        ].map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+                  <Field label="Field / Zone">
+                    <select
+                      value={form.field_id ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, field_id: e.target.value }))
+                      }
+                      className={inputCls}
+                    >
+                      <option value="">None</option>
+                      {fields.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Notes">
+                    <textarea
+                      value={form.notes ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, notes: e.target.value }))
+                      }
+                      rows={2}
+                      className={inputCls + " resize-none"}
+                    />
+                  </Field>
+                </>
+              )}
+
+              {modal.type === "livestock-activity" && (
+                <>
+                  <Field label="Livestock Group" required>
+                    <select
+                      value={form.livestock_group_id ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          livestock_group_id: e.target.value,
+                        }))
+                      }
+                      required
+                      className={inputCls}
+                    >
+                      <option value="">Select group...</option>
+                      {livestock.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {SPECIES_EMOJI[g.species]} {g.species} ({g.count} head)
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Activity Type" required>
+                      <select
+                        value={form.activity_type ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            activity_type: e.target.value,
+                          }))
+                        }
+                        required
+                        className={inputCls}
+                      >
+                        <option value="">Select...</option>
+                        {[
+                          "birth",
+                          "death",
+                          "vaccination",
+                          "feeding",
+                          "treatment",
+                          "breeding",
+                          "sale",
+                          "purchase",
+                          "weighing",
+                          "milking",
+                          "other",
+                        ].map((a) => (
+                          <option key={a} value={a}>
+                            {a}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Date">
+                      <input
+                        type="date"
+                        value={
+                          form.activity_date ??
+                          new Date().toISOString().split("T")[0]
+                        }
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            activity_date: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Count Affected">
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.count_affected ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            count_affected: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Cost (USD)">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={form.cost_usd ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, cost_usd: e.target.value }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Description">
+                    <textarea
+                      value={form.description ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, description: e.target.value }))
+                      }
+                      rows={2}
+                      className={inputCls + " resize-none"}
+                    />
+                  </Field>
+                  <Field label="Logged By">
+                    <select
+                      value={form.logged_by ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, logged_by: e.target.value }))
+                      }
+                      className={inputCls}
+                    >
+                      <option value="">Owner / Self</option>
+                      {workers.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </>
+              )}
+
+              {modal.type === "labour" && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Worker">
+                      <select
+                        value={form.worker_id ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, worker_id: e.target.value }))
+                        }
+                        className={inputCls}
+                      >
+                        <option value="">Owner / Self</option>
+                        {workers
+                          .filter((w) => w.is_active)
+                          .map((w) => (
+                            <option key={w.id} value={w.id}>
+                              {w.full_name}
+                              {w.daily_wage_usd
+                                ? ` ($${w.daily_wage_usd}/day)`
+                                : ""}
+                            </option>
+                          ))}
+                      </select>
+                    </Field>
+                    <Field label="Date">
+                      <input
+                        type="date"
+                        value={
+                          form.work_date ??
+                          new Date().toISOString().split("T")[0]
+                        }
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, work_date: e.target.value }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Task Category" required>
+                      <select
+                        value={form.task_category ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            task_category: e.target.value,
+                          }))
+                        }
+                        required
+                        className={inputCls}
+                      >
+                        <option value="">Select...</option>
+                        {[
+                          "land_prep",
+                          "planting",
+                          "weeding",
+                          "spraying",
+                          "harvesting",
+                          "irrigation",
+                          "maintenance",
+                          "construction",
+                          "livestock_care",
+                          "other",
+                        ].map((t) => (
+                          <option key={t} value={t}>
+                            {t.replace("_", " ")}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Field">
+                      <select
+                        value={form.field_id ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, field_id: e.target.value }))
+                        }
+                        className={inputCls}
+                      >
+                        <option value="">None</option>
+                        {fields.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.name}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Field label="Hours">
+                      <input
+                        type="number"
+                        min="0"
+                        max="24"
+                        step="0.5"
+                        value={form.hours_worked ?? "8"}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            hours_worked: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Area (ha)">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={form.area_covered_ha ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            area_covered_ha: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Wage ($)">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={form.wage_usd ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, wage_usd: e.target.value }))
+                        }
+                        placeholder="Auto"
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Notes">
+                    <textarea
+                      value={form.notes ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, notes: e.target.value }))
+                      }
+                      rows={2}
+                      className={inputCls + " resize-none"}
+                    />
+                  </Field>
+                </>
+              )}
+
+              {modal.type === "inventory" && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    {!modal.editing && (
+                      <Field label="Item Type" required>
+                        <select
+                          value={form.item_type ?? ""}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              item_type: e.target.value,
+                            }))
+                          }
+                          required
+                          className={inputCls}
+                        >
+                          <option value="">Select...</option>
+                          {[
+                            "seed",
+                            "fertiliser",
+                            "chemical",
+                            "feed",
+                            "fuel",
+                            "equipment",
+                            "other",
+                          ].map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    )}
+                    <Field label="Item Name" required>
+                      <input
+                        type="text"
+                        value={form.name ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, name: e.target.value }))
+                        }
+                        required
+                        placeholder="e.g. Compound D"
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Field label="Quantity">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={form.quantity ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            quantity: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Unit">
+                      <input
+                        type="text"
+                        value={form.unit ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, unit: e.target.value }))
+                        }
+                        placeholder="kg, litres"
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Unit Cost ($)">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={form.unit_cost_usd ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            unit_cost_usd: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Reorder Level">
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.reorder_level ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            reorder_level: e.target.value,
+                          }))
+                        }
+                        placeholder="Alert below this"
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Expiry Date">
+                      <input
+                        type="date"
+                        value={form.expiry_date ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            expiry_date: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Supplier">
+                    <input
+                      type="text"
+                      value={form.supplier ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, supplier: e.target.value }))
+                      }
+                      className={inputCls}
+                    />
+                  </Field>
+                </>
+              )}
+
+              {modal.type === "calendar" && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Crop Type" required>
+                      <input
+                        type="text"
+                        value={form.crop_type ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            crop_type: e.target.value,
+                          }))
+                        }
+                        required
+                        placeholder="e.g. Tomatoes"
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Region">
+                      <input
+                        type="text"
+                        value={form.region ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, region: e.target.value }))
+                        }
+                        placeholder="e.g. Mashonaland"
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Field label="Plant Start (mo)">
+                      <input
+                        type="number"
+                        min="1"
+                        max="12"
+                        value={form.recommended_planting_start ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            recommended_planting_start: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Plant End (mo)">
+                      <input
+                        type="number"
+                        min="1"
+                        max="12"
+                        value={form.recommended_planting_end ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            recommended_planting_end: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Harvest (wks)">
+                      <input
+                        type="number"
+                        min="1"
+                        value={form.expected_harvest_weeks ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            expected_harvest_weeks: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Soil Requirements">
+                    <input
+                      type="text"
+                      value={form.soil_requirements ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          soil_requirements: e.target.value,
+                        }))
+                      }
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="Water Requirements">
+                    <input
+                      type="text"
+                      value={form.water_requirements ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          water_requirements: e.target.value,
+                        }))
+                      }
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="Common Pests">
+                    <input
+                      type="text"
+                      value={form.common_pests ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          common_pests: e.target.value,
+                        }))
+                      }
+                      className={inputCls}
+                    />
+                  </Field>
+                </>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  {modal.editing ? "Save Changes" : "Add"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -200,6 +200,16 @@ const Dashboard: React.FC = () => {
                       ➕ Create New Listing
                     </Button>
                   </Link>
+                  <Link to="/farm-log">
+                    <Button variant="outline" className="w-full">
+                      📒 Farm Log
+                    </Button>
+                  </Link>
+                  <Link to="/farm-os">
+                    <Button variant="outline" className="w-full">
+                      🚜 Farm OS
+                    </Button>
+                  </Link>
                   <Link to="/recommendations">
                     <Button variant="outline" className="w-full">
                       ✨ AI Insights & Recommendations

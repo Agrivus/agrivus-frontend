@@ -56,6 +56,7 @@ const PaynowPayment = React.lazy(() => import("./pages/PaynowPayment"));
 const AccountsOfficerDashboard = React.lazy(() => import("./pages/AccountsOfficerDashboard"));
 const AdminCropTracker = React.lazy(() => import("./pages/AdminCropTracker"));
 const FarmLog = React.lazy(() => import("./pages/FarmLog"));
+const FarmOS = React.lazy(() => import("./pages/FarmOS"));
 const AdminFarmLogPlans = React.lazy(() => import("./pages/AdminFarmLogPlans"));
 
 function App() {
@@ -97,6 +98,14 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={["farmer"]}>
                         <FarmLog />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/farm-os"
+                    element={
+                      <ProtectedRoute allowedRoles={["farmer"]}>
+                        <FarmOS />
                       </ProtectedRoute>
                     }
                   />
