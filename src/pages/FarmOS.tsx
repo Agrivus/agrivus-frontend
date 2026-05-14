@@ -94,6 +94,60 @@ interface AIInsight {
   generated_at: string;
 }
 
+interface Expense {
+  id: string;
+  expense_date: string;
+  category: string;
+  description: string;
+  amount_usd: string;
+  field_name: string | null;
+  crop_type: string | null;
+  supplier: string | null;
+  receipt_ref: string | null;
+  notes: string | null;
+}
+
+interface Revenue {
+  id: string;
+  revenue_date: string;
+  category: string;
+  description: string;
+  amount_usd: string;
+  quantity: string | null;
+  unit: string | null;
+  unit_price_usd: string | null;
+  buyer_name: string | null;
+  field_name: string | null;
+  crop_type: string | null;
+}
+
+interface Profitability {
+  summary: {
+    totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
+    profitMargin: string;
+    isProfit: boolean;
+  };
+  expenses: any;
+  revenue: any;
+  byCrop: any[];
+  expenseCategories: any[];
+  trend: any[];
+}
+
+interface MarketPrice {
+  id: string;
+  commodity: string;
+  region: string | null;
+  price_usd: string;
+  unit: string;
+  price_date: string;
+  demand_level: string | null;
+  source: string | null;
+  is_ai_generated: boolean;
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const NAV = [
@@ -106,6 +160,8 @@ const NAV = [
   { key: "calendar", label: "Calendar", icon: "📅" },
   { key: "reports", label: "Reports", icon: "📈" },
   { key: "insights", label: "AI Insights", icon: "🤖" },
+  { key: "finance", label: "Finance", icon: "💰" },
+  { key: "market",  label: "Market",  icon: "📡" },
 ] as const;
 
 type Section = (typeof NAV)[number]["key"];
@@ -189,6 +245,19 @@ export default function FarmOS() {
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [monthlyReport, setMonthlyReport] = useState<any>(null);
 
+  const [expenses,        setExpenses]        = useState<Expense[]>([]);
+  const [,                setExpenseSummary]  = useState<any>(null);
+  const [revenue,         setRevenue]         = useState<Revenue[]>([]);
+  const [,                setRevenueSummary]  = useState<any>(null);
+  const [profitability,   setProfitability]   = useState<Profitability | null>(null);
+  const [marketPrices,    setMarketPrices]    = useState<MarketPrice[]>([]);
+  const [genMarket,       setGenMarket]       = useState(false);
+  const [marketInsights,  setMarketInsights]  = useState<any>(null);
+  const [finPeriod,       setFinPeriod]       = useState({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+  });
+
   // UI
   const [section, setSection] = useState<Section>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -241,6 +310,7 @@ export default function FarmOS() {
         api.get("/farm-os/inventory"),
         api.get("/farm-os/labour"),
         api.get("/farm-os/insights"),
+        api.get("/farm-os/market"),
         api.get("/farm-os/calendar"),
       ]);
 
@@ -253,6 +323,7 @@ export default function FarmOS() {
         invR,
         labR,
         insR,
+        marketR,
         calR,
       ] = results;
 
@@ -274,6 +345,8 @@ export default function FarmOS() {
         setLabourSummary(labR.value.data.data.summary);
       if (insR.status === "fulfilled" && insR.value.data.success)
         setInsights(insR.value.data.data.insights);
+      if (marketR && marketR.status === "fulfilled" && marketR.value.data.success)
+        setMarketPrices(marketR.value.data.data.prices);
       if (calR.status === "fulfilled" && calR.value.data.success) {
         setCalendar(calR.value.data.data.calendar);
         setPlantingNow(calR.value.data.data.plantingNow);
@@ -299,6 +372,32 @@ export default function FarmOS() {
         setMonthlyReport(m.value.data.data);
     });
   }, [section, hasAccess]);
+
+  useEffect(() => {
+    if ((section !== "finance" && section !== "market") || !hasAccess) return;
+    const loadFinance = async () => {
+      try {
+        const start = `${finPeriod.year}-${String(finPeriod.month).padStart(2,"0")}-01`;
+        const end   = new Date(finPeriod.year, finPeriod.month, 0).toISOString().split("T")[0];
+        const [expR, revR, profR] = await Promise.allSettled([
+          api.get("/farm-os/expenses",       { params: { startDate: start, endDate: end } }),
+          api.get("/farm-os/revenue",        { params: { startDate: start, endDate: end } }),
+          api.get("/farm-os/profitability",  { params: { year: finPeriod.year, month: finPeriod.month } }),
+        ]);
+        if (expR.status==="fulfilled"&&expR.value.data.success) {
+          setExpenses(expR.value.data.data.expenses);
+          setExpenseSummary(expR.value.data.data.summary);
+        }
+        if (revR.status==="fulfilled"&&revR.value.data.success) {
+          setRevenue(revR.value.data.data.revenue);
+          setRevenueSummary(revR.value.data.data.summary);
+        }
+        if (profR.status==="fulfilled"&&profR.value.data.success)
+          setProfitability(profR.value.data.data);
+      } catch { /* non-critical */ }
+    };
+    loadFinance();
+  }, [section, hasAccess, finPeriod]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -434,6 +533,27 @@ export default function FarmOS() {
               setPlantingNow(calR.data.data.plantingNow);
             }
           }
+          break;
+        case "expense":
+          editing?.id
+            ? await api.put(`/farm-os/expenses/${editing.id}`, form)
+            : await api.post("/farm-os/expenses", form);
+          flash("success", editing?.id ? "Expense updated" : "Expense recorded");
+          // reload finance
+          setFinPeriod(p => ({ ...p })); // trigger re-fetch
+          break;
+        case "revenue-entry":
+          editing?.id
+            ? await api.put(`/farm-os/revenue/${editing.id}`, form)
+            : await api.post("/farm-os/revenue", form);
+          flash("success", editing?.id ? "Revenue updated" : "Revenue recorded");
+          setFinPeriod(p => ({ ...p }));
+          break;
+        case "market-price":
+          await api.post("/farm-os/market", form);
+          flash("success", "Market price added");
+          const mpR = await api.get("/farm-os/market");
+          if (mpR.data.success) setMarketPrices(mpR.data.data.prices);
           break;
       }
       closeModal();
@@ -921,6 +1041,140 @@ export default function FarmOS() {
                   </div>
                 </Card>
               )}
+
+              {modal.type === "expense" && <>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Category" required>
+                    <select value={form.category??""} onChange={e=>setForm(f=>({...f,category:e.target.value}))} required className={inputCls}>
+                      <option value="">Select...</option>
+                      { ["labour","seeds","fertiliser","chemicals","fuel","equipment","irrigation","transport","veterinary","repairs","rent","other"].map(c=>(<option key={c} value={c}>{c}</option>)) }
+                    </select>
+                  </Field>
+                  <Field label="Date">
+                    <input type="date" value={form.expense_date??new Date().toISOString().split("T")[0]} onChange={e=>setForm(f=>({...f,expense_date:e.target.value}))} className={inputCls}/>
+                  </Field>
+                </div>
+                <Field label="Description" required>
+                  <input type="text" value={form.description??""} onChange={e=>setForm(f=>({...f,description:e.target.value}))} required placeholder="e.g. Compound D fertiliser - Block A" className={inputCls}/>
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Amount (USD)" required>
+                    <input type="number" min="0" step="0.01" value={form.amount_usd??""} onChange={e=>setForm(f=>({...f,amount_usd:e.target.value}))} required placeholder="e.g. 45.00" className={inputCls}/>
+                  </Field>
+                  <Field label="Supplier">
+                    <input type="text" value={form.supplier??""} onChange={e=>setForm(f=>({...f,supplier:e.target.value}))} placeholder="e.g. Agritex" className={inputCls}/>
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Field">
+                    <select value={form.field_id??""} onChange={e=>setForm(f=>({...f,field_id:e.target.value}))} className={inputCls}>
+                      <option value="">None</option>
+                      {fields.map(f=>(<option key={f.id} value={f.id}>{f.name}</option>))}
+                    </select>
+                  </Field>
+                  <Field label="Crop Plan">
+                    <select value={form.crop_plan_id??""} onChange={e=>setForm(f=>({...f,crop_plan_id:e.target.value}))} className={inputCls}>
+                      <option value="">None</option>
+                      {cropPlans.map(c=>(<option key={c.id} value={c.id}>{c.crop_type}</option>))}
+                    </select>
+                  </Field>
+                </div>
+                <Field label="Receipt Ref">
+                  <input type="text" value={form.receipt_ref??""} onChange={e=>setForm(f=>({...f,receipt_ref:e.target.value}))} placeholder="e.g. INV-001" className={inputCls}/>
+                </Field>
+                <Field label="Notes">
+                  <textarea value={form.notes??""} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} rows={2} className={inputCls+" resize-none"}/>
+                </Field>
+              </>}
+
+              {modal.type === "revenue-entry" && <>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Category" required>
+                    <select value={form.category??""} onChange={e=>setForm(f=>({...f,category:e.target.value}))} required className={inputCls}>
+                      <option value="">Select...</option>
+                      { ["crop_sale","livestock_sale","milk","eggs","wool","honey","contract","grant","other"].map(c=>(<option key={c} value={c}>{c.replace("_"," ")}</option>)) }
+                    </select>
+                  </Field>
+                  <Field label="Date">
+                    <input type="date" value={form.revenue_date??new Date().toISOString().split("T")[0]} onChange={e=>setForm(f=>({...f,revenue_date:e.target.value}))} className={inputCls}/>
+                  </Field>
+                </div>
+                <Field label="Description" required>
+                  <input type="text" value={form.description??""} onChange={e=>setForm(f=>({...f,description:e.target.value}))} required placeholder="e.g. Tomato sale - 500kg to Mbare Market" className={inputCls}/>
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Total Amount (USD)" required>
+                    <input type="number" min="0" step="0.01" value={form.amount_usd??""} onChange={e=>setForm(f=>({...f,amount_usd:e.target.value}))} required className={inputCls}/>
+                  </Field>
+                  <Field label="Buyer Name">
+                    <input type="text" value={form.buyer_name??""} onChange={e=>setForm(f=>({...f,buyer_name:e.target.value}))} placeholder="e.g. Mbare Market" className={inputCls}/>
+                  </Field>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label="Quantity">
+                    <input type="number" min="0" step="0.1" value={form.quantity??""} onChange={e=>setForm(f=>({...f,quantity:e.target.value}))} className={inputCls}/>
+                  </Field>
+                  <Field label="Unit">
+                    <input type="text" value={form.unit??""} onChange={e=>setForm(f=>({...f,unit:e.target.value}))} placeholder="kg, litres" className={inputCls}/>
+                  </Field>
+                  <Field label="Unit Price ($)">
+                    <input type="number" min="0" step="0.01" value={form.unit_price_usd??""} onChange={e=>setForm(f=>({...f,unit_price_usd:e.target.value}))} className={inputCls}/>
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Crop Plan">
+                    <select value={form.crop_plan_id??""} onChange={e=>setForm(f=>({...f,crop_plan_id:e.target.value}))} className={inputCls}>
+                      <option value="">None</option>
+                      {cropPlans.map(c=>(<option key={c.id} value={c.id}>{c.crop_type}</option>))}
+                    </select>
+                  </Field>
+                  <Field label="Field">
+                    <select value={form.field_id??""} onChange={e=>setForm(f=>({...f,field_id:e.target.value}))} className={inputCls}>
+                      <option value="">None</option>
+                      {fields.map(f=>(<option key={f.id} value={f.id}>{f.name}</option>))}
+                    </select>
+                  </Field>
+                </div>
+                <Field label="Notes">
+                  <textarea value={form.notes??""} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} rows={2} className={inputCls+" resize-none"}/>
+                </Field>
+              </>}
+
+              {modal.type === "market-price" && <>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Commodity" required>
+                    <input type="text" value={form.commodity??""} onChange={e=>setForm(f=>({...f,commodity:e.target.value}))} required placeholder="e.g. Tomatoes" className={inputCls}/>
+                  </Field>
+                  <Field label="Region">
+                    <input type="text" value={form.region??""} onChange={e=>setForm(f=>({...f,region:e.target.value}))} placeholder="e.g. Harare" className={inputCls}/>
+                  </Field>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label="Price (USD)" required>
+                    <input type="number" min="0" step="0.01" value={form.price_usd??""} onChange={e=>setForm(f=>({...f,price_usd:e.target.value}))} required className={inputCls}/>
+                  </Field>
+                  <Field label="Unit" required>
+                    <input type="text" value={form.unit??""} onChange={e=>setForm(f=>({...f,unit:e.target.value}))} required placeholder="kg, litre" className={inputCls}/>
+                  </Field>
+                  <Field label="Demand">
+                    <select value={form.demand_level??""} onChange={e=>setForm(f=>({...f,demand_level:e.target.value}))} className={inputCls}>
+                      <option value="">Unknown</option>
+                      { ["low","medium","high","very_high"].map(d=>(<option key={d} value={d}>{d.replace("_"," ")}</option>)) }
+                    </select>
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Date">
+                    <input type="date" value={form.price_date??new Date().toISOString().split("T")[0]} onChange={e=>setForm(f=>({...f,price_date:e.target.value}))} className={inputCls}/>
+                  </Field>
+                  <Field label="Source">
+                    <input type="text" value={form.source??""} onChange={e=>setForm(f=>({...f,source:e.target.value}))} placeholder="e.g. Mbare Market" className={inputCls}/>
+                  </Field>
+                </div>
+                <Field label="Notes">
+                  <textarea value={form.notes??""} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} rows={2} className={inputCls+" resize-none"}/>
+                </Field>
+              </>}
 
               {/* Two-column: Alerts + Planting now */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1982,6 +2236,278 @@ export default function FarmOS() {
           )}
 
           {/* ── AI INSIGHTS ── */}
+          {section === "finance" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Financial Management</h2>
+                <div className="flex gap-2">
+                  <button onClick={() => openModal("revenue-entry")} className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium">+ Record Revenue</button>
+                  <button onClick={() => openModal("expense")} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium">+ Record Expense</button>
+                </div>
+              </div>
+
+              {/* Month selector */}
+              <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-200">
+                <span className="text-sm font-medium text-gray-600">Period:</span>
+                <select value={finPeriod.month} onChange={e => setFinPeriod(p => ({ ...p, month: Number(e.target.value) }))} className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500">
+                  { ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>(
+                    <option key={i} value={i+1}>{m}</option>
+                  )) }
+                </select>
+                <select value={finPeriod.year} onChange={e => setFinPeriod(p => ({ ...p, year: Number(e.target.value) }))} className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500">
+                  {[new Date().getFullYear()-1, new Date().getFullYear(), new Date().getFullYear()+1].map(y=>(<option key={y} value={y}>{y}</option>))}
+                </select>
+              </div>
+
+              {/* P&L Summary */}
+              {profitability && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-green-50 rounded-xl p-4 text-center">
+                    <div className="text-2xl font-bold text-green-700">${profitability.summary.totalRevenue.toFixed(2)}</div>
+                    <div className="text-sm text-gray-600">Total Revenue</div>
+                  </div>
+                  <div className="bg-red-50 rounded-xl p-4 text-center">
+                    <div className="text-2xl font-bold text-red-600">${profitability.summary.totalExpenses.toFixed(2)}</div>
+                    <div className="text-sm text-gray-600">Total Expenses</div>
+                  </div>
+                  <div className={`rounded-xl p-4 text-center ${profitability.summary.isProfit ? "bg-blue-50" : "bg-orange-50"}`}>
+                    <div className={`text-2xl font-bold ${profitability.summary.isProfit ? "text-blue-700" : "text-orange-600"}`}>
+                      {profitability.summary.isProfit ? "+" : ""}${profitability.summary.netProfit.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-gray-600">Net {profitability.summary.isProfit ? "Profit" : "Loss"}</div>
+                  </div>
+                  <div className="bg-purple-50 rounded-xl p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-700">{profitability.summary.profitMargin}</div>
+                    <div className="text-sm text-gray-600">Profit Margin</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Profit by crop */}
+              {profitability && profitability.byCrop.length > 0 && (
+                <Card>
+                  <h3 className="font-bold text-gray-900 mb-4">Profit by Crop</h3>
+                  <div className="space-y-2">
+                    {profitability.byCrop.map((c: any) => {
+                      const profit = parseFloat(c.profit || "0");
+                      const revenue = parseFloat(c.revenue || "0");
+                      const expenses = parseFloat(c.expenses || "0");
+                      return (
+                        <div key={c.crop_plan_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <span className="font-medium text-gray-900">{c.crop_type}</span>
+                            {c.variety && <span className="text-sm text-gray-500 ml-1">({c.variety})</span>}
+                          </div>
+                          <div className="flex items-center gap-6 text-sm">
+                            <span className="text-green-600">Rev: ${revenue.toFixed(2)}</span>
+                            <span className="text-red-500">Exp: ${expenses.toFixed(2)}</span>
+                            <span className={`font-bold px-2 py-0.5 rounded ${profit >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"}`}>
+                              {profit >= 0 ? "+" : ""}${profit.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              )}
+
+              {/* 6-month trend */}
+              {profitability && profitability.trend.length > 0 && (
+                <Card>
+                  <h3 className="font-bold text-gray-900 mb-4">6-Month Trend</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          { ["Month","Revenue","Expenses","Net P&L"].map(h=>(<th key={h} className={`py-2 text-gray-500 font-medium ${h==="Month"?"text-left":"text-right"}`}>{h}</th>)) }
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {profitability.trend.map((row: any) => {
+                          const net = parseFloat(row.profit || "0");
+                          return (
+                            <tr key={row.month} className="border-b border-gray-100">
+                              <td className="py-2 font-medium">{row.month}</td>
+                              <td className="py-2 text-right text-green-600">${parseFloat(row.revenue || "0").toFixed(2)}</td>
+                              <td className="py-2 text-right text-red-500">${parseFloat(row.expenses || "0").toFixed(2)}</td>
+                              <td className={`py-2 text-right font-bold ${net >= 0 ? "text-blue-700" : "text-orange-600"}`}>
+                                {net >= 0 ? "+" : ""}${net.toFixed(2)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              )}
+
+              {/* Two columns: recent expenses + revenue */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900">Recent Expenses</h3>
+                    <button onClick={() => openModal("expense")} className="text-sm text-green-600 hover:text-green-700 font-medium">+ Add</button>
+                  </div>
+                  {expenses.length === 0 ? (
+                    <p className="text-gray-500 text-sm py-6 text-center">No expenses recorded this period</p>
+                  ) : expenses.slice(0, 8).map(exp => (
+                    <div key={exp.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{exp.description}</div>
+                        <div className="text-xs text-gray-400">
+                          {exp.category} · {new Date(exp.expense_date).toLocaleDateString("en-GB", { day:"2-digit", month:"short" })}
+                          {exp.crop_type && ` · ${exp.crop_type}`}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-red-600">${parseFloat(exp.amount_usd).toFixed(2)}</span>
+                        <button onClick={() => openModal("expense", exp)} className="text-xs text-blue-600">Edit</button>
+                      </div>
+                    </div>
+                  ))}
+                </Card>
+
+                <Card>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900">Recent Revenue</h3>
+                    <button onClick={() => openModal("revenue-entry")} className="text-sm text-green-600 hover:text-green-700 font-medium">+ Add</button>
+                  </div>
+                  {revenue.length === 0 ? (
+                    <p className="text-gray-500 text-sm py-6 text-center">No revenue recorded this period</p>
+                  ) : revenue.slice(0, 8).map(rev => (
+                    <div key={rev.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{rev.description}</div>
+                        <div className="text-xs text-gray-400">
+                          {rev.category} · {new Date(rev.revenue_date).toLocaleDateString("en-GB", { day:"2-digit", month:"short" })}
+                          {rev.buyer_name && ` · ${rev.buyer_name}`}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-green-600">${parseFloat(rev.amount_usd).toFixed(2)}</span>
+                        <button onClick={() => openModal("revenue-entry", rev)} className="text-xs text-blue-600">Edit</button>
+                      </div>
+                    </div>
+                  ))}
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {section === "market" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Market Intelligence</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">Current prices and AI-powered market recommendations</p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => openModal("market-price")} className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium">+ Add Price</button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        setGenMarket(true);
+                        const r = await api.post("/farm-os/market/insights");
+                        if (r.data.success) {
+                          setMarketInsights(r.data.data.insights);
+                          const mpR = await api.get("/farm-os/market");
+                          if (mpR.data.success) setMarketPrices(mpR.data.data.prices);
+                          flash("success", "Market insights generated");
+                        }
+                      } catch (err: any) {
+                        flash("error", err.response?.data?.message ?? "Failed");
+                      } finally { setGenMarket(false); }
+                    }}
+                    disabled={genMarket}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                  >
+                    {genMarket ? "Analysing..." : "📡 Get Market Insights"}
+                  </button>
+                </div>
+              </div>
+
+              {/* AI market insights */}
+              {marketInsights && (
+                <Card className="mb-6 border-l-4 border-green-400 bg-green-50">
+                  <h3 className="font-bold text-green-900 mb-2">Market Overview</h3>
+                  <p className="text-sm text-green-800 mb-4">{marketInsights.marketSummary}</p>
+                  {marketInsights.recommendations?.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-green-900">Recommendations</h4>
+                      {marketInsights.recommendations.map((rec: any, i: number) => (
+                        <div key={i} className="flex items-start justify-between p-3 bg-white rounded-lg">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-gray-900">{rec.crop}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                rec.action === "sell_now" ? "bg-green-100 text-green-800" :
+                                rec.action === "hold"     ? "bg-yellow-100 text-yellow-800" :
+                                rec.action === "plant_more" ? "bg-blue-100 text-blue-800" :
+                                "bg-red-100 text-red-700"
+                              }`}>{rec.action?.replace("_"," ").toUpperCase()}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                rec.urgency === "high" ? "bg-red-100 text-red-700" :
+                                rec.urgency === "medium" ? "bg-orange-100 text-orange-700" :
+                                "bg-gray-100 text-gray-600"
+                              }`}>{rec.urgency}</span>
+                            </div>
+                            <p className="text-sm text-gray-600">{rec.reason}</p>
+                          </div>
+                          {rec.estimatedPrice && <span className="text-sm font-bold text-green-700 shrink-0 ml-3">{rec.estimatedPrice}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              )}
+
+              {/* Commodity prices table */}
+              <Card>
+                <h3 className="font-bold text-gray-900 mb-4">Current Market Prices</h3>
+                {marketPrices.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="text-4xl mb-3">📡</div>
+                    <p className="text-gray-500 text-sm">No market prices yet</p>
+                    <p className="text-xs text-gray-400 mt-1">Add prices manually or generate AI market insights</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="border-b border-gray-200">
+                        <tr>{["Commodity","Price","Unit","Demand","Region","Date","Source"].map(h => (
+                          <th key={h} className="pb-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                        ))}</tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {marketPrices.map(price => (
+                          <tr key={price.id} className="hover:bg-gray-50">
+                            <td className="py-3 font-medium text-gray-900">{price.commodity}{price.is_ai_generated && <span className="ml-1 text-xs text-purple-500">AI</span>}</td>
+                            <td className="py-3 font-bold text-green-700">${parseFloat(price.price_usd).toFixed(2)}</td>
+                            <td className="py-3 text-gray-600">per {price.unit}</td>
+                            <td className="py-3">
+                              {price.demand_level && (
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                  price.demand_level === "very_high" ? "bg-red-100 text-red-700" :
+                                  price.demand_level === "high"      ? "bg-orange-100 text-orange-700" :
+                                  price.demand_level === "medium"    ? "bg-yellow-100 text-yellow-700" :
+                                  "bg-gray-100 text-gray-600"
+                                }`}>{price.demand_level.replace("_"," ")}</span>
+                              )}
+                            </td>
+                            <td className="py-3 text-gray-600">{price.region ?? "—"}</td>
+                            <td className="py-3 text-gray-500">{new Date(price.price_date).toLocaleDateString("en-GB", { day:"2-digit", month:"short" })}</td>
+                            <td className="py-3 text-gray-400 text-xs">{price.source ?? "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
           {section === "insights" && (
             <div>
               <div className="flex items-center justify-between mb-6">
