@@ -211,8 +211,20 @@ const INSIGHT_BORDER: Record<string, string> = {
   general: "border-gray-300",
 };
 
+const pageBgCls =
+  "min-h-screen bg-gradient-to-br from-[#fdfaf4] via-white to-[#e8f3e9] text-gray-900";
+const panelCls =
+  "bg-white/80 backdrop-blur border border-secondary-green/10 shadow-card";
+const btnPrimaryCls =
+  "inline-flex items-center justify-center gap-2 rounded-full bg-secondary-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-green";
+const btnOutlineCls =
+  "inline-flex items-center justify-center gap-2 rounded-full border border-secondary-green/40 bg-white/70 px-5 py-2.5 text-sm font-semibold text-secondary-green transition hover:border-secondary-green hover:bg-white";
+const btnGhostOnDarkCls =
+  "inline-flex items-center justify-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold text-white/80 transition hover:text-white hover:bg-white/10";
 const inputCls =
-  "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent";
+  "w-full rounded-xl border border-secondary-green/20 bg-white/80 px-3 py-2 text-sm text-gray-800 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-accent-gold/40 focus:border-secondary-green/50";
+const inputCompactCls =
+  "rounded-xl border border-secondary-green/20 bg-white/80 px-3 py-1.5 text-sm text-gray-800 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-accent-gold/40 focus:border-secondary-green/50";
 
 function Field({
   label,
@@ -616,14 +628,14 @@ export default function FarmOS() {
 
   if (subLoading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={`${pageBgCls} flex items-center justify-center`}>
         <LoadingSpinner />
       </div>
     );
 
   if (!hasAccess)
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className={`${pageBgCls} py-12 px-4`}>
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <div className="text-6xl mb-3">🚜</div>
@@ -632,7 +644,7 @@ export default function FarmOS() {
               The complete digital operating system for your farm.
             </p>
           </div>
-          <Card className="mb-6">
+          <Card className={`${panelCls} mb-6`}>
             <h2 className="font-bold text-gray-900 mb-3">
               Everything in one place
             </h2>
@@ -669,7 +681,7 @@ export default function FarmOS() {
             </div>
           )}
           {plans.length === 0 ? (
-            <Card>
+            <Card className={panelCls}>
               <p className="text-center text-gray-500 py-6">
                 No Farm OS plans available. Contact support.
               </p>
@@ -679,7 +691,7 @@ export default function FarmOS() {
               {plans.map((plan: any) => (
                 <Card
                   key={plan.id}
-                  className={`border-2 ${
+                  className={`${panelCls} border-2 ${
                     plan.billing_cycle === "annual"
                       ? "border-green-500"
                       : "border-gray-200"
@@ -702,7 +714,7 @@ export default function FarmOS() {
                   <button
                     onClick={() => handleSubscribe(plan.id)}
                     disabled={subscribing}
-                    className="w-full mt-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+                    className={`w-full mt-2 ${btnPrimaryCls} disabled:opacity-50`}
                   >
                     {subscribing ? "Processing..." : "Pay from Wallet"}
                   </button>
@@ -713,7 +725,7 @@ export default function FarmOS() {
           <div className="mt-6 text-center">
             <Link
               to="/dashboard"
-              className="text-green-600 hover:text-green-700 text-sm"
+              className={`${btnOutlineCls} mx-auto`}
             >
               ← Back to Dashboard
             </Link>
@@ -724,7 +736,7 @@ export default function FarmOS() {
 
   if (!farm && !loading)
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className={`${pageBgCls} py-12 px-4`}>
         <div className="max-w-lg mx-auto">
           <div className="text-center mb-8">
             <div className="text-5xl mb-3">🏡</div>
@@ -735,7 +747,7 @@ export default function FarmOS() {
               Enter your farm details to get started.
             </p>
           </div>
-          <Card>
+          <Card className={panelCls}>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -813,7 +825,7 @@ export default function FarmOS() {
               </Field>
               <button
                 type="submit"
-                className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                className={`w-full ${btnPrimaryCls}`}
               >
                 Save Farm Profile →
               </button>
@@ -885,152 +897,158 @@ export default function FarmOS() {
   const chartColors = ["#16a34a", "#2563eb", "#f59e0b", "#ef4444", "#8b5cf6"];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top bar */}
-      <div className="bg-dark-green text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-md">
-        <div className="flex items-center gap-3">
-          {/* Hamburger — mobile */}
-          <button
-            onClick={() => setSidebarOpen((o) => !o)}
-            className="md:hidden text-white p-1"
-            aria-label="Toggle menu"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-          <div>
-            <div className="font-bold text-lg leading-tight">
-              🚜 {farm?.name ?? "Farm OS"}
-            </div>
-            <div className="text-xs text-green-200">
-              {farm?.location ?? ""}
-              {farm?.total_area_ha
-                ? ` · ${parseFloat(farm.total_area_ha).toLocaleString()} ha`
-                : ""}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 text-sm">
-          <button
-            onClick={() => openModal("farm", farm)}
-            className="text-green-200 hover:text-white transition-colors"
-          >
-            Edit Farm
-          </button>
-          <Link
-            to="/dashboard"
-            className="text-green-200 hover:text-white transition-colors"
-          >
-            ← Dashboard
-          </Link>
-        </div>
+    <div className={`${pageBgCls} relative flex min-h-screen flex-col overflow-hidden`}>
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute -top-32 -left-32 h-72 w-72 rounded-full bg-secondary-green/20 blur-3xl" />
+        <div className="absolute top-12 -right-28 h-80 w-80 rounded-full bg-accent-gold/20 blur-3xl" />
+        <div className="absolute bottom-[-140px] left-1/3 h-80 w-80 rounded-full bg-primary-green/15 blur-3xl" />
       </div>
-
-      {feedback && (
-        <div
-          className={`mx-4 mt-3 px-4 py-3 rounded-lg border text-sm font-medium ${
-            feedback.type === "success"
-              ? "bg-green-50 border-green-200 text-green-800"
-              : "bg-red-50 border-red-200 text-red-800"
-          }`}
-        >
-          {feedback.msg}
-        </div>
-      )}
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside
-          className={`${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } md:translate-x-0 fixed md:static inset-y-0 left-0 z-30 w-56 bg-white border-r border-gray-200 flex flex-col transition-transform duration-200 ease-in-out pt-16 md:pt-0`}
-        >
-          <nav className="flex-1 py-4 overflow-y-auto">
-            {NAV.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => navigate(item.key)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors text-left ${
-                  section === item.key
-                    ? "bg-green-50 text-primary-green border-r-2 border-primary-green"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+      <div className="relative z-10 flex min-h-screen flex-col">
+        {/* Top bar */}
+        <div className="bg-dark-green/95 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-card backdrop-blur border-b border-white/10">
+          <div className="flex items-center gap-3">
+            {/* Hamburger — mobile */}
+            <button
+              onClick={() => setSidebarOpen((o) => !o)}
+              className="md:hidden text-white p-1"
+              aria-label="Toggle menu"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <span className="text-base">{item.icon}</span>
-                {item.label}
-                {item.key === "inventory" && alerts.length > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-                    {alerts.length}
-                  </span>
-                )}
-                {item.key === "insights" && insights.length > 0 && (
-                  <span className="ml-auto text-xs text-gray-400">
-                    {insights.length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-          {/* Quick log actions at bottom of sidebar */}
-          <div className="p-3 border-t border-gray-200 space-y-2">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-1 mb-2">
-              Quick Log
-            </p>
-            {[
-              {
-                label: "Labour Day",
-                action: () => {
-                  navigate("labour");
-                  openModal("labour");
-                },
-              },
-              {
-                label: "Crop Activity",
-                action: () => {
-                  navigate("crops");
-                  openModal("crop-activity");
-                },
-              },
-              {
-                label: "Livestock",
-                action: () => {
-                  navigate("livestock");
-                  openModal("livestock-activity");
-                },
-              },
-            ].map((a) => (
-              <button
-                key={a.label}
-                onClick={a.action}
-                className="w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-green-50 hover:text-primary-green rounded-lg transition-colors"
-              >
-                + {a.label}
-              </button>
-            ))}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+            <div>
+              <div className="font-bold text-lg leading-tight">
+                🚜 {farm?.name ?? "Farm OS"}
+              </div>
+              <div className="text-xs text-green-100/90">
+                {farm?.location ?? ""}
+                {farm?.total_area_ha
+                  ? ` · ${parseFloat(farm.total_area_ha).toLocaleString()} ha`
+                  : ""}
+              </div>
+            </div>
           </div>
-        </aside>
+          <div className="flex items-center gap-3 text-sm">
+            <button
+              onClick={() => openModal("farm", farm)}
+              className={btnGhostOnDarkCls}
+            >
+              Edit Farm
+            </button>
+            <Link
+              to="/dashboard"
+              className={btnGhostOnDarkCls}
+            >
+              ← Dashboard
+            </Link>
+          </div>
+        </div>
 
-        {/* Sidebar overlay — mobile */}
-        {sidebarOpen && (
+        {feedback && (
           <div
-            className="fixed inset-0 z-20 bg-black bg-opacity-30 md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
+            className={`mx-4 mt-3 px-4 py-3 rounded-lg border text-sm font-medium ${
+              feedback.type === "success"
+                ? "bg-green-50 border-green-200 text-green-800"
+                : "bg-red-50 border-red-200 text-red-800"
+            }`}
+          >
+            {feedback.msg}
+          </div>
         )}
 
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <aside
+            className={`${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            } md:translate-x-0 fixed md:static inset-y-0 left-0 z-30 w-56 bg-white/80 backdrop-blur border-r border-secondary-green/10 flex flex-col transition-transform duration-200 ease-in-out pt-16 md:pt-0`}
+          >
+            <nav className="flex-1 py-4 overflow-y-auto">
+              {NAV.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => navigate(item.key)}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors text-left ${
+                    section === item.key
+                      ? "bg-green-50 text-primary-green border-r-2 border-primary-green"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <span className="text-base">{item.icon}</span>
+                  {item.label}
+                  {item.key === "inventory" && alerts.length > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                      {alerts.length}
+                    </span>
+                  )}
+                  {item.key === "insights" && insights.length > 0 && (
+                    <span className="ml-auto text-xs text-gray-400">
+                      {insights.length}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+            {/* Quick log actions at bottom of sidebar */}
+            <div className="p-3 border-t border-gray-200 space-y-2">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-1 mb-2">
+                Quick Log
+              </p>
+              {[
+                {
+                  label: "Labour Day",
+                  action: () => {
+                    navigate("labour");
+                    openModal("labour");
+                  },
+                },
+                {
+                  label: "Crop Activity",
+                  action: () => {
+                    navigate("crops");
+                    openModal("crop-activity");
+                  },
+                },
+                {
+                  label: "Livestock",
+                  action: () => {
+                    navigate("livestock");
+                    openModal("livestock-activity");
+                  },
+                },
+              ].map((a) => (
+                <button
+                  key={a.label}
+                  onClick={a.action}
+                  className="w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-green-50 hover:text-primary-green rounded-lg transition-colors"
+                >
+                  + {a.label}
+                </button>
+              ))}
+            </div>
+          </aside>
+
+          {/* Sidebar overlay — mobile */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 z-20 bg-black bg-opacity-30 md:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
+          {/* Main content */}
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {/* ── OVERVIEW ── */}
           {section === "overview" && (
             <div className="space-y-6">
@@ -1071,25 +1089,41 @@ export default function FarmOS() {
                   <button
                     key={kpi.label}
                     onClick={kpi.onClick}
-                    className={`${kpi.color} rounded-xl p-4 text-center hover:shadow-md transition-shadow w-full`}
+                    className="group relative w-full overflow-hidden rounded-2xl border border-secondary-green/10 bg-white/80 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                   >
-                    <div className="text-3xl mb-1">{kpi.icon}</div>
-                    <div className="text-2xl font-bold">{kpi.value}</div>
-                    <div className="text-sm font-medium">{kpi.label}</div>
+                    <div
+                      className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${kpi.color} text-xl shadow-sm`}
+                    >
+                      {kpi.icon}
+                    </div>
+                    <div className="mt-3 flex items-end justify-between">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          {kpi.label}
+                        </div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {kpi.value}
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold text-gray-400 transition group-hover:text-gray-600">
+                        View
+                      </span>
+                    </div>
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-0 transition group-hover:opacity-100" />
                   </button>
                 ))}
               </div>
 
               {/* Labour this month */}
               {labourSummary && (
-                <Card>
+                <Card className={panelCls}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-gray-900">
                       Labour This Month
                     </h3>
                     <button
                       onClick={() => navigate("labour")}
-                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                      className="text-sm font-semibold text-secondary-green hover:text-primary-green"
                     >
                       View all →
                     </button>
@@ -1121,7 +1155,7 @@ export default function FarmOS() {
                     ].map((s) => (
                       <div
                         key={s.label}
-                        className="bg-gray-50 rounded-lg p-3 text-center"
+                        className="rounded-xl border border-secondary-green/10 bg-white/70 p-3 text-center shadow-sm"
                       >
                         <div className="text-xl font-bold text-gray-900">
                           {s.value}
@@ -1270,76 +1304,78 @@ export default function FarmOS() {
               {/* Two-column: Alerts + Planting now */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Inventory alerts */}
-                <Card>
+                <Card className={panelCls}>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-gray-900">
                       ⚠️ Inventory Alerts
                     </h3>
                     <button
                       onClick={() => navigate("inventory")}
-                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                      className="text-sm font-semibold text-secondary-green hover:text-primary-green"
                     >
                       View all →
                     </button>
                   </div>
                   {alerts.length === 0 ? (
-                    <p className="text-sm text-gray-500 py-4 text-center">
+                    <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-6 text-center text-sm text-gray-500">
                       All stock levels OK ✓
-                    </p>
+                    </div>
                   ) : (
-                    alerts.slice(0, 4).map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
-                      >
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {item.name}
-                          </span>
-                          <span className="ml-2 text-xs text-gray-400">
-                            {item.item_type}
-                          </span>
-                        </div>
-                        <div className="flex gap-1">
-                          {item.low_stock && (
-                            <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                              Low
+                    <div className="space-y-2">
+                      {alerts.slice(0, 4).map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2"
+                        >
+                          <div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {item.name}
                             </span>
-                          )}
-                          {item.expiring_soon && (
-                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                              Expiring
+                            <span className="ml-2 text-xs text-gray-400">
+                              {item.item_type}
                             </span>
-                          )}
+                          </div>
+                          <div className="flex gap-1">
+                            {item.low_stock && (
+                              <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                                Low
+                              </span>
+                            )}
+                            {item.expiring_soon && (
+                              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                                Expiring
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </Card>
 
                 {/* Planting now */}
-                <Card>
+                <Card className={panelCls}>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-gray-900">
                       🌱 Planting This Month
                     </h3>
                     <button
                       onClick={() => navigate("calendar")}
-                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                      className="text-sm font-semibold text-secondary-green hover:text-primary-green"
                     >
                       Calendar →
                     </button>
                   </div>
                   {plantingNow.length === 0 ? (
-                    <p className="text-sm text-gray-500 py-4 text-center">
+                    <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-6 text-center text-sm text-gray-500">
                       No calendar entries for this month
-                    </p>
+                    </div>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {plantingNow.map((e: any) => (
                         <span
                           key={e.id}
-                          className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium"
+                          className="rounded-full bg-secondary-green/10 px-3 py-1 text-sm font-semibold text-secondary-green"
                         >
                           {e.crop_type}
                         </span>
@@ -1351,14 +1387,14 @@ export default function FarmOS() {
 
               {/* Active crops summary */}
               {cropPlans.filter((c) => c.status === "active").length > 0 && (
-                <Card>
+                <Card className={panelCls}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-gray-900">
                       Active Crop Plans
                     </h3>
                     <button
                       onClick={() => navigate("crops")}
-                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                      className="text-sm font-semibold text-secondary-green hover:text-primary-green"
                     >
                       View all →
                     </button>
@@ -1370,7 +1406,7 @@ export default function FarmOS() {
                       .map((plan) => (
                         <div
                           key={plan.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                          className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2"
                         >
                           <div>
                             <span className="font-medium text-gray-900">
@@ -1415,13 +1451,13 @@ export default function FarmOS() {
                 </h2>
                 <button
                   onClick={() => openModal("field")}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  className={btnPrimaryCls}
                 >
                   + Add Field
                 </button>
               </div>
               {fields.length === 0 ? (
-                <Card>
+                <Card className={panelCls}>
                   <div className="py-16 text-center">
                     <div className="text-5xl mb-3">🌍</div>
                     <p className="font-medium text-gray-700">No fields yet</p>
@@ -1430,7 +1466,7 @@ export default function FarmOS() {
                     </p>
                     <button
                       onClick={() => openModal("field")}
-                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                      className={`mt-4 ${btnPrimaryCls}`}
                     >
                       Add First Field
                     </button>
@@ -1439,7 +1475,10 @@ export default function FarmOS() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {fields.map((field) => (
-                    <Card key={field.id}>
+                    <Card
+                      key={field.id}
+                      className={`${panelCls} group transition hover:-translate-y-0.5 hover:shadow-md`}
+                    >
                       <div className="flex items-start justify-between mb-3">
                         <h3 className="font-bold text-gray-900 text-lg">
                           {field.name}
@@ -1447,7 +1486,7 @@ export default function FarmOS() {
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${
                             field.status === "active"
-                              ? "bg-green-100 text-green-700"
+                              ? "bg-secondary-green/10 text-secondary-green font-semibold"
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
@@ -1498,7 +1537,7 @@ export default function FarmOS() {
                       </div>
                       <button
                         onClick={() => openModal("field", field)}
-                        className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                        className="mt-3 text-xs font-semibold text-secondary-green hover:text-primary-green"
                       >
                         Edit field →
                       </button>
@@ -1517,13 +1556,13 @@ export default function FarmOS() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => openModal("crop-activity")}
-                    className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium transition-colors"
+                    className={btnOutlineCls}
                   >
                     + Log Activity
                   </button>
                   <button
                     onClick={() => openModal("crop")}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    className={btnPrimaryCls}
                   >
                     + New Crop Plan
                   </button>
@@ -1541,10 +1580,10 @@ export default function FarmOS() {
                     <button
                       key={s}
                       onClick={() => setForm((f) => ({ ...f, _cropFilter: s }))}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                         (form._cropFilter || "all") === s
-                          ? "bg-green-600 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? "border-secondary-green bg-secondary-green text-white shadow-sm"
+                          : "border-secondary-green/20 bg-white/70 text-gray-600 hover:border-secondary-green/40 hover:bg-white"
                       }`}
                     >
                       {s.charAt(0).toUpperCase() + s.slice(1)} ({count})
@@ -1554,13 +1593,13 @@ export default function FarmOS() {
               </div>
 
               {cropPlans.length === 0 ? (
-                <Card>
+                <Card className={panelCls}>
                   <div className="py-16 text-center">
                     <div className="text-5xl mb-3">🌱</div>
                     <p className="font-medium text-gray-700">No crop plans yet</p>
                     <button
                       onClick={() => openModal("crop")}
-                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                      className={`mt-4 ${btnPrimaryCls}`}
                     >
                       Create First Plan
                     </button>
@@ -1575,7 +1614,10 @@ export default function FarmOS() {
                         c.status === form._cropFilter
                     )
                     .map((plan) => (
-                      <Card key={plan.id}>
+                      <Card
+                        key={plan.id}
+                        className={`${panelCls} transition hover:-translate-y-0.5 hover:shadow-md`}
+                      >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
@@ -1595,7 +1637,7 @@ export default function FarmOS() {
                                 {plan.status.toUpperCase()}
                               </span>
                               {plan.field_name && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                <span className="text-xs bg-secondary-green/10 text-secondary-green px-2 py-0.5 rounded-full font-semibold">
                                   {plan.field_name}
                                 </span>
                               )}
@@ -1657,7 +1699,7 @@ export default function FarmOS() {
                           </div>
                           <button
                             onClick={() => openModal("crop", plan)}
-                            className="text-xs text-blue-600 hover:text-blue-700 font-medium shrink-0"
+                            className="text-xs font-semibold text-secondary-green hover:text-primary-green shrink-0"
                           >
                             Edit
                           </button>
@@ -1677,20 +1719,20 @@ export default function FarmOS() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => openModal("livestock-activity")}
-                    className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium"
+                    className={btnOutlineCls}
                   >
                     + Log Activity
                   </button>
                   <button
                     onClick={() => openModal("livestock")}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                    className={btnPrimaryCls}
                   >
                     + Add Group
                   </button>
                 </div>
               </div>
               {livestock.length === 0 ? (
-                <Card>
+                <Card className={panelCls}>
                   <div className="py-16 text-center">
                     <div className="text-5xl mb-3">🐄</div>
                     <p className="font-medium text-gray-700">
@@ -1698,7 +1740,7 @@ export default function FarmOS() {
                     </p>
                     <button
                       onClick={() => openModal("livestock")}
-                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                      className={`${btnPrimaryCls} mt-4`}
                     >
                       Add Livestock
                     </button>
@@ -1707,7 +1749,7 @@ export default function FarmOS() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {livestock.map((group) => (
-                    <Card key={group.id}>
+                    <Card key={group.id} className={panelCls}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <span className="text-3xl">
@@ -1767,7 +1809,7 @@ export default function FarmOS() {
                       </div>
                       <button
                         onClick={() => openModal("livestock", group)}
-                        className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                        className="mt-3 text-xs font-semibold text-secondary-green hover:text-primary-green"
                       >
                         Edit group →
                       </button>
@@ -1788,13 +1830,13 @@ export default function FarmOS() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => openModal("worker")}
-                    className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium"
+                    className={btnOutlineCls}
                   >
                     + Add Worker
                   </button>
                   <button
                     onClick={() => openModal("labour")}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                    className={btnPrimaryCls}
                   >
                     + Log Labour Day
                   </button>
@@ -1807,27 +1849,31 @@ export default function FarmOS() {
                     {
                       label: "Man-Days (month)",
                       value: labourSummary.total_entries,
+                      icon: "👥",
                     },
                     {
                       label: "Total Hours",
                       value: `${parseFloat(
                         labourSummary.total_hours || "0"
                       ).toFixed(0)}h`,
+                      icon: "⏱️",
                     },
                     {
                       label: "Wages Paid",
                       value: `$${parseFloat(
                         labourSummary.total_wages || "0"
                       ).toFixed(2)}`,
+                      icon: "💰",
                     },
                     {
                       label: "Area Covered (ha)",
                       value: parseFloat(
                         labourSummary.total_area || "0"
                       ).toFixed(2),
+                      icon: "🌾",
                     },
                   ].map((s) => (
-                    <Card key={s.label} className="bg-blue-50">
+                    <Card key={s.label} className={`${panelCls} rounded-2xl border-l-4 border-blue-400`}>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-blue-700">
                           {s.value}
@@ -1839,7 +1885,7 @@ export default function FarmOS() {
                 </div>
               )}
 
-              <Card>
+              <Card className={panelCls}>
                 <h3 className="font-bold text-gray-900 mb-4">
                   Workers ({workers.length})
                 </h3>
@@ -1848,7 +1894,7 @@ export default function FarmOS() {
                     <p className="text-gray-500 text-sm">No workers added yet.</p>
                     <button
                       onClick={() => openModal("worker")}
-                      className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium"
+                      className="mt-2 font-semibold text-secondary-green hover:text-primary-green text-sm"
                     >
                       + Add Worker
                     </button>
@@ -1858,8 +1904,8 @@ export default function FarmOS() {
                     {workers.map((worker) => (
                       <div
                         key={worker.id}
-                        className={`flex items-center justify-between p-3 rounded-lg ${
-                          worker.is_active ? "bg-gray-50" : "bg-red-50 opacity-60"
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+                          worker.is_active ? "border-secondary-green/10 bg-white/70" : "border-red-200/50 bg-red-50/60"
                         }`}
                       >
                         <div>
@@ -1892,7 +1938,7 @@ export default function FarmOS() {
                           )}
                           <button
                             onClick={() => openModal("worker", worker)}
-                            className="text-blue-600 hover:text-blue-700 font-medium"
+                            className="font-semibold text-secondary-green hover:text-primary-green"
                           >
                             Edit
                           </button>
@@ -1912,25 +1958,25 @@ export default function FarmOS() {
                 <h2 className="text-2xl font-bold text-gray-900">Inventory</h2>
                 <button
                   onClick={() => openModal("inventory")}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                  className={btnPrimaryCls}
                 >
                   + Add Item
                 </button>
               </div>
               {alerts.length > 0 && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800 font-medium">
+                <div className="mb-4 rounded-xl border border-red-200/50 bg-red-50/80 px-4 py-3 text-sm font-medium text-red-700">
                   ⚠️ {alerts.length} item{alerts.length !== 1 ? "s" : ""} need
                   attention
                 </div>
               )}
               {inventory.length === 0 ? (
-                <Card>
+                <Card className={panelCls}>
                   <div className="py-16 text-center">
                     <div className="text-5xl mb-3">📦</div>
                     <p className="font-medium text-gray-700">No inventory items</p>
                     <button
                       onClick={() => openModal("inventory")}
-                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                      className={`${btnPrimaryCls} mt-4`}
                     >
                       Add First Item
                     </button>
@@ -1938,8 +1984,9 @@ export default function FarmOS() {
                 </Card>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full bg-white rounded-xl shadow-sm">
-                    <thead className="bg-gray-50 border-b border-gray-200">
+                  <div className={`${panelCls} rounded-2xl overflow-hidden`}>
+                  <table className="w-full">
+                    <thead className="border-b border-secondary-green/10 bg-white/50">
                       <tr>
                         {[
                           "Item",
@@ -1959,13 +2006,13 @@ export default function FarmOS() {
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-secondary-green/5">
                       {inventory.map((item) => (
                         <tr
                           key={item.id}
-                          className={`hover:bg-gray-50 ${
+                          className={`transition hover:bg-white/60 ${
                             item.low_stock || item.expiring_soon
-                              ? "bg-red-50"
+                              ? "bg-red-50/40"
                               : ""
                           }`}
                         >
@@ -2020,7 +2067,7 @@ export default function FarmOS() {
                           <td className="px-4 py-3">
                             <button
                               onClick={() => openModal("inventory", item)}
-                              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                              className="text-xs font-semibold text-secondary-green hover:text-primary-green"
                             >
                               Edit
                             </button>
@@ -2029,6 +2076,7 @@ export default function FarmOS() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
             </div>
@@ -2043,21 +2091,21 @@ export default function FarmOS() {
                 </h2>
                 <button
                   onClick={() => openModal("calendar")}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                  className={btnPrimaryCls}
                 >
                   + Add Entry
                 </button>
               </div>
               {plantingNow.length > 0 && (
-                <Card className="mb-4 bg-green-50 border border-green-200">
-                  <h3 className="font-bold text-green-900 mb-2">
+                <Card className={`${panelCls} mb-4 border-l-4 border-secondary-green/60`}>
+                  <h3 className="font-bold text-gray-900 mb-2">
                     🌱 Plant This Month
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {plantingNow.map((e: any) => (
                       <span
                         key={e.id}
-                        className="bg-green-200 text-green-900 text-sm px-3 py-1 rounded-full font-medium"
+                        className="bg-secondary-green/20 text-gray-900 text-sm px-3 py-1 rounded-full font-medium border border-secondary-green/30"
                       >
                         {e.crop_type}
                         {e.expected_harvest_weeks
@@ -2069,8 +2117,9 @@ export default function FarmOS() {
                 </Card>
               )}
               <div className="overflow-x-auto">
-                <table className="w-full bg-white rounded-xl shadow-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                <div className={`${panelCls} rounded-2xl overflow-hidden`}>
+                <table className="w-full">
+                  <thead className="border-b border-secondary-green/10 bg-white/50">
                     <tr>
                       {[
                         "Crop",
@@ -2090,19 +2139,19 @@ export default function FarmOS() {
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-secondary-green/5">
                     {calendar.length === 0 ? (
                       <tr>
                         <td
                           colSpan={7}
-                          className="px-4 py-12 text-center text-gray-500"
+                          className="px-4 py-12 text-center text-gray-500 text-sm"
                         >
                           No calendar entries yet
                         </td>
                       </tr>
                     ) : (
                       calendar.map((e: any) => (
-                        <tr key={e.id} className="hover:bg-gray-50">
+                        <tr key={e.id} className="transition hover:bg-white/60">
                           <td className="px-4 py-3 font-medium text-gray-900 text-sm">
                             {e.crop_type}
                           </td>
@@ -2132,6 +2181,7 @@ export default function FarmOS() {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           )}
@@ -2147,7 +2197,7 @@ export default function FarmOS() {
               ) : (
                 <>
                   {monthlyReport && (
-                    <Card>
+                    <Card className={panelCls}>
                       <h3 className="text-lg font-bold text-gray-900 mb-4">
                         Monthly Summary —{" "}
                         {new Date(
@@ -2185,7 +2235,7 @@ export default function FarmOS() {
                         ].map((s) => (
                           <div
                             key={s.label}
-                            className="bg-gray-50 rounded-lg p-3 text-center"
+                            className="rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2 text-center"
                           >
                             <div className="text-xl font-bold text-gray-900">
                               {s.value}
@@ -2202,7 +2252,7 @@ export default function FarmOS() {
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                               <thead>
-                                <tr className="border-b border-gray-200">
+                                <tr className="border-b border-secondary-green/10">
                                   {[
                                     "Task",
                                     "Man-Days",
@@ -2212,20 +2262,17 @@ export default function FarmOS() {
                                   ].map((h) => (
                                     <th
                                       key={h}
-                                      className={`py-2 ${
-                                        h === "Task" ? "text-left" : "text-right"
-                                      } text-gray-500 font-medium`}
+                                      className={`py-2 ${h === "Task" ? "text-left" : "text-right"} text-gray-500 font-medium`}
                                     >
                                       {h}
                                     </th>
                                   ))}
                                 </tr>
                               </thead>
-                              <tbody>
+                              <tbody className="divide-y divide-secondary-green/5">
                                 {monthlyReport.labour.byTask.map((row: any) => (
                                   <tr
                                     key={row.task_category}
-                                    className="border-b border-gray-100"
                                   >
                                     <td className="py-2 capitalize">
                                       {row.task_category.replace("_", " ")}
@@ -2264,7 +2311,7 @@ export default function FarmOS() {
                             {monthlyReport.inventory.map((row: any) => (
                               <div
                                 key={row.name}
-                                className="flex items-center justify-between text-sm py-1 border-b border-gray-100"
+                                className="flex items-center justify-between text-sm py-1 border-b border-secondary-green/5"
                               >
                                 <span>
                                   {row.name}{" "}
@@ -2286,13 +2333,13 @@ export default function FarmOS() {
                     </Card>
                   )}
                   {weeklyReport && (
-                    <Card>
+                    <Card className={panelCls}>
                       <h3 className="text-lg font-bold text-gray-900 mb-4">
                         Weekly Summary — {weeklyReport.period.startDate} to{" "}
                         {weeklyReport.period.endDate}
                       </h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="bg-gray-50 rounded p-3 text-center">
+                        <div className="rounded-lg border border-secondary-green/10 bg-white/70 p-3 text-center">
                           <div className="text-xl font-bold text-blue-700">
                             {weeklyReport.labour?.total_entries ?? 0}
                           </div>
@@ -2332,20 +2379,20 @@ export default function FarmOS() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">Financial Management</h2>
                 <div className="flex gap-2">
-                  <button onClick={() => openModal("revenue-entry")} className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium">+ Record Revenue</button>
-                  <button onClick={() => openModal("expense")} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium">+ Record Expense</button>
+                  <button onClick={() => openModal("revenue-entry")} className={btnOutlineCls}>+ Record Revenue</button>
+                  <button onClick={() => openModal("expense")} className={btnPrimaryCls}>+ Record Expense</button>
                 </div>
               </div>
 
               {/* Month selector */}
-              <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-200">
+              <div className={`${panelCls} flex items-center gap-3 rounded-2xl px-4 py-3`}>
                 <span className="text-sm font-medium text-gray-600">Period:</span>
-                <select value={finPeriod.month} onChange={e => setFinPeriod(p => ({ ...p, month: Number(e.target.value) }))} className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500">
+                <select value={finPeriod.month} onChange={e => setFinPeriod(p => ({ ...p, month: Number(e.target.value) }))} className={inputCompactCls}>
                   { ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>(
                     <option key={i} value={i+1}>{m}</option>
                   )) }
                 </select>
-                <select value={finPeriod.year} onChange={e => setFinPeriod(p => ({ ...p, year: Number(e.target.value) }))} className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500">
+                <select value={finPeriod.year} onChange={e => setFinPeriod(p => ({ ...p, year: Number(e.target.value) }))} className={inputCompactCls}>
                   {[new Date().getFullYear()-1, new Date().getFullYear(), new Date().getFullYear()+1].map(y=>(<option key={y} value={y}>{y}</option>))}
                 </select>
               </div>
@@ -2353,22 +2400,22 @@ export default function FarmOS() {
               {/* P&L Summary */}
               {profitability && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-green-50 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-green-700">${profitability.summary.totalRevenue.toFixed(2)}</div>
+                  <div className={`${panelCls} rounded-2xl border-l-4 border-secondary-green p-4 text-center`}>
+                    <div className="text-2xl font-bold text-secondary-green">${profitability.summary.totalRevenue.toFixed(2)}</div>
                     <div className="text-sm text-gray-600">Total Revenue</div>
                   </div>
-                  <div className="bg-red-50 rounded-xl p-4 text-center">
+                  <div className={`${panelCls} rounded-2xl border-l-4 border-red-400 p-4 text-center`}>
                     <div className="text-2xl font-bold text-red-600">${profitability.summary.totalExpenses.toFixed(2)}</div>
                     <div className="text-sm text-gray-600">Total Expenses</div>
                   </div>
-                  <div className={`rounded-xl p-4 text-center ${profitability.summary.isProfit ? "bg-blue-50" : "bg-orange-50"}`}>
+                  <div className={`${panelCls} rounded-2xl border-l-4 p-4 text-center ${profitability.summary.isProfit ? "border-blue-400" : "border-orange-400"}`}>
                     <div className={`text-2xl font-bold ${profitability.summary.isProfit ? "text-blue-700" : "text-orange-600"}`}>
                       {profitability.summary.isProfit ? "+" : ""}${profitability.summary.netProfit.toFixed(2)}
                     </div>
                     <div className="text-sm text-gray-600">Net {profitability.summary.isProfit ? "Profit" : "Loss"}</div>
                   </div>
-                  <div className="bg-purple-50 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-purple-700">{profitability.summary.profitMargin}</div>
+                  <div className={`${panelCls} rounded-2xl border-l-4 border-accent-gold p-4 text-center`}>
+                    <div className="text-2xl font-bold text-amber-600">{profitability.summary.profitMargin}</div>
                     <div className="text-sm text-gray-600">Profit Margin</div>
                   </div>
                 </div>
@@ -2376,7 +2423,7 @@ export default function FarmOS() {
 
               {/* Profit by crop */}
               {profitability && profitability.byCrop.length > 0 && (
-                <Card>
+                <Card className={panelCls}>
                   <h3 className="font-bold text-gray-900 mb-4">Profit by Crop</h3>
                   <div className="space-y-2">
                     {profitability.byCrop.map((c: any) => {
@@ -2384,7 +2431,7 @@ export default function FarmOS() {
                       const revenue = parseFloat(c.revenue || "0");
                       const expenses = parseFloat(c.expenses || "0");
                       return (
-                        <div key={c.crop_plan_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div key={c.crop_plan_id} className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2">
                           <div>
                             <span className="font-medium text-gray-900">{c.crop_type}</span>
                             {c.variety && <span className="text-sm text-gray-500 ml-1">({c.variety})</span>}
@@ -2392,7 +2439,7 @@ export default function FarmOS() {
                           <div className="flex items-center gap-6 text-sm">
                             <span className="text-green-600">Rev: ${revenue.toFixed(2)}</span>
                             <span className="text-red-500">Exp: ${expenses.toFixed(2)}</span>
-                            <span className={`font-bold px-2 py-0.5 rounded ${profit >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"}`}>
+                            <span className={`font-bold px-2 py-0.5 rounded-full ${profit >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"}`}>
                               {profit >= 0 ? "+" : ""}${profit.toFixed(2)}
                             </span>
                           </div>
@@ -2405,12 +2452,12 @@ export default function FarmOS() {
 
               {/* 6-month trend */}
               {profitability && profitability.trend.length > 0 && (
-                <Card>
+                <Card className={panelCls}>
                   <h3 className="font-bold text-gray-900 mb-4">6-Month Trend</h3>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-gray-200">
+                        <tr className="border-b border-secondary-green/10">
                           { ["Month","Revenue","Expenses","Net P&L"].map(h=>(<th key={h} className={`py-2 text-gray-500 font-medium ${h==="Month"?"text-left":"text-right"}`}>{h}</th>)) }
                         </tr>
                       </thead>
@@ -2418,7 +2465,7 @@ export default function FarmOS() {
                         {profitability.trend.map((row: any) => {
                           const net = parseFloat(row.profit || "0");
                           return (
-                            <tr key={row.month} className="border-b border-gray-100">
+                            <tr key={row.month} className="border-b border-secondary-green/5">
                               <td className="py-2 font-medium">{row.month}</td>
                               <td className="py-2 text-right text-green-600">${parseFloat(row.revenue || "0").toFixed(2)}</td>
                               <td className="py-2 text-right text-red-500">${parseFloat(row.expenses || "0").toFixed(2)}</td>
@@ -2436,15 +2483,17 @@ export default function FarmOS() {
 
               {/* Two columns: recent expenses + revenue */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
+                <Card className={panelCls}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-gray-900">Recent Expenses</h3>
-                    <button onClick={() => openModal("expense")} className="text-sm text-green-600 hover:text-green-700 font-medium">+ Add</button>
+                    <button onClick={() => openModal("expense")} className="text-sm font-semibold text-secondary-green hover:text-primary-green">+ Add</button>
                   </div>
                   {expenses.length === 0 ? (
-                    <p className="text-gray-500 text-sm py-6 text-center">No expenses recorded this period</p>
+                    <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-6 text-center text-sm text-gray-500">
+                      No expenses recorded this period
+                    </div>
                   ) : expenses.slice(0, 8).map(exp => (
-                    <div key={exp.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <div key={exp.id} className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{exp.description}</div>
                         <div className="text-xs text-gray-400">
@@ -2454,21 +2503,23 @@ export default function FarmOS() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-red-600">${parseFloat(exp.amount_usd).toFixed(2)}</span>
-                        <button onClick={() => openModal("expense", exp)} className="text-xs text-blue-600">Edit</button>
+                        <button onClick={() => openModal("expense", exp)} className="text-xs font-semibold text-secondary-green">Edit</button>
                       </div>
                     </div>
                   ))}
                 </Card>
 
-                <Card>
+                <Card className={panelCls}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-gray-900">Recent Revenue</h3>
-                    <button onClick={() => openModal("revenue-entry")} className="text-sm text-green-600 hover:text-green-700 font-medium">+ Add</button>
+                    <button onClick={() => openModal("revenue-entry")} className="text-sm font-semibold text-secondary-green hover:text-primary-green">+ Add</button>
                   </div>
                   {revenue.length === 0 ? (
-                    <p className="text-gray-500 text-sm py-6 text-center">No revenue recorded this period</p>
+                    <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-6 text-center text-sm text-gray-500">
+                      No revenue recorded this period
+                    </div>
                   ) : revenue.slice(0, 8).map(rev => (
-                    <div key={rev.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <div key={rev.id} className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{rev.description}</div>
                         <div className="text-xs text-gray-400">
@@ -2478,7 +2529,7 @@ export default function FarmOS() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-green-600">${parseFloat(rev.amount_usd).toFixed(2)}</span>
-                        <button onClick={() => openModal("revenue-entry", rev)} className="text-xs text-blue-600">Edit</button>
+                        <button onClick={() => openModal("revenue-entry", rev)} className="text-xs font-semibold text-secondary-green">Edit</button>
                       </div>
                     </div>
                   ))}
@@ -2495,7 +2546,7 @@ export default function FarmOS() {
                   <p className="text-sm text-gray-500 mt-0.5">Current prices and AI-powered market recommendations</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => openModal("market-price")} className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium">+ Add Price</button>
+                  <button onClick={() => openModal("market-price")} className={btnOutlineCls}>+ Add Price</button>
                   <button
                     onClick={async () => {
                       try {
@@ -2512,7 +2563,7 @@ export default function FarmOS() {
                       } finally { setGenMarket(false); }
                     }}
                     disabled={genMarket}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                    className={`${btnPrimaryCls} disabled:opacity-50`}
                   >
                     {genMarket ? "Analysing..." : "📡 Get Market Insights"}
                   </button>
@@ -2841,14 +2892,14 @@ export default function FarmOS() {
 
               {/* AI market insights */}
               {marketInsights && (
-                <Card className="mb-6 border-l-4 border-green-400 bg-green-50">
-                  <h3 className="font-bold text-green-900 mb-2">Market Overview</h3>
-                  <p className="text-sm text-green-800 mb-4">{marketInsights.marketSummary}</p>
+                <Card className={`${panelCls} mb-6 border-l-4 border-secondary-green/60`}>
+                  <h3 className="font-bold text-gray-900 mb-2">Market Overview</h3>
+                  <p className="text-sm text-gray-700 mb-4">{marketInsights.marketSummary}</p>
                   {marketInsights.recommendations?.length > 0 && (
                     <div className="space-y-2">
-                      <h4 className="text-sm font-semibold text-green-900">Recommendations</h4>
+                      <h4 className="text-sm font-semibold text-gray-900">Recommendations</h4>
                       {marketInsights.recommendations.map((rec: any, i: number) => (
-                        <div key={i} className="flex items-start justify-between p-3 bg-white rounded-lg">
+                        <div key={i} className="flex items-start justify-between rounded-lg border border-secondary-green/10 bg-white/70 p-3">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-medium text-gray-900">{rec.crop}</span>
@@ -2866,7 +2917,7 @@ export default function FarmOS() {
                             </div>
                             <p className="text-sm text-gray-600">{rec.reason}</p>
                           </div>
-                          {rec.estimatedPrice && <span className="text-sm font-bold text-green-700 shrink-0 ml-3">{rec.estimatedPrice}</span>}
+                          {rec.estimatedPrice && <span className="text-sm font-bold text-secondary-green shrink-0 ml-3">{rec.estimatedPrice}</span>}
                         </div>
                       ))}
                     </div>
@@ -2875,10 +2926,10 @@ export default function FarmOS() {
               )}
 
               {/* Commodity prices table */}
-              <Card>
+              <Card className={panelCls}>
                 <h3 className="font-bold text-gray-900 mb-4">Current Market Prices</h3>
                 {marketPrices.length === 0 ? (
-                  <div className="py-12 text-center">
+                  <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-12 text-center">
                     <div className="text-4xl mb-3">📡</div>
                     <p className="text-gray-500 text-sm">No market prices yet</p>
                     <p className="text-xs text-gray-400 mt-1">Add prices manually or generate AI market insights</p>
@@ -2886,7 +2937,7 @@ export default function FarmOS() {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead className="border-b border-gray-200">
+                      <thead className="border-b border-secondary-green/10">
                         <tr>{["Commodity","Price","Unit","Demand","Region","Date","Source"].map(h => (
                           <th key={h} className="pb-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
                         ))}</tr>
@@ -2933,13 +2984,13 @@ export default function FarmOS() {
                 <button
                   onClick={handleGenerateInsights}
                   disabled={genInsights}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  className={`${btnPrimaryCls} transition-colors disabled:opacity-50`}
                 >
                   {genInsights ? "Analysing..." : "🤖 Generate Insights"}
                 </button>
               </div>
               {genInsights && (
-                <Card className="mb-4">
+                <Card className={`${panelCls} mb-4`}>
                   <div className="flex items-center gap-3 py-4">
                     <LoadingSpinner />
                     <div>
@@ -2954,7 +3005,7 @@ export default function FarmOS() {
                 </Card>
               )}
               {insights.length === 0 && !genInsights ? (
-                <Card>
+                <Card className={panelCls}>
                   <div className="py-16 text-center">
                     <div className="text-5xl mb-3">🤖</div>
                     <p className="font-medium text-gray-700">No insights yet</p>
@@ -2963,7 +3014,7 @@ export default function FarmOS() {
                     </p>
                     <button
                       onClick={handleGenerateInsights}
-                      className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                      className={`${btnPrimaryCls} mt-4`}
                     >
                       Generate First Insights
                     </button>
@@ -2974,7 +3025,7 @@ export default function FarmOS() {
                   {insights.map((insight) => (
                     <div
                       key={insight.id}
-                      className={`border-l-4 bg-white rounded-xl p-5 shadow-sm ${
+                      className={`${panelCls} rounded-xl border-l-4 p-5 ${
                         INSIGHT_BORDER[insight.insight_type] ??
                         INSIGHT_BORDER.general
                       }`}
@@ -3004,9 +3055,9 @@ export default function FarmOS() {
 
       {/* ── MODAL ──────────────────────────────────────────────────────────── */}
       {modal.type && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className={`${panelCls} rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto`}>
+            <div className="px-6 py-4 border-b border-secondary-green/10 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur z-10">
               <h2 className="text-lg font-bold text-gray-900">
                 {(
                   {
@@ -3025,7 +3076,7 @@ export default function FarmOS() {
               </h2>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                className="text-gray-400 hover:text-gray-600 transition text-2xl leading-none"
               >
                 ×
               </button>
@@ -4226,17 +4277,17 @@ export default function FarmOS() {
                 </>
               )}
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition-colors"
+                  className={btnOutlineCls}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  className={btnPrimaryCls}
                 >
                   {modal.editing ? "Save Changes" : "Add"}
                 </button>
@@ -4245,6 +4296,7 @@ export default function FarmOS() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
