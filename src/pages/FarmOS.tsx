@@ -1,5 +1,20 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import api from "../services/api";
 import { Card, LoadingSpinner } from "../components/common";
 
@@ -162,6 +177,7 @@ const NAV = [
   { key: "insights", label: "AI Insights", icon: "🤖" },
   { key: "finance", label: "Finance", icon: "💰" },
   { key: "market",  label: "Market",  icon: "📡" },
+  { key: "analytics", label: "Analytics", icon: "📉" },
 ] as const;
 
 type Section = (typeof NAV)[number]["key"];
@@ -273,6 +289,12 @@ export default function FarmOS() {
     { type: null }
   );
   const [form, setForm] = useState<Record<string, any>>({});
+  const [analytics,        setAnalytics]        = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [predictions,      setPredictions]      = useState<any>(null);
+  const [genPredictions,   setGenPredictions]   = useState(false);
+  const [exportYear,       setExportYear]       = useState(new Date().getFullYear());
+  const [exportMonth,      setExportMonth]      = useState(new Date().getMonth() + 1);
 
   // ── Subscription ──────────────────────────────────────────────────────────
 
@@ -398,6 +420,19 @@ export default function FarmOS() {
     };
     loadFinance();
   }, [section, hasAccess, finPeriod]);
+
+  useEffect(() => {
+    if (section !== "analytics" || !hasAccess) return;
+    const load = async () => {
+      try {
+        setAnalyticsLoading(true);
+        const r = await api.get("/farm-os/analytics");
+        if (r.data.success) setAnalytics(r.data.data);
+      } catch { /* non-critical */ }
+      finally { setAnalyticsLoading(false); }
+    };
+    load();
+  }, [section, hasAccess]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -792,6 +827,62 @@ export default function FarmOS() {
 
   const activeCrops = cropPlans.filter((c) => c.status === "active").length;
   const totalLivestock = livestock.reduce((s, g) => s + g.count, 0);
+
+  const handleExportCSV = async (type: string) => {
+    try {
+      const start = `${exportYear}-${String(exportMonth).padStart(2,"0")}-01`;
+      const end   = new Date(exportYear, exportMonth, 0).toISOString().split("T")[0];
+      const r = await api.get(`/farm-os/export/csv?type=${type}&startDate=${start}&endDate=${end}`, { responseType: "blob" });
+      const url  = URL.createObjectURL(new Blob([r.data], { type: "text/csv" }));
+      const link = document.createElement("a");
+      link.href  = url;
+      link.download = `farm-${type}-${start}-to-${end}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch { flash("error", "Export failed"); }
+  };
+
+  const handleExportReport = async () => {
+    try {
+      const r = await api.get(`/farm-os/export/report?year=${exportYear}&month=${exportMonth}`, { responseType: "blob" });
+      const url = URL.createObjectURL(new Blob([r.data], { type: "text/html" }));
+      window.open(url, "_blank");
+    } catch { flash("error", "Report export failed"); }
+  };
+
+  const analyticsTrendData = Array.isArray(analytics?.trend)
+    ? analytics.trend.map((row: any) => ({
+        label: row.month ?? row.label ?? row.date ?? row.period ?? "",
+        revenue: Number(row.revenue ?? row.total_revenue ?? 0),
+        expenses: Number(row.expenses ?? row.total_expenses ?? 0),
+        net: Number(row.profit ?? row.netProfit ?? row.net_profit ?? 0),
+      }))
+    : [];
+  const analyticsCropData = Array.isArray(analytics?.byCrop)
+    ? analytics.byCrop.map((row: any) => ({
+        label: row.crop ?? row.crop_type ?? row.name ?? row.label ?? "Unknown",
+        value: Number(row.value ?? row.profit ?? row.revenue ?? row.count ?? 0),
+      }))
+    : [];
+  const analyticsCategoryData = Array.isArray(
+    analytics?.byCategory ?? analytics?.categories,
+  )
+    ? (analytics.byCategory ?? analytics.categories).map((row: any) => ({
+        label: row.category ?? row.name ?? row.label ?? "Other",
+        value: Number(row.value ?? row.amount ?? row.total ?? row.count ?? 0),
+      }))
+    : [];
+  const predictionData = Array.isArray(
+    predictions?.predictions ?? predictions?.forecast ?? predictions?.trend,
+  )
+    ? (predictions.predictions ?? predictions.forecast ?? predictions.trend).map(
+        (row: any) => ({
+          label: row.month ?? row.label ?? row.period ?? row.date ?? "",
+          value: Number(row.value ?? row.amount ?? row.projection ?? row.total ?? 0),
+        }),
+      )
+    : [];
+  const chartColors = ["#16a34a", "#2563eb", "#f59e0b", "#ef4444", "#8b5cf6"];
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -2426,6 +2517,326 @@ export default function FarmOS() {
                     {genMarket ? "Analysing..." : "📡 Get Market Insights"}
                   </button>
                 </div>
+
+            {false && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Analytics</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      Operational trends, forecasts, and export tools
+                    </p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => handleExportCSV("expenses")}
+                      className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium"
+                    >
+                      Export Expenses CSV
+                    </button>
+                    <button
+                      onClick={() => handleExportCSV("revenue")}
+                      className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium"
+                    >
+                      Export Revenue CSV
+                    </button>
+                    <button
+                      onClick={handleExportReport}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                    >
+                      Export Report
+                    </button>
+                  </div>
+                </div>
+
+                <Card>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Export / forecast year
+                      </label>
+                      <input
+                        type="number"
+                        className={inputCls}
+                        value={exportYear}
+                        onChange={(e) =>
+                          setExportYear(
+                            Number(e.target.value) || new Date().getFullYear(),
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Month
+                      </label>
+                      <select
+                        className={inputCls}
+                        value={exportMonth}
+                        onChange={(e) =>
+                          setExportMonth(Number(e.target.value) || 1)
+                        }
+                      >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                          (month) => (
+                            <option key={month} value={month}>
+                              {new Date(2000, month - 1, 1).toLocaleString(
+                                "en-US",
+                                { month: "long" },
+                              )}
+                            </option>
+                          ),
+                        )}
+                      </select>
+                    </div>
+                    <div className="md:col-span-2 flex gap-2 flex-wrap">
+                      <button
+                        onClick={async () => {
+                          try {
+                            setGenPredictions(true);
+                            const r = await api.post("/farm-os/analytics/predict", {
+                              year: exportYear,
+                              month: exportMonth,
+                            });
+                            if (r.data.success) setPredictions(r.data.data);
+                          } catch (err: any) {
+                            flash(
+                              "error",
+                              err.response?.data?.message ??
+                                "Prediction failed",
+                            );
+                          } finally {
+                            setGenPredictions(false);
+                          }
+                        }}
+                        disabled={genPredictions}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                      >
+                        {genPredictions ? "Generating..." : "Generate Predictions"}
+                      </button>
+                      <button
+                        onClick={() => handleExportCSV("analytics")}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-medium"
+                      >
+                        Export Analytics CSV
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+
+                {analyticsLoading ? (
+                  <div className="py-16 flex justify-center">
+                    <LoadingSpinner />
+                  </div>
+                ) : analytics ? (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        {
+                          label: "Revenue",
+                          value:
+                            analytics.summary?.revenue ??
+                            analytics.summary?.totalRevenue ??
+                            0,
+                          tone: "text-green-700 bg-green-50",
+                        },
+                        {
+                          label: "Expenses",
+                          value:
+                            analytics.summary?.expenses ??
+                            analytics.summary?.totalExpenses ??
+                            0,
+                          tone: "text-red-700 bg-red-50",
+                        },
+                        {
+                          label: "Profit",
+                          value:
+                            analytics.summary?.profit ??
+                            analytics.summary?.netProfit ??
+                            0,
+                          tone: "text-blue-700 bg-blue-50",
+                        },
+                        {
+                          label: "Margin",
+                          value:
+                            analytics.summary?.margin ??
+                            analytics.summary?.profitMargin ??
+                            "—",
+                          tone: "text-purple-700 bg-purple-50",
+                        },
+                      ].map((item) => (
+                        <Card key={item.label} className={item.tone}>
+                          <div className="text-center">
+                            <div className="text-xl font-bold">
+                              {typeof item.value === "number"
+                                ? `$${item.value.toFixed(2)}`
+                                : item.value}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              {item.label}
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                      <Card>
+                        <h3 className="font-bold text-gray-900 mb-4">
+                          Financial Trend
+                        </h3>
+                        {analyticsTrendData.length === 0 ? (
+                          <p className="text-sm text-gray-500 py-8 text-center">
+                            No trend data available.
+                          </p>
+                        ) : (
+                          <div className="h-72">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={analyticsTrendData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="label" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Line
+                                  type="monotone"
+                                  dataKey="revenue"
+                                  stroke="#16a34a"
+                                  strokeWidth={3}
+                                />
+                                <Line
+                                  type="monotone"
+                                  dataKey="expenses"
+                                  stroke="#ef4444"
+                                  strokeWidth={3}
+                                />
+                                <Line
+                                  type="monotone"
+                                  dataKey="net"
+                                  stroke="#2563eb"
+                                  strokeWidth={3}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+                      </Card>
+
+                      <Card>
+                        <h3 className="font-bold text-gray-900 mb-4">
+                          Profit by Crop
+                        </h3>
+                        {analyticsCropData.length === 0 ? (
+                          <p className="text-sm text-gray-500 py-8 text-center">
+                            No crop analytics available.
+                          </p>
+                        ) : (
+                          <div className="h-72">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={analyticsCropData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="label" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Bar
+                                  dataKey="value"
+                                  fill="#16a34a"
+                                  radius={[6, 6, 0, 0]}
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+                      </Card>
+
+                      <Card>
+                        <h3 className="font-bold text-gray-900 mb-4">
+                          Category Mix
+                        </h3>
+                        {analyticsCategoryData.length === 0 ? (
+                          <p className="text-sm text-gray-500 py-8 text-center">
+                            No category analytics available.
+                          </p>
+                        ) : (
+                          <div className="h-72">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={analyticsCategoryData}
+                                  dataKey="value"
+                                  nameKey="label"
+                                  innerRadius={45}
+                                  outerRadius={90}
+                                  paddingAngle={2}
+                                >
+                                  {analyticsCategoryData.map(
+                                    (entry: any, index: number) => (
+                                      <Cell
+                                        key={`cell-${entry.label}-${index}`}
+                                        fill={
+                                          chartColors[index % chartColors.length]
+                                        }
+                                      />
+                                    ),
+                                  )}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+                      </Card>
+
+                      <Card>
+                        <h3 className="font-bold text-gray-900 mb-4">Forecast</h3>
+                        {predictionData.length === 0 ? (
+                          <p className="text-sm text-gray-500 py-8 text-center">
+                            Generate predictions to see the forecast here.
+                          </p>
+                        ) : (
+                          <div className="h-72">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={predictionData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="label" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Line
+                                  type="monotone"
+                                  dataKey="value"
+                                  stroke="#8b5cf6"
+                                  strokeWidth={3}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+                      </Card>
+                    </div>
+
+                    {predictions && (
+                      <Card>
+                        <h3 className="font-bold text-gray-900 mb-4">
+                          Predictions
+                        </h3>
+                        <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-x-auto">
+                          {JSON.stringify(predictions, null, 2)}
+                        </pre>
+                      </Card>
+                    )}
+                  </>
+                ) : (
+                  <Card>
+                    <p className="text-sm text-gray-500 py-6 text-center">
+                      Select Analytics to load data.
+                    </p>
+                  </Card>
+                )}
+              </div>
+            )}
               </div>
 
               {/* AI market insights */}
