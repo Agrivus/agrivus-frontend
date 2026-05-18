@@ -88,3 +88,98 @@
     }
   }
 }
+
+/* --- AGRIVUS FARM OS CUSTOM STYLES --- */
+:root {
+  --farm-primary: #2d6a4f;
+  --farm-primary-dark: #1b4332;
+  --farm-primary-light: #40916c;
+  --farm-primary-glow: #74c69d;
+  --farm-secondary: #ff9f1c;
+  --farm-secondary-dark: #e85d04;
+  --farm-accent: #ffb703;
+  --farm-danger: #e63946;
+  --farm-warning: #fb8500;
+  --farm-success: #06d6a0;
+  --farm-info: #118ab2;
+  --farm-dark: #081c15;
+  --farm-gray-dark: #2d3e40;
+  --farm-gray: #52796f;
+  --farm-gray-light: #dad7cd;
+  --farm-cream: #f8f9fa;
+  
+  --farm-shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+  --farm-shadow-md: 0 10px 25px -5px rgba(0,0,0,0.1);
+  --farm-shadow-lg: 0 20px 40px -12px rgba(0,0,0,0.15);
+  --farm-radius-sm: 12px;
+  --farm-radius-md: 20px;
+  --farm-radius-lg: 32px;
+  --farm-radius-xl: 40px;
+}
+
+.farm-os-body {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+  background: linear-gradient(135deg, #f5f7e8 0%, #e8f0e6 100%);
+  color: var(--farm-dark);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animated Background */
+.farm-bg-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0.3;
+  pointer-events: none;
+}
+.farm-bg-animation::before {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--farm-primary-glow) 0%, transparent 70%);
+  top: -150px;
+  right: -150px;
+  animation: float 20s infinite;
+}
+.farm-bg-animation::after {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--farm-secondary) 0%, transparent 70%);
+  bottom: -200px;
+  left: -200px;
+  animation: float 25s infinite reverse;
+}
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(30px, -30px) rotate(120deg); }
+  66% { transform: translate(-20px, 20px) rotate(240deg); }
+}
+
+/* Horizontal Nav Scrollbar Hide */
+.farm-nav-container {
+  scrollbar-width: none;
+}
+.farm-nav-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Glassmorphism Utilities */
+.farm-glass-card {
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  border-radius: var(--farm-radius-lg);
+  border: 1px solid rgba(255,255,255,0.8);
+  box-shadow: var(--farm-shadow-sm);
+  transition: all 0.3s;
+}
+.farm-glass-card:hover {
+  box-shadow: var(--farm-shadow-lg);
+}

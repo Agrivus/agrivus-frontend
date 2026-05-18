@@ -14,7 +14,6 @@ const Header: React.FC = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setUnreadChatCount(0);
       return;
     }
 
@@ -66,9 +65,12 @@ const Header: React.FC = () => {
   }, [isAuthenticated]);
 
   const handleLogout = () => {
+    setUnreadChatCount(0);
     logout();
     navigate("/");
   };
+
+  const displayUnreadChatCount = isAuthenticated ? unreadChatCount : 0;
 
   const getNavLinks = () => {
     const baseLinks = [
@@ -269,9 +271,9 @@ const Header: React.FC = () => {
                         d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                       />
                     </svg>
-                    {unreadChatCount > 0 && (
+                    {displayUnreadChatCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-green-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {unreadChatCount > 9 ? "9+" : unreadChatCount}
+                        {displayUnreadChatCount > 9 ? "9+" : displayUnreadChatCount}
                       </span>
                     )}
                   </Link>
@@ -321,9 +323,9 @@ const Header: React.FC = () => {
                         />
                       </svg>
                       Messages
-                      {unreadChatCount > 0 && (
+                      {displayUnreadChatCount > 0 && (
                         <span className="bg-green-600 text-white text-xs rounded-full px-2 py-0.5">
-                          {unreadChatCount > 9 ? "9+" : unreadChatCount}
+                          {displayUnreadChatCount > 9 ? "9+" : displayUnreadChatCount}
                         </span>
                       )}
                     </Link>

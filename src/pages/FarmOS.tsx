@@ -19,7 +19,6 @@ import api from "../services/api";
 import { Card, LoadingSpinner } from "../components/common";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
 interface Farm {
   id: string;
   name: string;
@@ -136,6 +135,177 @@ interface Revenue {
   crop_type: string | null;
 }
 
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price_usd: string;
+  billing_cycle: string;
+}
+
+interface CalendarEntry {
+  id: string;
+  crop_type: string;
+  region: string | null;
+  recommended_planting_start: string | number | null;
+  recommended_planting_end: string | number | null;
+  expected_harvest_weeks: string | number | null;
+  soil_requirements: string | null;
+  water_requirements: string | null;
+  common_pests: string | null;
+}
+
+interface PlantingWindow {
+  id: string;
+  crop_type: string;
+  region: string | null;
+  expected_harvest_weeks: string | number | null;
+}
+
+interface WeeklyReport {
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  labour?: {
+    total_entries?: number;
+    total_wages?: string | number | null;
+  };
+  cropActivities?: unknown[];
+}
+
+interface MonthlyLabourTaskRow {
+  task_category: string;
+  man_days: number;
+  total_hours: string | number | null;
+  area_covered: string | number | null;
+  total_wages: string | number | null;
+}
+
+interface MonthlyInventoryRow {
+  name: string;
+  item_type: string;
+  total_used: string | number;
+  unit: string | null;
+  total_cost: string | number | null;
+}
+
+interface MonthlyReport {
+  period: {
+    year: number;
+    month: number;
+  };
+  summary: {
+    totalManDays: number;
+    totalWages?: string | number | null;
+    totalInputs?: string | number | null;
+    totalCost?: string | number | null;
+  };
+  labour: {
+    byTask: MonthlyLabourTaskRow[];
+  };
+  inventory: MonthlyInventoryRow[];
+}
+
+interface ProfitabilityCropRow {
+  crop_plan_id: string;
+  crop_type: string;
+  variety: string | null;
+  profit: string | number | null;
+  revenue: string | number | null;
+  expenses: string | number | null;
+}
+
+interface ProfitabilityTrendRow {
+  month: string;
+  revenue: string | number | null;
+  expenses: string | number | null;
+  profit: string | number | null;
+}
+
+interface AnalyticsSummary {
+  revenue?: number | string | null;
+  totalRevenue?: number | string | null;
+  expenses?: number | string | null;
+  totalExpenses?: number | string | null;
+  profit?: number | string | null;
+  netProfit?: number | string | null;
+  margin?: number | string | null;
+  profitMargin?: number | string | null;
+}
+
+interface AnalyticsTrendRow {
+  month?: string;
+  label?: string;
+  date?: string;
+  period?: string;
+  revenue?: number | string | null;
+  total_revenue?: number | string | null;
+  expenses?: number | string | null;
+  total_expenses?: number | string | null;
+  profit?: number | string | null;
+  netProfit?: number | string | null;
+  net_profit?: number | string | null;
+}
+
+interface AnalyticsCropRow {
+  crop?: string;
+  crop_type?: string;
+  name?: string;
+  label?: string;
+  value?: number | string | null;
+  profit?: number | string | null;
+  revenue?: number | string | null;
+  count?: number | string | null;
+}
+
+interface AnalyticsCategoryRow {
+  category?: string;
+  name?: string;
+  label?: string;
+  value?: number | string | null;
+  amount?: number | string | null;
+  total?: number | string | null;
+  count?: number | string | null;
+}
+
+interface AnalyticsData {
+  summary?: AnalyticsSummary;
+  trend?: AnalyticsTrendRow[];
+  byCrop?: AnalyticsCropRow[];
+  byCategory?: AnalyticsCategoryRow[];
+  categories?: AnalyticsCategoryRow[];
+}
+
+interface PredictionRow {
+  month?: string;
+  label?: string;
+  period?: string;
+  date?: string;
+  value?: number | string | null;
+  amount?: number | string | null;
+  projection?: number | string | null;
+  total?: number | string | null;
+}
+
+interface PredictionData {
+  predictions?: PredictionRow[];
+  forecast?: PredictionRow[];
+  trend?: PredictionRow[];
+}
+
+interface MarketRecommendation {
+  crop: string;
+  action: string;
+  urgency: string;
+  reason: string;
+  estimatedPrice?: string | number | null;
+}
+
+interface MarketInsights {
+  marketSummary: string;
+  recommendations?: MarketRecommendation[];
+}
+
 interface Profitability {
   summary: {
     totalRevenue: number;
@@ -144,11 +314,11 @@ interface Profitability {
     profitMargin: string;
     isProfit: boolean;
   };
-  expenses: any;
-  revenue: any;
-  byCrop: any[];
-  expenseCategories: any[];
-  trend: any[];
+  expenses: unknown;
+  revenue: unknown;
+  byCrop: ProfitabilityCropRow[];
+  expenseCategories: unknown[];
+  trend: ProfitabilityTrendRow[];
 }
 
 interface MarketPrice {
@@ -163,32 +333,35 @@ interface MarketPrice {
   is_ai_generated: boolean;
 }
 
+type FormValue = string | number | null | undefined;
+type FormState = Record<string, FormValue>;
+
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const NAV = [
-  { key: "overview", label: "Overview", icon: "📊" },
-  { key: "fields", label: "Fields", icon: "🌍" },
-  { key: "crops", label: "Crop Plans", icon: "🌱" },
-  { key: "livestock", label: "Livestock", icon: "🐄" },
-  { key: "labour", label: "Labour", icon: "👷" },
-  { key: "inventory", label: "Inventory", icon: "📦" },
-  { key: "calendar", label: "Calendar", icon: "📅" },
-  { key: "reports", label: "Reports", icon: "📈" },
-  { key: "insights", label: "AI Insights", icon: "🤖" },
-  { key: "finance", label: "Finance", icon: "💰" },
-  { key: "market",  label: "Market",  icon: "📡" },
-  { key: "analytics", label: "Analytics", icon: "📉" },
+  { key: "overview", label: "Dashboard", icon: "fas fa-chart-pie" },
+  { key: "fields", label: "Fields", icon: "fas fa-map-marked-alt" },
+  { key: "crops", label: "Crops", icon: "fas fa-seedling" },
+  { key: "livestock", label: "Livestock", icon: "fas fa-paw" },
+  { key: "inventory", label: "Inventory", icon: "fas fa-boxes" },
+  { key: "finance", label: "Finance", icon: "fas fa-coins" },
+  { key: "labour", label: "Workers", icon: "fas fa-users" },
+  { key: "calendar", label: "Calendar", icon: "fas fa-calendar" },
+  { key: "reports", label: "Reports", icon: "fas fa-file-alt" },
+  { key: "insights", label: "Insights", icon: "fas fa-brain" },
+  { key: "market", label: "Market", icon: "fas fa-broadcast-tower" },
+  { key: "analytics", label: "Analytics", icon: "fas fa-chart-line" },
 ] as const;
 
 type Section = (typeof NAV)[number]["key"];
-
-const CROP_STATUS_COLOR: Record<string, string> = {
-  planned: "bg-blue-100 text-blue-800",
-  active: "bg-green-100 text-green-800",
-  harvested: "bg-yellow-100 text-yellow-800",
-  failed: "bg-red-100 text-red-800",
-  cancelled: "bg-gray-100 text-gray-700",
-};
 
 const SPECIES_EMOJI: Record<string, string> = {
   cattle: "🐄",
@@ -201,16 +374,6 @@ const SPECIES_EMOJI: Record<string, string> = {
   other: "🐾",
 };
 
-const INSIGHT_BORDER: Record<string, string> = {
-  labour: "border-blue-400",
-  crops: "border-green-400",
-  livestock: "border-yellow-400",
-  inventory: "border-orange-400",
-  financial: "border-purple-400",
-  risk: "border-red-400",
-  general: "border-gray-300",
-};
-
 const pageBgCls =
   "min-h-screen bg-gradient-to-br from-[#fdfaf4] via-white to-[#e8f3e9] text-gray-900";
 const panelCls =
@@ -219,12 +382,8 @@ const btnPrimaryCls =
   "inline-flex items-center justify-center gap-2 rounded-full bg-secondary-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-green";
 const btnOutlineCls =
   "inline-flex items-center justify-center gap-2 rounded-full border border-secondary-green/40 bg-white/70 px-5 py-2.5 text-sm font-semibold text-secondary-green transition hover:border-secondary-green hover:bg-white";
-const btnGhostOnDarkCls =
-  "inline-flex items-center justify-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold text-white/80 transition hover:text-white hover:bg-white/10";
 const inputCls =
   "w-full rounded-xl border border-secondary-green/20 bg-white/80 px-3 py-2 text-sm text-gray-800 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-accent-gold/40 focus:border-secondary-green/50";
-const inputCompactCls =
-  "rounded-xl border border-secondary-green/20 bg-white/80 px-3 py-1.5 text-sm text-gray-800 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-accent-gold/40 focus:border-secondary-green/50";
 
 function Field({
   label,
@@ -254,7 +413,7 @@ export default function FarmOS() {
   // Subscription
   const [subLoading, setSubLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [subscribing, setSubscribing] = useState(false);
   const [subMsg, setSubMsg] = useState("");
 
@@ -268,19 +427,19 @@ export default function FarmOS() {
   const [alerts, setAlerts] = useState<InventoryItem[]>([]);
   const [labourSummary, setLabourSummary] = useState<LabourSummary | null>(null);
   const [insights, setInsights] = useState<AIInsight[]>([]);
-  const [calendar, setCalendar] = useState<any[]>([]);
-  const [plantingNow, setPlantingNow] = useState<any[]>([]);
-  const [weeklyReport, setWeeklyReport] = useState<any>(null);
-  const [monthlyReport, setMonthlyReport] = useState<any>(null);
+  const [calendar, setCalendar] = useState<CalendarEntry[]>([]);
+  const [plantingNow, setPlantingNow] = useState<PlantingWindow[]>([]);
+  const [weeklyReport, setWeeklyReport] = useState<WeeklyReport | null>(null);
+  const [monthlyReport, setMonthlyReport] = useState<MonthlyReport | null>(null);
 
   const [expenses,        setExpenses]        = useState<Expense[]>([]);
-  const [,                setExpenseSummary]  = useState<any>(null);
+  const [,                setExpenseSummary]  = useState<Record<string, unknown> | null>(null);
   const [revenue,         setRevenue]         = useState<Revenue[]>([]);
-  const [,                setRevenueSummary]  = useState<any>(null);
+  const [,                setRevenueSummary]  = useState<Record<string, unknown> | null>(null);
   const [profitability,   setProfitability]   = useState<Profitability | null>(null);
   const [marketPrices,    setMarketPrices]    = useState<MarketPrice[]>([]);
   const [genMarket,       setGenMarket]       = useState(false);
-  const [marketInsights,  setMarketInsights]  = useState<any>(null);
+  const [marketInsights,  setMarketInsights]  = useState<MarketInsights | null>(null);
   const [finPeriod,       setFinPeriod]       = useState({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
@@ -288,7 +447,6 @@ export default function FarmOS() {
 
   // UI
   const [section, setSection] = useState<Section>("overview");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -297,13 +455,14 @@ export default function FarmOS() {
   const [genInsights, setGenInsights] = useState(false);
 
   // Modal
-  const [modal, setModal] = useState<{ type: string | null; editing?: any }>(
-    { type: null }
-  );
-  const [form, setForm] = useState<Record<string, any>>({});
-  const [analytics,        setAnalytics]        = useState<any>(null);
+  const [modal, setModal] = useState<{
+    type: string | null;
+    editing?: Record<string, unknown> | null;
+  }>({ type: null });
+  const [form, setForm] = useState<FormState>({});
+  const [analytics,        setAnalytics]        = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [predictions,      setPredictions]      = useState<any>(null);
+  const [predictions,      setPredictions]      = useState<PredictionData | null>(null);
   const [genPredictions,   setGenPredictions]   = useState(false);
   const [exportYear,       setExportYear]       = useState(new Date().getFullYear());
   const [exportMonth,      setExportMonth]      = useState(new Date().getMonth() + 1);
@@ -453,9 +612,43 @@ export default function FarmOS() {
     setTimeout(() => setFeedback(null), 4000);
   };
 
-  const openModal = (type: string, editing?: any) => {
-    setModal({ type, editing });
-    setForm(editing ? { ...editing } : {});
+  const getApiErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === "object") {
+      const message = (error as ApiError).response?.data?.message;
+      if (typeof message === "string" && message.trim()) return message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
+
+  const normalizeFormData = (data: Record<string, unknown>): FormState =>
+    Object.entries(data).reduce<FormState>((acc, [key, value]) => {
+      if (typeof value === "string" || typeof value === "number") {
+        acc[key] = value;
+        return acc;
+      }
+      if (typeof value === "boolean") {
+        acc[key] = value ? "true" : "false";
+        return acc;
+      }
+      if (value === null || value === undefined) {
+        acc[key] = value;
+        return acc;
+      }
+      acc[key] = String(value);
+      return acc;
+    }, {});
+
+  const toNumber = (value: string | number | null | undefined) =>
+    typeof value === "number" ? value : parseFloat(String(value ?? 0));
+
+  const openModal = (type: string, editing?: unknown) => {
+    const editingRecord =
+      editing && typeof editing === "object"
+        ? (editing as Record<string, unknown>)
+        : undefined;
+    setModal({ type, editing: editingRecord ?? null });
+    setForm(editingRecord ? normalizeFormData(editingRecord) : {});
   };
 
   const closeModal = () => {
@@ -465,7 +658,6 @@ export default function FarmOS() {
 
   const navigate = (s: Section) => {
     setSection(s);
-    setSidebarOpen(false);
   };
 
   const handleSubscribe = async (planId: string) => {
@@ -477,8 +669,8 @@ export default function FarmOS() {
         setSubMsg("Subscription activated!");
         checkSub();
       }
-    } catch (e: any) {
-      setSubMsg(e.response?.data?.message ?? "Payment failed");
+    } catch (err: unknown) {
+      setSubMsg(getApiErrorMessage(err, "Payment failed"));
     } finally {
       setSubscribing(false);
     }
@@ -487,6 +679,7 @@ export default function FarmOS() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const { type, editing } = modal;
+    const editingId = typeof editing?.id === "string" ? editing.id : undefined;
     try {
       switch (type) {
         case "farm":
@@ -495,32 +688,47 @@ export default function FarmOS() {
           loadAll();
           break;
         case "field":
-          editing?.id
-            ? await api.put(`/farm-os/fields/${editing.id}`, form)
-            : await api.post("/farm-os/fields", form);
-          flash("success", editing?.id ? "Field updated" : "Field created");
+          if (editingId) {
+            await api.put(`/farm-os/fields/${editingId}`, form);
+          } else {
+            await api.post("/farm-os/fields", form);
+          }
+          flash("success", editingId ? "Field updated" : "Field created");
           {
             const fr = await api.get("/farm-os/fields");
             if (fr.data.success) setFields(fr.data.data.fields);
           }
           break;
         case "worker":
-          editing?.id
-            ? await api.put(`/farm-os/workers/${editing.id}`, form)
-            : await api.post("/farm-os/workers", form);
-          flash("success", editing?.id ? "Worker updated" : "Worker added");
+          {
+            const workerPayload = {
+              ...form,
+              is_active:
+                form.is_active === undefined
+                  ? true
+                  : String(form.is_active) === "true",
+            };
+            if (editingId) {
+              await api.put(`/farm-os/workers/${editingId}`, workerPayload);
+            } else {
+              await api.post("/farm-os/workers", workerPayload);
+            }
+            flash("success", editingId ? "Worker updated" : "Worker added");
+          }
           {
             const wr = await api.get("/farm-os/workers");
             if (wr.data.success) setWorkers(wr.data.data.workers);
           }
           break;
         case "crop":
-          editing?.id
-            ? await api.put(`/farm-os/crop-plans/${editing.id}`, form)
-            : await api.post("/farm-os/crop-plans", form);
+          if (editingId) {
+            await api.put(`/farm-os/crop-plans/${editingId}`, form);
+          } else {
+            await api.post("/farm-os/crop-plans", form);
+          }
           flash(
             "success",
-            editing?.id ? "Crop plan updated" : "Crop plan created"
+            editingId ? "Crop plan updated" : "Crop plan created"
           );
           {
             const cr = await api.get("/farm-os/crop-plans");
@@ -532,10 +740,12 @@ export default function FarmOS() {
           flash("success", "Activity logged");
           break;
         case "livestock":
-          editing?.id
-            ? await api.put(`/farm-os/livestock/${editing.id}`, form)
-            : await api.post("/farm-os/livestock", form);
-          flash("success", editing?.id ? "Updated" : "Livestock group created");
+          if (editingId) {
+            await api.put(`/farm-os/livestock/${editingId}`, form);
+          } else {
+            await api.post("/farm-os/livestock", form);
+          }
+          flash("success", editingId ? "Updated" : "Livestock group created");
           {
             const lr = await api.get("/farm-os/livestock");
             if (lr.data.success) setLivestock(lr.data.data.groups);
@@ -558,10 +768,12 @@ export default function FarmOS() {
           }
           break;
         case "inventory":
-          editing?.id
-            ? await api.put(`/farm-os/inventory/${editing.id}`, form)
-            : await api.post("/farm-os/inventory", form);
-          flash("success", editing?.id ? "Item updated" : "Item added");
+          if (editingId) {
+            await api.put(`/farm-os/inventory/${editingId}`, form);
+          } else {
+            await api.post("/farm-os/inventory", form);
+          }
+          flash("success", editingId ? "Item updated" : "Item added");
           {
             const ir = await api.get("/farm-os/inventory");
             if (ir.data.success) {
@@ -582,30 +794,35 @@ export default function FarmOS() {
           }
           break;
         case "expense":
-          editing?.id
-            ? await api.put(`/farm-os/expenses/${editing.id}`, form)
-            : await api.post("/farm-os/expenses", form);
-          flash("success", editing?.id ? "Expense updated" : "Expense recorded");
+          if (editingId) {
+            await api.put(`/farm-os/expenses/${editingId}`, form);
+          } else {
+            await api.post("/farm-os/expenses", form);
+          }
+          flash("success", editingId ? "Expense updated" : "Expense recorded");
           // reload finance
           setFinPeriod(p => ({ ...p })); // trigger re-fetch
           break;
         case "revenue-entry":
-          editing?.id
-            ? await api.put(`/farm-os/revenue/${editing.id}`, form)
-            : await api.post("/farm-os/revenue", form);
-          flash("success", editing?.id ? "Revenue updated" : "Revenue recorded");
+          if (editingId) {
+            await api.put(`/farm-os/revenue/${editingId}`, form);
+          } else {
+            await api.post("/farm-os/revenue", form);
+          }
+          flash("success", editingId ? "Revenue updated" : "Revenue recorded");
           setFinPeriod(p => ({ ...p }));
           break;
-        case "market-price":
+        case "market-price": {
           await api.post("/farm-os/market", form);
           flash("success", "Market price added");
           const mpR = await api.get("/farm-os/market");
           if (mpR.data.success) setMarketPrices(mpR.data.data.prices);
           break;
+        }
       }
       closeModal();
-    } catch (err: any) {
-      flash("error", err.response?.data?.message ?? "Failed to save");
+    } catch (err: unknown) {
+      flash("error", getApiErrorMessage(err, "Failed to save"));
     }
   };
 
@@ -617,8 +834,8 @@ export default function FarmOS() {
         setInsights(r.data.data.insights);
         flash("success", "AI insights generated");
       }
-    } catch (err: any) {
-      flash("error", err.response?.data?.message ?? "Failed to generate insights");
+    } catch (err: unknown) {
+      flash("error", getApiErrorMessage(err, "Failed to generate insights"));
     } finally {
       setGenInsights(false);
     }
@@ -688,7 +905,7 @@ export default function FarmOS() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {plans.map((plan: any) => (
+              {plans.map((plan: SubscriptionPlan) => (
                 <Card
                   key={plan.id}
                   className={`${panelCls} border-2 ${
@@ -754,8 +971,8 @@ export default function FarmOS() {
                 try {
                   await api.post("/farm-os/farm", form);
                   loadAll();
-                } catch (err: any) {
-                  flash("error", err.response?.data?.message ?? "Failed");
+                } catch (err: unknown) {
+                  flash("error", getApiErrorMessage(err, "Failed"));
                 }
               }}
               className="space-y-4"
@@ -862,686 +1079,445 @@ export default function FarmOS() {
     } catch { flash("error", "Report export failed"); }
   };
 
-  const analyticsTrendData = Array.isArray(analytics?.trend)
-    ? analytics.trend.map((row: any) => ({
+  const analyticsTrendSource = analytics?.trend ?? [];
+  const analyticsTrendData = Array.isArray(analyticsTrendSource)
+    ? analyticsTrendSource.map((row: AnalyticsTrendRow) => ({
         label: row.month ?? row.label ?? row.date ?? row.period ?? "",
         revenue: Number(row.revenue ?? row.total_revenue ?? 0),
         expenses: Number(row.expenses ?? row.total_expenses ?? 0),
         net: Number(row.profit ?? row.netProfit ?? row.net_profit ?? 0),
       }))
     : [];
-  const analyticsCropData = Array.isArray(analytics?.byCrop)
-    ? analytics.byCrop.map((row: any) => ({
+  const analyticsCropSource = analytics?.byCrop ?? [];
+  const analyticsCropData = Array.isArray(analyticsCropSource)
+    ? analyticsCropSource.map((row: AnalyticsCropRow) => ({
         label: row.crop ?? row.crop_type ?? row.name ?? row.label ?? "Unknown",
         value: Number(row.value ?? row.profit ?? row.revenue ?? row.count ?? 0),
       }))
     : [];
-  const analyticsCategoryData = Array.isArray(
-    analytics?.byCategory ?? analytics?.categories,
-  )
-    ? (analytics.byCategory ?? analytics.categories).map((row: any) => ({
+  const analyticsCategorySource =
+    analytics?.byCategory ?? analytics?.categories ?? [];
+  const analyticsCategoryData = Array.isArray(analyticsCategorySource)
+    ? analyticsCategorySource.map((row: AnalyticsCategoryRow) => ({
         label: row.category ?? row.name ?? row.label ?? "Other",
         value: Number(row.value ?? row.amount ?? row.total ?? row.count ?? 0),
       }))
     : [];
-  const predictionData = Array.isArray(
-    predictions?.predictions ?? predictions?.forecast ?? predictions?.trend,
-  )
-    ? (predictions.predictions ?? predictions.forecast ?? predictions.trend).map(
-        (row: any) => ({
-          label: row.month ?? row.label ?? row.period ?? row.date ?? "",
-          value: Number(row.value ?? row.amount ?? row.projection ?? row.total ?? 0),
-        }),
-      )
+  const predictionSource =
+    predictions?.predictions ?? predictions?.forecast ?? predictions?.trend ?? [];
+  const predictionData = Array.isArray(predictionSource)
+    ? predictionSource.map((row: PredictionRow) => ({
+        label: row.month ?? row.label ?? row.period ?? row.date ?? "",
+        value: Number(row.value ?? row.amount ?? row.projection ?? row.total ?? 0),
+      }))
     : [];
   const chartColors = ["#16a34a", "#2563eb", "#f59e0b", "#ef4444", "#8b5cf6"];
 
   return (
-    <div className={`${pageBgCls} relative flex min-h-screen flex-col overflow-hidden`}>
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute -top-32 -left-32 h-72 w-72 rounded-full bg-secondary-green/20 blur-3xl" />
-        <div className="absolute top-12 -right-28 h-80 w-80 rounded-full bg-accent-gold/20 blur-3xl" />
-        <div className="absolute bottom-[-140px] left-1/3 h-80 w-80 rounded-full bg-primary-green/15 blur-3xl" />
-      </div>
-      <div className="relative z-10 flex min-h-screen flex-col">
-        {/* Top bar */}
-        <div className="bg-dark-green/95 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-card backdrop-blur border-b border-white/10">
-          <div className="flex items-center gap-3">
-            {/* Hamburger — mobile */}
-            <button
-              onClick={() => setSidebarOpen((o) => !o)}
-              className="md:hidden text-white p-1"
-              aria-label="Toggle menu"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
+    <div className="farm-os-body">
+      <div className="farm-bg-animation"></div>
+
+      <div className="max-w-[1600px] mx-auto p-5 relative z-10">
+        {/* Header with Farmer Profile */}
+        <div className="bg-white/95 backdrop-blur-xl rounded-[32px] p-4 md:px-7 md:py-4 mb-6 flex justify-between items-center flex-wrap gap-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] border border-white/50">
+          <div className="flex items-center gap-4">
+            <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm animate-[pulse_2s_infinite]" style={{ background: "linear-gradient(135deg, var(--farm-primary), var(--farm-primary-light))" }}>
+              <i className="fas fa-seedling text-white text-[28px]"></i>
+            </div>
             <div>
-              <div className="font-bold text-lg leading-tight">
-                🚜 {farm?.name ?? "Farm OS"}
-              </div>
-              <div className="text-xs text-green-100/90">
-                {farm?.location ?? ""}
-                {farm?.total_area_ha
-                  ? ` · ${parseFloat(farm.total_area_ha).toLocaleString()} ha`
-                  : ""}
-              </div>
+              <h1 className="text-2xl font-extrabold bg-clip-text text-transparent" style={{ backgroundImage: "linear-gradient(135deg, var(--farm-primary), var(--farm-secondary))" }}>
+                AGRIVUS FARM OS
+              </h1>
+              <p className="text-[12px] font-medium" style={{ color: "var(--farm-gray)" }}>
+                {farm?.name ?? "Intelligent Farm Operating System"} • {farm?.location ?? "Premium Edition"}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <button
-              onClick={() => openModal("farm", farm)}
-              className={btnGhostOnDarkCls}
-            >
-              Edit Farm
-            </button>
-            <Link
-              to="/dashboard"
-              className={btnGhostOnDarkCls}
-            >
-              ← Dashboard
-            </Link>
+
+          <div className="flex items-center gap-5 px-3 py-2 rounded-[60px] text-white shadow-md cursor-pointer hover:scale-105 transition-transform" style={{ background: "linear-gradient(135deg, var(--farm-primary-dark), var(--farm-primary))" }} onClick={() => openModal("farm", farm)}>
+            <div className="w-[42px] h-[42px] rounded-full flex items-center justify-center text-xl font-bold border-[3px] border-white/50" style={{ background: "linear-gradient(135deg, var(--farm-secondary), var(--farm-accent))" }}>
+              {farm?.name ? farm.name.charAt(0).toUpperCase() : "TS"}
+            </div>
+            <div className="pr-2">
+              <h3 className="text-[15px] font-semibold leading-tight">{farm?.name ?? "Farmer"}</h3>
+              <p className="text-[11px] opacity-80 leading-tight">Master Farmer</p>
+            </div>
+            <div className="px-2.5 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1" style={{ background: "var(--farm-secondary)" }}>
+              <i className="fas fa-crown"></i> Premium
+            </div>
           </div>
         </div>
 
         {feedback && (
-          <div
-            className={`mx-4 mt-3 px-4 py-3 rounded-lg border text-sm font-medium ${
-              feedback.type === "success"
-                ? "bg-green-50 border-green-200 text-green-800"
-                : "bg-red-50 border-red-200 text-red-800"
-            }`}
-          >
+          <div className={`mb-6 px-5 py-3 rounded-2xl border text-sm font-medium shadow-sm flex items-center gap-3 ${
+              feedback.type === "success" ? "bg-[#e8f5e9] border-[#c8e6c9] text-[#1b4332]" : "bg-[#ffebee] border-[#ffcdd2] text-[#c62828]"
+            }`}>
+            <i className={`fas ${feedback.type === "success" ? "fa-check-circle" : "fa-exclamation-triangle"}`}></i>
             {feedback.msg}
           </div>
         )}
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <aside
-            className={`${
-              sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } md:translate-x-0 fixed md:static inset-y-0 left-0 z-30 w-56 bg-white/80 backdrop-blur border-r border-secondary-green/10 flex flex-col transition-transform duration-200 ease-in-out pt-16 md:pt-0`}
-          >
-            <nav className="flex-1 py-4 overflow-y-auto">
-              {NAV.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => navigate(item.key)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors text-left ${
-                    section === item.key
-                      ? "bg-green-50 text-primary-green border-r-2 border-primary-green"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                >
-                  <span className="text-base">{item.icon}</span>
-                  {item.label}
-                  {item.key === "inventory" && alerts.length > 0 && (
-                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-                      {alerts.length}
-                    </span>
-                  )}
-                  {item.key === "insights" && insights.length > 0 && (
-                    <span className="ml-auto text-xs text-gray-400">
-                      {insights.length}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </nav>
-            {/* Quick log actions at bottom of sidebar */}
-            <div className="p-3 border-t border-gray-200 space-y-2">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-1 mb-2">
-                Quick Log
-              </p>
-              {[
-                {
-                  label: "Labour Day",
-                  action: () => {
-                    navigate("labour");
-                    openModal("labour");
-                  },
-                },
-                {
-                  label: "Crop Activity",
-                  action: () => {
-                    navigate("crops");
-                    openModal("crop-activity");
-                  },
-                },
-                {
-                  label: "Livestock",
-                  action: () => {
-                    navigate("livestock");
-                    openModal("livestock-activity");
-                  },
-                },
-              ].map((a) => (
-                <button
-                  key={a.label}
-                  onClick={a.action}
-                  className="w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-green-50 hover:text-primary-green rounded-lg transition-colors"
-                >
-                  + {a.label}
-                </button>
-              ))}
-            </div>
-          </aside>
+        {/* Navigation */}
+        <div className="farm-nav-container bg-white/95 backdrop-blur-xl rounded-[40px] p-2 mb-6 flex gap-2 overflow-x-auto shadow-sm border border-white/50">
+          {NAV.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => navigate(item.key)}
+              className={`flex items-center gap-2 px-6 py-3.5 rounded-[40px] border-none font-semibold text-[14px] whitespace-nowrap transition-all duration-300 ${
+                section === item.key
+                  ? "text-white shadow-md"
+                  : "bg-transparent text-[#52796f] hover:bg-[#f8f9fa] hover:text-[#2d6a4f]"
+              }`}
+              style={section === item.key ? { background: "linear-gradient(135deg, var(--farm-primary), var(--farm-primary-light))" } : {}}
+            >
+              <i className={item.icon}></i>
+              {item.label}
+              {item.key === "inventory" && alerts.length > 0 && (
+                <span className="ml-1 bg-[#e63946] text-white text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                  {alerts.length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
 
-          {/* Sidebar overlay — mobile */}
-          {sidebarOpen && (
-            <div
-              className="fixed inset-0 z-20 bg-black bg-opacity-30 md:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
-
-          {/* Main content */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        {/* Main Content Area (Tabs will go inside here in the next steps) */}
+        <div className="min-h-[60vh]">
           {/* ── OVERVIEW ── */}
           {section === "overview" && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">Farm Overview</h2>
+            <div className="space-y-6 animate-fade-in">
+              
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="farm-glass-card p-5 relative overflow-hidden cursor-pointer group" onClick={() => navigate("fields")}>
+                  <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-all duration-500 group-hover:left-[100%]"></div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: 'linear-gradient(135deg, var(--farm-primary-light), var(--farm-primary-glow))' }}>
+                    <i className="fas fa-map-marked-alt text-white text-2xl"></i>
+                  </div>
+                  <div className="text-[32px] font-extrabold text-[#081c15] leading-tight">
+                    {farm?.total_area_ha ? parseFloat(farm.total_area_ha).toLocaleString() : "0"}
+                  </div>
+                  <div className="text-[13px] text-[#52796f] mt-1">Total Hectares</div>
+                  <div className="text-[11px] mt-2 font-medium text-[#06d6a0]">
+                    <i className="fas fa-arrow-up"></i> {fields.length} Configured Fields
+                  </div>
+                </div>
 
-              {/* KPIs */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  {
-                    label: "Fields",
-                    value: farm?.field_count ?? 0,
-                    icon: "🌍",
-                    color: "bg-blue-50 text-blue-700",
-                    onClick: () => navigate("fields"),
-                  },
-                  {
-                    label: "Active Crops",
-                    value: activeCrops,
-                    icon: "🌱",
-                    color: "bg-green-50 text-green-700",
-                    onClick: () => navigate("crops"),
-                  },
-                  {
-                    label: "Livestock",
-                    value: totalLivestock,
-                    icon: "🐄",
-                    color: "bg-yellow-50 text-yellow-700",
-                    onClick: () => navigate("livestock"),
-                  },
-                  {
-                    label: "Workers",
-                    value: farm?.worker_count ?? 0,
-                    icon: "👷",
-                    color: "bg-purple-50 text-purple-700",
-                    onClick: () => navigate("labour"),
-                  },
-                ].map((kpi) => (
-                  <button
-                    key={kpi.label}
-                    onClick={kpi.onClick}
-                    className="group relative w-full overflow-hidden rounded-2xl border border-secondary-green/10 bg-white/80 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <div
-                      className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${kpi.color} text-xl shadow-sm`}
-                    >
-                      {kpi.icon}
-                    </div>
-                    <div className="mt-3 flex items-end justify-between">
-                      <div>
-                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                          {kpi.label}
-                        </div>
-                        <div className="text-2xl font-bold text-gray-900">
-                          {kpi.value}
-                        </div>
-                      </div>
-                      <span className="text-xs font-semibold text-gray-400 transition group-hover:text-gray-600">
-                        View
-                      </span>
-                    </div>
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-0 transition group-hover:opacity-100" />
-                  </button>
-                ))}
+                <div className="farm-glass-card p-5 relative overflow-hidden cursor-pointer group" onClick={() => navigate("crops")}>
+                  <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-all duration-500 group-hover:left-[100%]"></div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: 'linear-gradient(135deg, var(--farm-primary-light), var(--farm-primary-glow))' }}>
+                    <i className="fas fa-seedling text-white text-2xl"></i>
+                  </div>
+                  <div className="text-[32px] font-extrabold text-[#081c15] leading-tight">{activeCrops}</div>
+                  <div className="text-[13px] text-[#52796f] mt-1">Active Crops</div>
+                  <div className="text-[11px] mt-2 font-medium text-[#06d6a0]">
+                    <i className="fas fa-arrow-up"></i> Tracked this season
+                  </div>
+                </div>
+
+                <div className="farm-glass-card p-5 relative overflow-hidden cursor-pointer group" onClick={() => navigate("livestock")}>
+                  <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-all duration-500 group-hover:left-[100%]"></div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: 'linear-gradient(135deg, var(--farm-primary-light), var(--farm-primary-glow))' }}>
+                    <i className="fas fa-paw text-white text-2xl"></i>
+                  </div>
+                  <div className="text-[32px] font-extrabold text-[#081c15] leading-tight">{totalLivestock}</div>
+                  <div className="text-[13px] text-[#52796f] mt-1">Total Livestock</div>
+                  <div className="text-[11px] mt-2 font-medium text-[#06d6a0]">
+                    <i className="fas fa-arrow-up"></i> Across {livestock.length} groups
+                  </div>
+                </div>
+
+                <div className="farm-glass-card p-5 relative overflow-hidden cursor-pointer group" onClick={() => navigate("labour")}>
+                  <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-all duration-500 group-hover:left-[100%]"></div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: 'linear-gradient(135deg, var(--farm-primary-light), var(--farm-primary-glow))' }}>
+                    <i className="fas fa-users text-white text-2xl"></i>
+                  </div>
+                  <div className="text-[32px] font-extrabold text-[#081c15] leading-tight">{farm?.worker_count ?? 0}</div>
+                  <div className="text-[13px] text-[#52796f] mt-1">Active Workers</div>
+                  <div className="text-[11px] mt-2 font-medium text-[#06d6a0]">
+                    <i className="fas fa-arrow-up"></i> Managing operations
+                  </div>
+                </div>
               </div>
 
-              {/* Labour this month */}
-              {labourSummary && (
-                <Card className={panelCls}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-gray-900">
-                      Labour This Month
+              {/* Quick Actions */}
+              <div className="rounded-[32px] p-7 text-white relative overflow-hidden shadow-lg" style={{ background: 'linear-gradient(135deg, var(--farm-primary-dark), var(--farm-primary))' }}>
+                <div className="absolute -bottom-5 -right-5 text-[120px] opacity-10 pointer-events-none">🌾</div>
+                <h3 className="text-[20px] mb-5 flex items-center gap-2.5 font-bold">
+                  <i className="fas fa-bolt text-[#ffb703]"></i> Quick Log — One Tap Recording
+                </h3>
+                <div className="flex gap-3 flex-wrap relative z-10">
+                  <button onClick={() => { navigate("crops"); openModal("crop-activity"); }} className="bg-white/15 backdrop-blur-md border border-white/30 px-6 py-3 rounded-[60px] font-semibold text-[14px] flex items-center gap-2.5 text-white hover:bg-white/30 hover:scale-105 transition-all">
+                    <i className="fas fa-seedling"></i> Crop Activity
+                  </button>
+                  <button onClick={() => { navigate("livestock"); openModal("livestock-activity"); }} className="bg-white/15 backdrop-blur-md border border-white/30 px-6 py-3 rounded-[60px] font-semibold text-[14px] flex items-center gap-2.5 text-white hover:bg-white/30 hover:scale-105 transition-all">
+                    <i className="fas fa-paw"></i> Livestock Log
+                  </button>
+                  <button onClick={() => { navigate("labour"); openModal("labour"); }} className="bg-white/15 backdrop-blur-md border border-white/30 px-6 py-3 rounded-[60px] font-semibold text-[14px] flex items-center gap-2.5 text-white hover:bg-white/30 hover:scale-105 transition-all">
+                    <i className="fas fa-user-clock"></i> Log Labour Day
+                  </button>
+                  <button onClick={() => { navigate("finance"); openModal("revenue-entry"); }} className="bg-[#ff9f1c] border border-transparent px-6 py-3 rounded-[60px] font-semibold text-[14px] flex items-center gap-2.5 text-white hover:bg-[#e85d04] hover:scale-105 transition-all shadow-md">
+                    <i className="fas fa-coins"></i> Record Revenue
+                  </button>
+                </div>
+              </div>
+
+              {/* Two Column Grid: Map & Alerts */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Farm Map Overlay */}
+                <div className="farm-glass-card p-6 flex flex-col">
+                  <div className="flex justify-between items-center mb-5 gap-3 flex-wrap">
+                    <h3 className="text-[18px] font-bold flex items-center gap-2.5 text-[#081c15]">
+                      <i className="fas fa-map text-[#2d6a4f]"></i> Digital Map Overview
                     </h3>
-                    <button
-                      onClick={() => navigate("labour")}
-                      className="text-sm font-semibold text-secondary-green hover:text-primary-green"
-                    >
-                      View all →
-                    </button>
+                    <span className="text-[#2d6a4f] text-[13px] cursor-pointer font-medium hover:underline" onClick={() => navigate("fields")}>
+                      🗺️ View Fields →
+                    </span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      {
-                        label: "Man-Days",
-                        value: labourSummary.total_entries,
-                      },
-                      {
-                        label: "Hours",
-                        value: `${parseFloat(
-                          labourSummary.total_hours || "0"
-                        ).toFixed(0)}h`,
-                      },
-                      {
-                        label: "Wages Paid",
-                        value: `$${parseFloat(
-                          labourSummary.total_wages || "0"
-                        ).toFixed(2)}`,
-                      },
-                      {
-                        label: "Area (ha)",
-                        value: parseFloat(
-                          labourSummary.total_area || "0"
-                        ).toFixed(1),
-                      },
-                    ].map((s) => (
-                      <div
-                        key={s.label}
-                        className="rounded-xl border border-secondary-green/10 bg-white/70 p-3 text-center shadow-sm"
-                      >
-                        <div className="text-xl font-bold text-gray-900">
-                          {s.value}
+                  <div className="w-full h-[280px] rounded-2xl relative overflow-hidden cursor-pointer group flex-1" style={{ background: 'linear-gradient(135deg, #2d6a4f, #1b4332)' }}>
+                    {fields.slice(0, 3).map((field, idx) => (
+                      <div key={field.id} className="absolute bg-white px-3.5 py-1.5 rounded-full text-[12px] font-bold text-[#2d6a4f] shadow-md transition-transform hover:scale-105 z-10" style={{ top: `${20 + (idx * 25)}%`, left: `${20 + (idx * 15)}%` }}>
+                        {field.current_crop_type ? '🌱' : '📍'} {field.name}
+                      </div>
+                    ))}
+                    {fields.length === 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center text-white/50 text-sm font-medium">
+                        No fields mapped yet
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-20" onClick={() => navigate("fields")}>
+                      <i className="fas fa-search-plus text-white text-5xl drop-shadow-lg"></i>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alerts / Planting Timeline */}
+                <div className="farm-glass-card p-6 flex flex-col">
+                  <div className="flex justify-between items-center mb-5 gap-3 flex-wrap">
+                    <h3 className="text-[18px] font-bold flex items-center gap-2.5 text-[#081c15]">
+                      <i className="fas fa-bell text-[#ff9f1c]"></i> Action Items & Alerts
+                    </h3>
+                    <span className="text-[#2d6a4f] text-[13px] cursor-pointer font-medium hover:underline" onClick={() => navigate("inventory")}>
+                      View All →
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-4 flex-1 overflow-y-auto pr-2">
+                    {alerts.length === 0 && plantingNow.length === 0 && (
+                      <div className="h-full flex flex-col items-center justify-center text-[#52796f] text-sm py-10 opacity-70">
+                        <i className="fas fa-check-circle text-4xl mb-3 text-[#06d6a0]"></i>
+                        All caught up! No urgent alerts.
+                      </div>
+                    )}
+                    
+                    {alerts.slice(0, 3).map(item => (
+                      <div key={item.id} className="flex gap-4 p-3 rounded-xl hover:bg-[#2d6a4f]/5 transition-colors border border-transparent hover:border-[#dad7cd]">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white shadow-sm" style={{ background: item.low_stock ? 'var(--farm-danger)' : 'var(--farm-warning)' }}>
+                          <i className={`fas ${item.low_stock ? 'fa-box-open' : 'fa-hourglass-half'}`}></i>
                         </div>
-                        <div className="text-xs text-gray-500">{s.label}</div>
+                        <div>
+                          <div className="text-[11px] text-[#52796f] font-medium mb-1 uppercase tracking-wider">
+                            {item.low_stock ? "Low Stock Alert" : "Expiring Soon"}
+                          </div>
+                          <div className="text-[14px] font-bold text-[#081c15]">{item.name}</div>
+                          <div className="text-[12px] text-[#52796f]">Current Level: {item.quantity} {item.unit}</div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {plantingNow.slice(0, 2).map((e: PlantingWindow) => (
+                      <div key={e.id} className="flex gap-4 p-3 rounded-xl hover:bg-[#2d6a4f]/5 transition-colors border border-transparent hover:border-[#dad7cd]">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white shadow-sm" style={{ background: 'linear-gradient(135deg, var(--farm-success), var(--farm-primary-glow))' }}>
+                          <i className="fas fa-calendar-check"></i>
+                        </div>
+                        <div>
+                          <div className="text-[11px] text-[#52796f] font-medium mb-1 uppercase tracking-wider">Planting Window Open</div>
+                          <div className="text-[14px] font-bold text-[#081c15]">Plant {e.crop_type}</div>
+                          <div className="text-[12px] text-[#52796f]">Recommended for {e.region ?? "your region"}</div>
+                        </div>
                       </div>
                     ))}
                   </div>
-                </Card>
-              )}
-
-              {modal.type === "expense" && <>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Category" required>
-                    <select value={form.category??""} onChange={e=>setForm(f=>({...f,category:e.target.value}))} required className={inputCls}>
-                      <option value="">Select...</option>
-                      { ["labour","seeds","fertiliser","chemicals","fuel","equipment","irrigation","transport","veterinary","repairs","rent","other"].map(c=>(<option key={c} value={c}>{c}</option>)) }
-                    </select>
-                  </Field>
-                  <Field label="Date">
-                    <input type="date" value={form.expense_date??new Date().toISOString().split("T")[0]} onChange={e=>setForm(f=>({...f,expense_date:e.target.value}))} className={inputCls}/>
-                  </Field>
                 </div>
-                <Field label="Description" required>
-                  <input type="text" value={form.description??""} onChange={e=>setForm(f=>({...f,description:e.target.value}))} required placeholder="e.g. Compound D fertiliser - Block A" className={inputCls}/>
-                </Field>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Amount (USD)" required>
-                    <input type="number" min="0" step="0.01" value={form.amount_usd??""} onChange={e=>setForm(f=>({...f,amount_usd:e.target.value}))} required placeholder="e.g. 45.00" className={inputCls}/>
-                  </Field>
-                  <Field label="Supplier">
-                    <input type="text" value={form.supplier??""} onChange={e=>setForm(f=>({...f,supplier:e.target.value}))} placeholder="e.g. Agritex" className={inputCls}/>
-                  </Field>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Field">
-                    <select value={form.field_id??""} onChange={e=>setForm(f=>({...f,field_id:e.target.value}))} className={inputCls}>
-                      <option value="">None</option>
-                      {fields.map(f=>(<option key={f.id} value={f.id}>{f.name}</option>))}
-                    </select>
-                  </Field>
-                  <Field label="Crop Plan">
-                    <select value={form.crop_plan_id??""} onChange={e=>setForm(f=>({...f,crop_plan_id:e.target.value}))} className={inputCls}>
-                      <option value="">None</option>
-                      {cropPlans.map(c=>(<option key={c.id} value={c.id}>{c.crop_type}</option>))}
-                    </select>
-                  </Field>
-                </div>
-                <Field label="Receipt Ref">
-                  <input type="text" value={form.receipt_ref??""} onChange={e=>setForm(f=>({...f,receipt_ref:e.target.value}))} placeholder="e.g. INV-001" className={inputCls}/>
-                </Field>
-                <Field label="Notes">
-                  <textarea value={form.notes??""} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} rows={2} className={inputCls+" resize-none"}/>
-                </Field>
-              </>}
-
-              {modal.type === "revenue-entry" && <>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Category" required>
-                    <select value={form.category??""} onChange={e=>setForm(f=>({...f,category:e.target.value}))} required className={inputCls}>
-                      <option value="">Select...</option>
-                      { ["crop_sale","livestock_sale","milk","eggs","wool","honey","contract","grant","other"].map(c=>(<option key={c} value={c}>{c.replace("_"," ")}</option>)) }
-                    </select>
-                  </Field>
-                  <Field label="Date">
-                    <input type="date" value={form.revenue_date??new Date().toISOString().split("T")[0]} onChange={e=>setForm(f=>({...f,revenue_date:e.target.value}))} className={inputCls}/>
-                  </Field>
-                </div>
-                <Field label="Description" required>
-                  <input type="text" value={form.description??""} onChange={e=>setForm(f=>({...f,description:e.target.value}))} required placeholder="e.g. Tomato sale - 500kg to Mbare Market" className={inputCls}/>
-                </Field>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Total Amount (USD)" required>
-                    <input type="number" min="0" step="0.01" value={form.amount_usd??""} onChange={e=>setForm(f=>({...f,amount_usd:e.target.value}))} required className={inputCls}/>
-                  </Field>
-                  <Field label="Buyer Name">
-                    <input type="text" value={form.buyer_name??""} onChange={e=>setForm(f=>({...f,buyer_name:e.target.value}))} placeholder="e.g. Mbare Market" className={inputCls}/>
-                  </Field>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <Field label="Quantity">
-                    <input type="number" min="0" step="0.1" value={form.quantity??""} onChange={e=>setForm(f=>({...f,quantity:e.target.value}))} className={inputCls}/>
-                  </Field>
-                  <Field label="Unit">
-                    <input type="text" value={form.unit??""} onChange={e=>setForm(f=>({...f,unit:e.target.value}))} placeholder="kg, litres" className={inputCls}/>
-                  </Field>
-                  <Field label="Unit Price ($)">
-                    <input type="number" min="0" step="0.01" value={form.unit_price_usd??""} onChange={e=>setForm(f=>({...f,unit_price_usd:e.target.value}))} className={inputCls}/>
-                  </Field>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Crop Plan">
-                    <select value={form.crop_plan_id??""} onChange={e=>setForm(f=>({...f,crop_plan_id:e.target.value}))} className={inputCls}>
-                      <option value="">None</option>
-                      {cropPlans.map(c=>(<option key={c.id} value={c.id}>{c.crop_type}</option>))}
-                    </select>
-                  </Field>
-                  <Field label="Field">
-                    <select value={form.field_id??""} onChange={e=>setForm(f=>({...f,field_id:e.target.value}))} className={inputCls}>
-                      <option value="">None</option>
-                      {fields.map(f=>(<option key={f.id} value={f.id}>{f.name}</option>))}
-                    </select>
-                  </Field>
-                </div>
-                <Field label="Notes">
-                  <textarea value={form.notes??""} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} rows={2} className={inputCls+" resize-none"}/>
-                </Field>
-              </>}
-
-              {modal.type === "market-price" && <>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Commodity" required>
-                    <input type="text" value={form.commodity??""} onChange={e=>setForm(f=>({...f,commodity:e.target.value}))} required placeholder="e.g. Tomatoes" className={inputCls}/>
-                  </Field>
-                  <Field label="Region">
-                    <input type="text" value={form.region??""} onChange={e=>setForm(f=>({...f,region:e.target.value}))} placeholder="e.g. Harare" className={inputCls}/>
-                  </Field>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <Field label="Price (USD)" required>
-                    <input type="number" min="0" step="0.01" value={form.price_usd??""} onChange={e=>setForm(f=>({...f,price_usd:e.target.value}))} required className={inputCls}/>
-                  </Field>
-                  <Field label="Unit" required>
-                    <input type="text" value={form.unit??""} onChange={e=>setForm(f=>({...f,unit:e.target.value}))} required placeholder="kg, litre" className={inputCls}/>
-                  </Field>
-                  <Field label="Demand">
-                    <select value={form.demand_level??""} onChange={e=>setForm(f=>({...f,demand_level:e.target.value}))} className={inputCls}>
-                      <option value="">Unknown</option>
-                      { ["low","medium","high","very_high"].map(d=>(<option key={d} value={d}>{d.replace("_"," ")}</option>)) }
-                    </select>
-                  </Field>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Date">
-                    <input type="date" value={form.price_date??new Date().toISOString().split("T")[0]} onChange={e=>setForm(f=>({...f,price_date:e.target.value}))} className={inputCls}/>
-                  </Field>
-                  <Field label="Source">
-                    <input type="text" value={form.source??""} onChange={e=>setForm(f=>({...f,source:e.target.value}))} placeholder="e.g. Mbare Market" className={inputCls}/>
-                  </Field>
-                </div>
-                <Field label="Notes">
-                  <textarea value={form.notes??""} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} rows={2} className={inputCls+" resize-none"}/>
-                </Field>
-              </>}
-
-              {/* Two-column: Alerts + Planting now */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Inventory alerts */}
-                <Card className={panelCls}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-gray-900">
-                      ⚠️ Inventory Alerts
-                    </h3>
-                    <button
-                      onClick={() => navigate("inventory")}
-                      className="text-sm font-semibold text-secondary-green hover:text-primary-green"
-                    >
-                      View all →
-                    </button>
-                  </div>
-                  {alerts.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-6 text-center text-sm text-gray-500">
-                      All stock levels OK ✓
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {alerts.slice(0, 4).map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2"
-                        >
-                          <div>
-                            <span className="text-sm font-medium text-gray-900">
-                              {item.name}
-                            </span>
-                            <span className="ml-2 text-xs text-gray-400">
-                              {item.item_type}
-                            </span>
-                          </div>
-                          <div className="flex gap-1">
-                            {item.low_stock && (
-                              <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                                Low
-                              </span>
-                            )}
-                            {item.expiring_soon && (
-                              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                                Expiring
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-
-                {/* Planting now */}
-                <Card className={panelCls}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-gray-900">
-                      🌱 Planting This Month
-                    </h3>
-                    <button
-                      onClick={() => navigate("calendar")}
-                      className="text-sm font-semibold text-secondary-green hover:text-primary-green"
-                    >
-                      Calendar →
-                    </button>
-                  </div>
-                  {plantingNow.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-6 text-center text-sm text-gray-500">
-                      No calendar entries for this month
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {plantingNow.map((e: any) => (
-                        <span
-                          key={e.id}
-                          className="rounded-full bg-secondary-green/10 px-3 py-1 text-sm font-semibold text-secondary-green"
-                        >
-                          {e.crop_type}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </Card>
               </div>
 
-              {/* Active crops summary */}
-              {cropPlans.filter((c) => c.status === "active").length > 0 && (
-                <Card className={panelCls}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-gray-900">
-                      Active Crop Plans
-                    </h3>
-                    <button
-                      onClick={() => navigate("crops")}
-                      className="text-sm font-semibold text-secondary-green hover:text-primary-green"
-                    >
-                      View all →
-                    </button>
+              {/* Three Column Grid: Active Crops */}
+              <div className="farm-glass-card p-6">
+                <div className="flex justify-between items-center mb-5 gap-3 flex-wrap">
+                  <h3 className="text-[18px] font-bold flex items-center gap-2.5 text-[#081c15]">
+                    <i className="fas fa-leaf text-[#2d6a4f]"></i> Active Crops Status
+                  </h3>
+                  <span className="text-[#2d6a4f] text-[13px] cursor-pointer font-medium hover:underline" onClick={() => navigate("crops")}>
+                    🌾 Manage All →
+                  </span>
+                </div>
+                
+                {activeCrops === 0 ? (
+                  <div className="py-10 text-center text-[#52796f] bg-white/50 rounded-xl border border-dashed border-[#dad7cd]">
+                    No active crops right now. Start planting!
                   </div>
-                  <div className="space-y-3">
-                    {cropPlans
-                      .filter((c) => c.status === "active")
-                      .slice(0, 3)
-                      .map((plan) => (
-                        <div
-                          key={plan.id}
-                          className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2"
-                        >
-                          <div>
-                            <span className="font-medium text-gray-900">
-                              {plan.crop_type}
-                            </span>
-                            {plan.variety && (
-                              <span className="text-sm text-gray-500 ml-1">
-                                ({plan.variety})
-                              </span>
-                            )}
-                            {plan.field_name && (
-                              <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                {plan.field_name}
-                              </span>
-                            )}
-                          </div>
-                          {plan.expected_harvest_date && (
-                            <span className="text-sm text-gray-600">
-                              Harvest:{" "}
-                              {new Date(
-                                plan.expected_harvest_date
-                              ).toLocaleDateString("en-GB", {
-                                day: "2-digit",
-                                month: "short",
-                              })}
-                            </span>
-                          )}
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {cropPlans.filter(c => c.status === "active").slice(0, 3).map(plan => (
+                      <div key={plan.id} className="bg-gradient-to-br from-[#f8f9fa] to-white rounded-xl p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg border border-[#dad7cd] hover:border-[#40916c] cursor-pointer" onClick={() => openModal("crop", plan)}>
+                        <div className="text-[42px] mb-3">{plan.crop_type.toLowerCase().includes("maize") ? "🌽" : plan.crop_type.toLowerCase().includes("tomato") ? "🍅" : "🌱"}</div>
+                        <div className="font-bold text-[16px] text-[#081c15] mb-1">{plan.crop_type}</div>
+                        <div className="text-[13px] text-[#52796f]">{plan.field_name ?? "No field assigned"} • {plan.planned_area_ha ?? "0"} ha</div>
+                        
+                        {/* Fake Progress based on dates if available, or static 50% */}
+                        <div className="bg-[#dad7cd] rounded-full h-2 mt-4 overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-[#2d6a4f] to-[#40916c]" style={{ width: '50%' }}></div>
                         </div>
-                      ))}
+                        <div className="text-[11px] mt-2 text-[#52796f] font-medium">
+                          {plan.expected_harvest_date ? `Harvest: ${new Date(plan.expected_harvest_date).toLocaleDateString()}` : "Growing"}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </Card>
-              )}
+                )}
+              </div>
+
+              {/* Bottom Two Columns: AI Insights & Workers */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* AI Insights */}
+                <div className="lg:col-span-2 farm-glass-card p-6">
+                  <div className="flex justify-between items-center mb-5 gap-3 flex-wrap">
+                    <h3 className="text-[18px] font-bold flex items-center gap-2.5 text-[#081c15]">
+                      <i className="fas fa-brain text-[#118ab2]"></i> AI-Powered Intelligence
+                    </h3>
+                    <span className="text-[#52796f] text-[12px] font-medium bg-[#f8f9fa] px-3 py-1 rounded-full border border-[#dad7cd]">
+                      🤖 Updated Live
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {insights.length === 0 ? (
+                      <div className="py-8 text-center text-[#52796f] bg-white/50 rounded-xl border border-dashed border-[#dad7cd]">
+                        Generate insights from the AI Insights tab to see them here.
+                      </div>
+                    ) : insights.slice(0, 3).map((insight, idx) => {
+                      // Apply specific styling based on index/type to mimic HTML
+                      const styles = [
+                        { bg: "linear-gradient(135deg, #e8f5e9, #c8e6c9)", border: "var(--farm-primary)", icon: "fa-seedling text-[var(--farm-primary)]" },
+                        { bg: "linear-gradient(135deg, #fff3e0, #ffe0b2)", border: "var(--farm-secondary)", icon: "fa-chart-line text-[var(--farm-secondary)]" },
+                        { bg: "linear-gradient(135deg, #e0f7fa, #b2ebf2)", border: "var(--farm-info)", icon: "fa-lightbulb text-[var(--farm-info)]" }
+                      ];
+                      const style = styles[idx % styles.length];
+
+                      return (
+                        <div key={insight.id} className="rounded-xl p-4 border-l-[5px] shadow-sm cursor-pointer transition-transform hover:scale-[1.01]" style={{ background: style.bg, borderLeftColor: style.border }} onClick={() => navigate("insights")}>
+                          <div className="flex items-center gap-2 text-[#081c15] text-[14px]">
+                            <i className={`fas ${style.icon}`}></i> <strong>{insight.title}</strong>
+                          </div>
+                          <div className="mt-2 text-[13px] text-[#2d3e40] leading-relaxed">
+                            {insight.content}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Top Workers */}
+                <div className="farm-glass-card p-6">
+                  <div className="flex justify-between items-center mb-5 gap-3 flex-wrap">
+                    <h3 className="text-[18px] font-bold flex items-center gap-2.5 text-[#081c15]">
+                      <i className="fas fa-users text-[#2d6a4f]"></i> Your Team
+                    </h3>
+                    <span className="text-[#2d6a4f] text-[13px] cursor-pointer font-medium hover:underline" onClick={() => navigate("labour")}>
+                      👥 View All
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {workers.length === 0 ? (
+                      <div className="py-8 text-center text-[#52796f] bg-white/50 rounded-xl border border-dashed border-[#dad7cd]">
+                        No workers added yet.
+                      </div>
+                    ) : workers.slice(0, 3).map(worker => (
+                      <div key={worker.id} className="bg-gradient-to-br from-white to-[#f8f9fa] border border-[#dad7cd] rounded-xl p-3 flex items-center gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer" onClick={() => openModal("worker", worker)}>
+                        <div className="w-[50px] h-[50px] rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-inner" style={{ background: 'linear-gradient(135deg, var(--farm-primary), var(--farm-primary-light))' }}>
+                          {worker.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <h4 className="text-[14px] font-bold text-[#081c15]">{worker.full_name}</h4>
+                          <p className="text-[12px] text-[#52796f] capitalize">{worker.role} • {worker.is_active ? 'Active' : 'Inactive'}</p>
+                          <div className="text-[11px] mt-0.5 text-[#ffb703]"><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star-half-alt"></i></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
             </div>
           )}
 
           {/* ── FIELDS ── */}
           {section === "fields" && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Fields & Zones
+            <div className="animate-fade-in space-y-6">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                  <i className="fas fa-map-marked-alt text-[#2d6a4f]"></i> Fields & Zones
                 </h2>
-                <button
-                  onClick={() => openModal("field")}
-                  className={btnPrimaryCls}
-                >
+                <button onClick={() => openModal("field")} className="bg-[var(--farm-primary)] text-white px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-[var(--farm-primary-light)] shadow-md transition-all">
                   + Add Field
                 </button>
               </div>
+              
               {fields.length === 0 ? (
-                <Card className={panelCls}>
-                  <div className="py-16 text-center">
-                    <div className="text-5xl mb-3">🌍</div>
-                    <p className="font-medium text-gray-700">No fields yet</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Add fields or zones to organise your farm
-                    </p>
-                    <button
-                      onClick={() => openModal("field")}
-                      className={`mt-4 ${btnPrimaryCls}`}
-                    >
-                      Add First Field
-                    </button>
-                  </div>
-                </Card>
+                <div className="farm-glass-card py-16 text-center">
+                  <i className="fas fa-map-marked-alt text-5xl text-[#dad7cd] mb-4"></i>
+                  <p className="font-bold text-[#081c15] text-lg">No fields yet</p>
+                  <p className="text-sm text-[#52796f] mt-1">Add fields or zones to organise your farm</p>
+                  <button onClick={() => openModal("field")} className="mt-5 bg-[var(--farm-primary)] text-white px-6 py-2.5 rounded-[60px] font-semibold text-sm shadow-md hover:-translate-y-0.5 transition-transform">
+                    Add First Field
+                  </button>
+                </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {fields.map((field) => (
-                    <Card
-                      key={field.id}
-                      className={`${panelCls} group transition hover:-translate-y-0.5 hover:shadow-md`}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-bold text-gray-900 text-lg">
-                          {field.name}
-                        </h3>
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            field.status === "active"
-                              ? "bg-secondary-green/10 text-secondary-green font-semibold"
-                              : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
+                    <div key={field.id} className="farm-glass-card p-5 group cursor-pointer hover:-translate-y-1" onClick={() => openModal("field", field)}>
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="font-bold text-[18px] text-[#081c15]">{field.name}</h3>
+                        <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
+                          field.status === "active" ? "bg-[#e8f5e9] text-[#2d6a4f]" : "bg-[#f8f9fa] text-[#52796f]"
+                        }`}>
                           {field.status}
                         </span>
                       </div>
-                      <div className="space-y-1.5 text-sm text-gray-600">
+                      <div className="space-y-2.5 text-[13px] text-[#2d3e40]">
                         {field.area_ha && (
-                          <div className="flex justify-between">
-                            <span>Size</span>
-                            <span className="font-medium">
-                              {parseFloat(field.area_ha).toLocaleString()} ha
-                            </span>
+                          <div className="flex justify-between border-b border-black/5 pb-1.5">
+                            <span className="text-[#52796f]">Size</span>
+                            <span className="font-bold">{parseFloat(field.area_ha).toLocaleString()} ha</span>
                           </div>
                         )}
                         {field.current_use && (
-                          <div className="flex justify-between">
-                            <span>Use</span>
-                            <span className="font-medium capitalize">
-                              {field.current_use}
-                            </span>
+                          <div className="flex justify-between border-b border-black/5 pb-1.5">
+                            <span className="text-[#52796f]">Use</span>
+                            <span className="font-bold capitalize">{field.current_use}</span>
                           </div>
                         )}
                         {field.current_crop_type && (
-                          <div className="flex justify-between">
-                            <span>Crop</span>
-                            <span className="font-medium text-green-700">
-                              {field.current_crop_type}
-                            </span>
+                          <div className="flex justify-between border-b border-black/5 pb-1.5">
+                            <span className="text-[#52796f]">Crop</span>
+                            <span className="font-bold text-[#2d6a4f]">{field.current_crop_type}</span>
                           </div>
                         )}
                         {field.soil_type && (
-                          <div className="flex justify-between">
-                            <span>Soil</span>
-                            <span className="font-medium">
-                              {field.soil_type}
-                            </span>
-                          </div>
-                        )}
-                        {field.irrigation_type && (
-                          <div className="flex justify-between">
-                            <span>Irrigation</span>
-                            <span className="font-medium">
-                              {field.irrigation_type}
-                            </span>
+                          <div className="flex justify-between border-b border-black/5 pb-1.5">
+                            <span className="text-[#52796f]">Soil</span>
+                            <span className="font-bold">{field.soil_type}</span>
                           </div>
                         )}
                       </div>
-                      <button
-                        onClick={() => openModal("field", field)}
-                        className="mt-3 text-xs font-semibold text-secondary-green hover:text-primary-green"
-                      >
-                        Edit field →
-                      </button>
-                    </Card>
+                      <div className="mt-4 text-[#2d6a4f] text-[12px] font-bold group-hover:underline flex items-center justify-between">
+                        Edit field <i className="fas fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1550,20 +1526,16 @@ export default function FarmOS() {
 
           {/* ── CROPS ── */}
           {section === "crops" && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Crop Plans</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openModal("crop-activity")}
-                    className={btnOutlineCls}
-                  >
+            <div className="animate-fade-in space-y-6">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                  <i className="fas fa-seedling text-[#2d6a4f]"></i> Crop Plans
+                </h2>
+                <div className="flex gap-3">
+                  <button onClick={() => openModal("crop-activity")} className="bg-white/50 border border-[#dad7cd] text-[#2d6a4f] px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-white shadow-sm transition-all">
                     + Log Activity
                   </button>
-                  <button
-                    onClick={() => openModal("crop")}
-                    className={btnPrimaryCls}
-                  >
+                  <button onClick={() => openModal("crop")} className="bg-[var(--farm-primary)] text-white px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-[var(--farm-primary-light)] shadow-md transition-all">
                     + New Crop Plan
                   </button>
                 </div>
@@ -1572,18 +1544,15 @@ export default function FarmOS() {
               {/* Filter tabs */}
               <div className="flex gap-2 mb-4 flex-wrap">
                 {["all", "active", "planned", "harvested"].map((s) => {
-                  const count =
-                    s === "all"
-                      ? cropPlans.length
-                      : cropPlans.filter((c) => c.status === s).length;
+                  const count = s === "all" ? cropPlans.length : cropPlans.filter((c) => c.status === s).length;
                   return (
                     <button
                       key={s}
                       onClick={() => setForm((f) => ({ ...f, _cropFilter: s }))}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      className={`px-4 py-2 rounded-[60px] text-[13px] font-bold transition-all ${
                         (form._cropFilter || "all") === s
-                          ? "border-secondary-green bg-secondary-green text-white shadow-sm"
-                          : "border-secondary-green/20 bg-white/70 text-gray-600 hover:border-secondary-green/40 hover:bg-white"
+                          ? "bg-[var(--farm-primary)] text-white shadow-md"
+                          : "bg-white/60 text-[#52796f] border border-[#dad7cd] hover:bg-white"
                       }`}
                     >
                       {s.charAt(0).toUpperCase() + s.slice(1)} ({count})
@@ -1593,118 +1562,72 @@ export default function FarmOS() {
               </div>
 
               {cropPlans.length === 0 ? (
-                <Card className={panelCls}>
-                  <div className="py-16 text-center">
-                    <div className="text-5xl mb-3">🌱</div>
-                    <p className="font-medium text-gray-700">No crop plans yet</p>
-                    <button
-                      onClick={() => openModal("crop")}
-                      className={`mt-4 ${btnPrimaryCls}`}
-                    >
-                      Create First Plan
-                    </button>
-                  </div>
-                </Card>
+                <div className="farm-glass-card py-16 text-center">
+                  <i className="fas fa-seedling text-5xl text-[#dad7cd] mb-4"></i>
+                  <p className="font-bold text-[#081c15] text-lg">No crop plans yet</p>
+                  <button onClick={() => openModal("crop")} className="mt-5 bg-[var(--farm-primary)] text-white px-6 py-2.5 rounded-[60px] font-semibold text-sm shadow-md hover:-translate-y-0.5 transition-transform">
+                    Create First Plan
+                  </button>
+                </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {cropPlans
-                    .filter(
-                      (c) =>
-                        (form._cropFilter || "all") === "all" ||
-                        c.status === form._cropFilter
-                    )
+                    .filter((c) => (form._cropFilter || "all") === "all" || c.status === form._cropFilter)
                     .map((plan) => (
-                      <Card
-                        key={plan.id}
-                        className={`${panelCls} transition hover:-translate-y-0.5 hover:shadow-md`}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2 flex-wrap">
-                              <span className="font-bold text-gray-900 text-lg">
-                                {plan.crop_type}
-                              </span>
-                              {plan.variety && (
-                                <span className="text-sm text-gray-500">
-                                  ({plan.variety})
+                      <div key={plan.id} className="farm-glass-card p-5 transition-transform hover:-translate-y-1 cursor-pointer flex flex-col md:flex-row gap-5 items-start md:items-center justify-between" onClick={() => openModal("crop", plan)}>
+                        <div className="flex-1 w-full">
+                          <div className="flex items-center gap-4 mb-4 flex-wrap">
+                            <span className="text-[40px] leading-none shrink-0 drop-shadow-sm">
+                              {plan.crop_type.toLowerCase().includes("maize") ? "🌽" : plan.crop_type.toLowerCase().includes("tomato") ? "🍅" : "🌱"}
+                            </span>
+                            <div>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h3 className="font-bold text-[18px] text-[#081c15]">{plan.crop_type}</h3>
+                                {plan.variety && <span className="text-[13px] text-[#52796f]">({plan.variety})</span>}
+                                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wide ${
+                                  plan.status === "active" ? "bg-[#e8f5e9] text-[#2d6a4f]" :
+                                  plan.status === "harvested" ? "bg-[#fff3e0] text-[#ff9f1c]" :
+                                  plan.status === "planned" ? "bg-[#e0f7fa] text-[#118ab2]" :
+                                  "bg-gray-100 text-gray-600"
+                                }`}>
+                                  {plan.status}
                                 </span>
-                              )}
-                              <span
-                                className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                  CROP_STATUS_COLOR[plan.status]
-                                }`}
-                              >
-                                {plan.status.toUpperCase()}
-                              </span>
-                              {plan.field_name && (
-                                <span className="text-xs bg-secondary-green/10 text-secondary-green px-2 py-0.5 rounded-full font-semibold">
-                                  {plan.field_name}
-                                </span>
-                              )}
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-gray-600">
-                              {plan.planned_area_ha && (
-                                <div>
-                                  Area:{" "}
-                                  <strong>
-                                    {parseFloat(
-                                      plan.planned_area_ha
-                                    ).toLocaleString()} ha
-                                  </strong>
-                                </div>
-                              )}
-                              {plan.planting_date && (
-                                <div>
-                                  Planted:{" "}
-                                  <strong>
-                                    {new Date(
-                                      plan.planting_date
-                                    ).toLocaleDateString("en-GB", {
-                                      day: "2-digit",
-                                      month: "short",
-                                    })}
-                                  </strong>
-                                </div>
-                              )}
-                              {plan.expected_harvest_date && (
-                                <div>
-                                  Harvest:{" "}
-                                  <strong>
-                                    {new Date(
-                                      plan.expected_harvest_date
-                                    ).toLocaleDateString("en-GB", {
-                                      day: "2-digit",
-                                      month: "short",
-                                      year: "numeric",
-                                    })}
-                                  </strong>
-                                </div>
-                              )}
-                              {plan.expected_yield_kg && (
-                                <div>
-                                  Expected:{" "}
-                                  <strong>
-                                    {parseFloat(
-                                      plan.expected_yield_kg
-                                    ).toLocaleString()} kg
-                                  </strong>
-                                </div>
-                              )}
-                            </div>
-                            {plan.activity_count > 0 && (
-                              <div className="mt-1.5 text-xs text-gray-400">
-                                {plan.activity_count} activities logged
                               </div>
-                            )}
+                              <div className="text-[13px] text-[#2d6a4f] font-semibold mt-1 flex items-center gap-1.5">
+                                <i className="fas fa-map-marker-alt"></i> {plan.field_name ?? "Unassigned Field"}
+                              </div>
+                            </div>
                           </div>
-                          <button
-                            onClick={() => openModal("crop", plan)}
-                            className="text-xs font-semibold text-secondary-green hover:text-primary-green shrink-0"
-                          >
-                            Edit
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[13px] text-[#2d3e40] bg-[#f8f9fa]/80 p-3.5 rounded-xl border border-black/5">
+                            <div>
+                              <div className="text-[#52796f] text-[10px] uppercase font-bold tracking-wider mb-0.5">Area</div>
+                              <div className="font-bold text-[#081c15]">{plan.planned_area_ha ? `${parseFloat(plan.planned_area_ha).toLocaleString()} ha` : "—"}</div>
+                            </div>
+                            <div>
+                              <div className="text-[#52796f] text-[10px] uppercase font-bold tracking-wider mb-0.5">Planted</div>
+                              <div className="font-bold text-[#081c15]">{plan.planting_date ? new Date(plan.planting_date).toLocaleDateString("en-GB", {day: "2-digit", month: "short", year: "numeric"}) : "—"}</div>
+                            </div>
+                            <div>
+                              <div className="text-[#52796f] text-[10px] uppercase font-bold tracking-wider mb-0.5">Harvest</div>
+                              <div className="font-bold text-[#081c15]">{plan.expected_harvest_date ? new Date(plan.expected_harvest_date).toLocaleDateString("en-GB", {day: "2-digit", month: "short", year: "numeric"}) : "—"}</div>
+                            </div>
+                            <div>
+                              <div className="text-[#52796f] text-[10px] uppercase font-bold tracking-wider mb-0.5">Expected Yield</div>
+                              <div className="font-bold text-[#081c15]">{plan.expected_yield_kg ? `${parseFloat(plan.expected_yield_kg).toLocaleString()} kg` : "—"}</div>
+                            </div>
+                          </div>
+                          {plan.activity_count > 0 && (
+                            <div className="mt-3 text-[12px] text-[#52796f] flex items-center gap-1.5 font-medium">
+                              <i className="fas fa-history"></i> {plan.activity_count} activities logged
+                            </div>
+                          )}
+                        </div>
+                        <div className="shrink-0 w-full md:w-auto flex justify-end">
+                          <button className="bg-white/80 border border-[#dad7cd] w-10 h-10 rounded-full flex items-center justify-center text-[#2d6a4f] hover:bg-[var(--farm-primary)] hover:text-white hover:border-[var(--farm-primary)] transition-all shadow-sm">
+                            <i className="fas fa-pen text-sm"></i>
                           </button>
                         </div>
-                      </Card>
+                      </div>
                     ))}
                 </div>
               )}
@@ -1713,107 +1636,72 @@ export default function FarmOS() {
 
           {/* ── LIVESTOCK ── */}
           {section === "livestock" && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Livestock</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openModal("livestock-activity")}
-                    className={btnOutlineCls}
-                  >
+            <div className="animate-fade-in space-y-6">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                  <i className="fas fa-paw text-[#2d6a4f]"></i> Livestock Management
+                </h2>
+                <div className="flex gap-3">
+                  <button onClick={() => openModal("livestock-activity")} className="bg-white/50 border border-[#dad7cd] text-[#2d6a4f] px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-white shadow-sm transition-all">
                     + Log Activity
                   </button>
-                  <button
-                    onClick={() => openModal("livestock")}
-                    className={btnPrimaryCls}
-                  >
+                  <button onClick={() => openModal("livestock")} className="bg-[var(--farm-primary)] text-white px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-[var(--farm-primary-light)] shadow-md transition-all">
                     + Add Group
                   </button>
                 </div>
               </div>
+              
               {livestock.length === 0 ? (
-                <Card className={panelCls}>
-                  <div className="py-16 text-center">
-                    <div className="text-5xl mb-3">🐄</div>
-                    <p className="font-medium text-gray-700">
-                      No livestock recorded
-                    </p>
-                    <button
-                      onClick={() => openModal("livestock")}
-                      className={`${btnPrimaryCls} mt-4`}
-                    >
-                      Add Livestock
-                    </button>
-                  </div>
-                </Card>
+                <div className="farm-glass-card py-16 text-center">
+                  <i className="fas fa-paw text-5xl text-[#dad7cd] mb-4"></i>
+                  <p className="font-bold text-[#081c15] text-lg">No livestock recorded</p>
+                  <button onClick={() => openModal("livestock")} className="mt-5 bg-[var(--farm-primary)] text-white px-6 py-2.5 rounded-[60px] font-semibold text-sm shadow-md hover:-translate-y-0.5 transition-transform">
+                    Add Livestock
+                  </button>
+                </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {livestock.map((group) => (
-                    <Card key={group.id} className={panelCls}>
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-3xl">
+                    <div key={group.id} className="farm-glass-card p-5 group hover:-translate-y-1 cursor-pointer transition-transform" onClick={() => openModal("livestock", group)}>
+                      <div className="flex items-center justify-between mb-5 border-b border-black/5 pb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-3xl shadow-sm bg-gradient-to-br from-white to-[#f8f9fa] border border-[#dad7cd]">
                             {SPECIES_EMOJI[group.species] ?? "🐾"}
-                          </span>
+                          </div>
                           <div>
-                            <div className="font-bold text-gray-900 capitalize">
-                              {group.species}
-                            </div>
-                            {group.breed && (
-                              <div className="text-xs text-gray-500">
-                                {group.breed}
-                              </div>
-                            )}
+                            <div className="font-bold text-[18px] text-[#081c15] capitalize">{group.species}</div>
+                            {group.breed && <div className="text-[13px] text-[#52796f]">{group.breed}</div>}
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-3xl font-bold text-gray-900">
-                            {group.count}
-                          </div>
-                          <div className="text-xs text-gray-500">head</div>
+                          <div className="text-[28px] font-extrabold text-[#081c15] leading-none">{group.count}</div>
+                          <div className="text-[10px] text-[#52796f] font-bold uppercase tracking-wider mt-1">Head</div>
                         </div>
                       </div>
-                      <div className="space-y-1 text-sm text-gray-600">
+                      <div className="space-y-2.5 text-[13px] text-[#2d3e40]">
                         {group.purpose && (
-                          <div className="flex justify-between">
-                            <span>Purpose</span>
-                            <span className="font-medium capitalize">
-                              {group.purpose}
-                            </span>
+                          <div className="flex justify-between border-b border-black/5 pb-1.5">
+                            <span className="text-[#52796f]">Purpose</span>
+                            <span className="font-bold capitalize">{group.purpose}</span>
                           </div>
                         )}
                         {group.field_name && (
-                          <div className="flex justify-between">
-                            <span>Location</span>
-                            <span className="font-medium">
-                              {group.field_name}
-                            </span>
+                          <div className="flex justify-between border-b border-black/5 pb-1.5">
+                            <span className="text-[#52796f]">Location</span>
+                            <span className="font-bold text-[#2d6a4f]">{group.field_name}</span>
                           </div>
                         )}
                         {group.total_cost && parseFloat(group.total_cost) > 0 && (
-                          <div className="flex justify-between">
-                            <span>Total costs</span>
-                            <span className="font-medium">
-                              ${parseFloat(group.total_cost).toFixed(2)}
-                            </span>
-                          </div>
-                        )}
-                        {group.activity_count > 0 && (
-                          <div className="flex justify-between">
-                            <span>Activities</span>
-                            <span className="font-medium">
-                              {group.activity_count}
-                            </span>
+                          <div className="flex justify-between border-b border-black/5 pb-1.5">
+                            <span className="text-[#52796f]">Total costs</span>
+                            <span className="font-bold text-[#e63946]">${parseFloat(group.total_cost).toFixed(2)}</span>
                           </div>
                         )}
                       </div>
-                      <button
-                        onClick={() => openModal("livestock", group)}
-                        className="mt-3 text-xs font-semibold text-secondary-green hover:text-primary-green"
-                      >
-                        Edit group →
-                      </button>
-                    </Card>
+                      <div className="mt-4 text-[#2d6a4f] text-[12px] font-bold group-hover:underline flex items-center justify-between">
+                        Edit group <i className="fas fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1822,260 +1710,147 @@ export default function FarmOS() {
 
           {/* ── LABOUR ── */}
           {section === "labour" && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Labour Tracking
+            <div className="animate-fade-in space-y-6">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                  <i className="fas fa-users-cog text-[#2d6a4f]"></i> Labour Tracking
                 </h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openModal("worker")}
-                    className={btnOutlineCls}
-                  >
+                <div className="flex gap-3">
+                  <button onClick={() => openModal("worker")} className="bg-white/50 border border-[#dad7cd] text-[#2d6a4f] px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-white shadow-sm transition-all">
                     + Add Worker
                   </button>
-                  <button
-                    onClick={() => openModal("labour")}
-                    className={btnPrimaryCls}
-                  >
+                  <button onClick={() => openModal("labour")} className="bg-[var(--farm-primary)] text-white px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-[var(--farm-primary-light)] shadow-md transition-all">
                     + Log Labour Day
                   </button>
                 </div>
               </div>
 
               {labourSummary && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                   {[
-                    {
-                      label: "Man-Days (month)",
-                      value: labourSummary.total_entries,
-                      icon: "👥",
-                    },
-                    {
-                      label: "Total Hours",
-                      value: `${parseFloat(
-                        labourSummary.total_hours || "0"
-                      ).toFixed(0)}h`,
-                      icon: "⏱️",
-                    },
-                    {
-                      label: "Wages Paid",
-                      value: `$${parseFloat(
-                        labourSummary.total_wages || "0"
-                      ).toFixed(2)}`,
-                      icon: "💰",
-                    },
-                    {
-                      label: "Area Covered (ha)",
-                      value: parseFloat(
-                        labourSummary.total_area || "0"
-                      ).toFixed(2),
-                      icon: "🌾",
-                    },
+                    { label: "Man-Days (month)", value: labourSummary.total_entries, icon: "fa-clipboard-list", color: "var(--farm-info)" },
+                    { label: "Total Hours", value: `${parseFloat(labourSummary.total_hours || "0").toFixed(0)}h`, icon: "fa-clock", color: "var(--farm-primary-light)" },
+                    { label: "Wages Paid", value: `$${parseFloat(labourSummary.total_wages || "0").toFixed(2)}`, icon: "fa-money-bill-wave", color: "var(--farm-danger)" },
+                    { label: "Area Covered", value: `${parseFloat(labourSummary.total_area || "0").toFixed(2)} ha`, icon: "fa-map-marked-alt", color: "var(--farm-secondary)" },
                   ].map((s) => (
-                    <Card key={s.label} className={`${panelCls} rounded-2xl border-l-4 border-blue-400`}>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-700">
-                          {s.value}
-                        </div>
-                        <div className="text-xs text-gray-600">{s.label}</div>
+                    <div key={s.label} className="farm-glass-card p-5 relative overflow-hidden">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 text-white shadow-sm" style={{ backgroundColor: s.color }}>
+                        <i className={`fas ${s.icon} text-lg`}></i>
                       </div>
-                    </Card>
+                      <div className="text-[28px] font-extrabold text-[#081c15] leading-tight">{s.value}</div>
+                      <div className="text-[13px] text-[#52796f] mt-1">{s.label}</div>
+                    </div>
                   ))}
                 </div>
               )}
 
-              <Card className={panelCls}>
-                <h3 className="font-bold text-gray-900 mb-4">
-                  Workers ({workers.length})
-                </h3>
+              <div className="farm-glass-card p-6">
+                <div className="flex justify-between items-center mb-5 border-b border-black/5 pb-4">
+                  <h3 className="text-[18px] font-bold flex items-center gap-2.5 text-[#081c15]">
+                    <i className="fas fa-users text-[#2d6a4f]"></i> Worker Directory ({workers.length})
+                  </h3>
+                </div>
                 {workers.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 text-sm">No workers added yet.</p>
-                    <button
-                      onClick={() => openModal("worker")}
-                      className="mt-2 font-semibold text-secondary-green hover:text-primary-green text-sm"
-                    >
-                      + Add Worker
-                    </button>
+                  <div className="py-10 text-center text-[#52796f] bg-white/50 rounded-xl border border-dashed border-[#dad7cd]">
+                    No workers added yet.
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {workers.map((worker) => (
-                      <div
-                        key={worker.id}
-                        className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
-                          worker.is_active ? "border-secondary-green/10 bg-white/70" : "border-red-200/50 bg-red-50/60"
-                        }`}
-                      >
-                        <div>
-                          <span className="font-medium text-gray-900 text-sm">
-                            {worker.full_name}
-                          </span>
-                          <span
-                            className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                              worker.role === "manager"
-                                ? "bg-purple-100 text-purple-700"
-                                : "bg-gray-200 text-gray-600"
-                            }`}
-                          >
-                            {worker.role}
-                          </span>
-                          {worker.phone && (
-                            <span className="ml-2 text-xs text-gray-400">
-                              {worker.phone}
-                            </span>
-                          )}
+                      <div key={worker.id} className="bg-gradient-to-br from-white to-[#f8f9fa] border border-[#dad7cd] rounded-xl p-4 flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer" onClick={() => openModal("worker", worker)}>
+                        <div className="w-[50px] h-[50px] rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-inner" style={{ background: worker.is_active ? 'linear-gradient(135deg, var(--farm-primary), var(--farm-primary-light))' : '#dad7cd' }}>
+                          {worker.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                          {worker.daily_wage_usd && (
-                            <span>
-                              ${parseFloat(worker.daily_wage_usd).toFixed(2)}/day
-                            </span>
-                          )}
-                          {worker.total_days_worked && (
-                            <span>{worker.total_days_worked} days</span>
-                          )}
-                          <button
-                            onClick={() => openModal("worker", worker)}
-                            className="font-semibold text-secondary-green hover:text-primary-green"
-                          >
-                            Edit
-                          </button>
+                        <div className="flex-1">
+                          <h4 className="text-[15px] font-bold text-[#081c15]">{worker.full_name}</h4>
+                          <p className="text-[12px] text-[#52796f] capitalize">{worker.role}</p>
+                          {worker.phone && <p className="text-[11px] text-[#52796f] mt-0.5"><i className="fas fa-phone-alt"></i> {worker.phone}</p>}
+                        </div>
+                        <div className="text-right shrink-0">
+                          {worker.daily_wage_usd && <div className="text-[13px] font-bold text-[#2d6a4f]">${parseFloat(worker.daily_wage_usd).toFixed(2)}/d</div>}
+                          {worker.total_days_worked && <div className="text-[11px] text-[#52796f]">{worker.total_days_worked} days</div>}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-              </Card>
+              </div>
             </div>
           )}
 
           {/* ── INVENTORY ── */}
           {section === "inventory" && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Inventory</h2>
-                <button
-                  onClick={() => openModal("inventory")}
-                  className={btnPrimaryCls}
-                >
+            <div className="animate-fade-in space-y-6">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                  <i className="fas fa-boxes text-[#2d6a4f]"></i> Inventory Levels
+                </h2>
+                <button onClick={() => openModal("inventory")} className="bg-[var(--farm-primary)] text-white px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-[var(--farm-primary-light)] shadow-md transition-all">
                   + Add Item
                 </button>
               </div>
+              
               {alerts.length > 0 && (
-                <div className="mb-4 rounded-xl border border-red-200/50 bg-red-50/80 px-4 py-3 text-sm font-medium text-red-700">
-                  ⚠️ {alerts.length} item{alerts.length !== 1 ? "s" : ""} need
-                  attention
+                <div className="bg-[#fff3e0] border-l-[5px] border-[#ff9f1c] p-4 rounded-xl shadow-sm flex items-center gap-3">
+                  <i className="fas fa-exclamation-triangle text-[#e85d04] text-xl"></i>
+                  <div className="text-[14px] font-bold text-[#e85d04]">
+                    {alerts.length} item{alerts.length !== 1 ? "s" : ""} need attention
+                  </div>
                 </div>
               )}
+              
               {inventory.length === 0 ? (
-                <Card className={panelCls}>
-                  <div className="py-16 text-center">
-                    <div className="text-5xl mb-3">📦</div>
-                    <p className="font-medium text-gray-700">No inventory items</p>
-                    <button
-                      onClick={() => openModal("inventory")}
-                      className={`${btnPrimaryCls} mt-4`}
-                    >
-                      Add First Item
-                    </button>
-                  </div>
-                </Card>
+                <div className="farm-glass-card py-16 text-center">
+                  <i className="fas fa-box-open text-5xl text-[#dad7cd] mb-4"></i>
+                  <p className="font-bold text-[#081c15] text-lg">No inventory items</p>
+                  <button onClick={() => openModal("inventory")} className="mt-5 bg-[var(--farm-primary)] text-white px-6 py-2.5 rounded-[60px] font-semibold text-sm shadow-md hover:-translate-y-0.5 transition-transform">
+                    Add First Item
+                  </button>
+                </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <div className={`${panelCls} rounded-2xl overflow-hidden`}>
-                  <table className="w-full">
-                    <thead className="border-b border-secondary-green/10 bg-white/50">
-                      <tr>
-                        {[
-                          "Item",
-                          "Type",
-                          "Stock",
-                          "Unit Cost",
-                          "Total Value",
-                          "Status",
-                          "",
-                        ].map((h) => (
-                          <th
-                            key={h}
-                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-secondary-green/5">
-                      {inventory.map((item) => (
-                        <tr
-                          key={item.id}
-                          className={`transition hover:bg-white/60 ${
-                            item.low_stock || item.expiring_soon
-                              ? "bg-red-50/40"
-                              : ""
-                          }`}
-                        >
-                          <td className="px-4 py-3">
-                            <div className="font-medium text-gray-900 text-sm">
-                              {item.name}
-                            </div>
-                            {item.expiry_date && (
-                              <div className="text-xs text-gray-400">
-                                Exp: {new Date(item.expiry_date).toLocaleDateString("en-GB")}
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 capitalize">
-                            {item.item_type}
-                          </td>
-                          <td className="px-4 py-3 text-sm font-medium">
-                            {parseFloat(item.quantity).toLocaleString()} {item.unit}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {item.unit_cost_usd
-                              ? `$${parseFloat(item.unit_cost_usd).toFixed(2)}`
-                              : "—"}
-                          </td>
-                          <td className="px-4 py-3 text-sm font-medium">
-                            {item.unit_cost_usd
-                              ? `$${(
-                                  parseFloat(item.quantity) *
-                                  parseFloat(item.unit_cost_usd)
-                                ).toFixed(2)}`
-                              : "—"}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1">
-                              {item.low_stock && (
-                                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                                  Low
-                                </span>
-                              )}
-                              {item.expiring_soon && (
-                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                                  Expiring
-                                </span>
-                              )}
-                              {!item.low_stock && !item.expiring_soon && (
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                  OK
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <button
-                              onClick={() => openModal("inventory", item)}
-                              className="text-xs font-semibold text-secondary-green hover:text-primary-green"
-                            >
-                              Edit
-                            </button>
-                          </td>
+                <div className="farm-glass-card overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead className="bg-[#f8f9fa] border-b border-[#dad7cd]">
+                        <tr>
+                          {["Item", "Type", "Stock", "Unit Cost", "Total Value", "Status", "Action"].map((h) => (
+                            <th key={h} className="p-4 text-[12px] font-bold text-[#52796f] uppercase tracking-wider">{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-black/5">
+                        {inventory.map((item) => (
+                          <tr key={item.id} className={`transition-colors hover:bg-black/5 ${item.low_stock || item.expiring_soon ? "bg-[#fff3e0]/30" : ""}`}>
+                            <td className="p-4">
+                              <div className="font-bold text-[14px] text-[#081c15]">{item.name}</div>
+                              {item.expiry_date && <div className="text-[11px] text-[#52796f] mt-0.5">Exp: {new Date(item.expiry_date).toLocaleDateString("en-GB")}</div>}
+                            </td>
+                            <td className="p-4 text-[13px] text-[#2d3e40] capitalize">{item.item_type}</td>
+                            <td className="p-4 text-[13px] font-bold text-[#081c15]">
+                              {parseFloat(item.quantity).toLocaleString()} {item.unit}
+                            </td>
+                            <td className="p-4 text-[13px] text-[#52796f]">
+                              {item.unit_cost_usd ? `$${parseFloat(item.unit_cost_usd).toFixed(2)}` : "—"}
+                            </td>
+                            <td className="p-4 text-[13px] font-bold text-[#2d6a4f]">
+                              {item.unit_cost_usd ? `$${(parseFloat(item.quantity) * parseFloat(item.unit_cost_usd)).toFixed(2)}` : "—"}
+                            </td>
+                            <td className="p-4">
+                              <div className="flex gap-2 flex-wrap">
+                                {item.low_stock && <span className="text-[10px] bg-[#ffebee] text-[#c62828] px-2 py-1 rounded-full font-bold uppercase tracking-wider">Low</span>}
+                                {item.expiring_soon && <span className="text-[10px] bg-[#fff3e0] text-[#e85d04] px-2 py-1 rounded-full font-bold uppercase tracking-wider">Expiring</span>}
+                                {!item.low_stock && !item.expiring_soon && <span className="text-[10px] bg-[#e8f5e9] text-[#2d6a4f] px-2 py-1 rounded-full font-bold uppercase tracking-wider">OK</span>}
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <button onClick={() => openModal("inventory", item)} className="text-[12px] font-bold text-[#2d6a4f] hover:underline bg-[#f8f9fa] border border-[#dad7cd] px-3 py-1.5 rounded-[60px]">
+                                Edit
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
@@ -2084,103 +1859,63 @@ export default function FarmOS() {
 
           {/* ── CALENDAR ── */}
           {section === "calendar" && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Cropping Calendar
+            <div className="animate-fade-in space-y-6">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                  <i className="fas fa-calendar-alt text-[#2d6a4f]"></i> Cropping Calendar
                 </h2>
-                <button
-                  onClick={() => openModal("calendar")}
-                  className={btnPrimaryCls}
-                >
+                <button onClick={() => openModal("calendar")} className="bg-[var(--farm-primary)] text-white px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-[var(--farm-primary-light)] shadow-md transition-all">
                   + Add Entry
                 </button>
               </div>
+              
               {plantingNow.length > 0 && (
-                <Card className={`${panelCls} mb-4 border-l-4 border-secondary-green/60`}>
-                  <h3 className="font-bold text-gray-900 mb-2">
-                    🌱 Plant This Month
+                <div className="farm-glass-card p-5 border-l-[5px] border-[var(--farm-primary)]">
+                  <h3 className="font-bold text-[#081c15] mb-3 flex items-center gap-2">
+                    <i className="fas fa-seedling text-[var(--farm-primary)]"></i> Plant This Month
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {plantingNow.map((e: any) => (
-                      <span
-                        key={e.id}
-                        className="bg-secondary-green/20 text-gray-900 text-sm px-3 py-1 rounded-full font-medium border border-secondary-green/30"
-                      >
-                        {e.crop_type}
-                        {e.expected_harvest_weeks
-                          ? ` (${e.expected_harvest_weeks}wks)`
-                          : ""}
+                    {plantingNow.map((e: PlantingWindow) => (
+                      <span key={e.id} className="bg-[#e8f5e9] text-[#2d6a4f] text-[13px] px-3.5 py-1.5 rounded-[60px] font-bold border border-[#c8e6c9]">
+                        {e.crop_type} {e.expected_harvest_weeks ? `(${e.expected_harvest_weeks}wks)` : ""}
                       </span>
                     ))}
                   </div>
-                </Card>
+                </div>
               )}
-              <div className="overflow-x-auto">
-                <div className={`${panelCls} rounded-2xl overflow-hidden`}>
-                <table className="w-full">
-                  <thead className="border-b border-secondary-green/10 bg-white/50">
-                    <tr>
-                      {[
-                        "Crop",
-                        "Region",
-                        "Plant (months)",
-                        "Harvest (weeks)",
-                        "Soil",
-                        "Water",
-                        "Pests",
-                      ].map((h) => (
-                        <th
-                          key={h}
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-secondary-green/5">
-                    {calendar.length === 0 ? (
+              
+              <div className="farm-glass-card overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-[#f8f9fa] border-b border-[#dad7cd]">
                       <tr>
-                        <td
-                          colSpan={7}
-                          className="px-4 py-12 text-center text-gray-500 text-sm"
-                        >
-                          No calendar entries yet
-                        </td>
+                        {["Crop", "Region", "Plant (months)", "Harvest (weeks)", "Soil", "Water", "Pests"].map((h) => (
+                          <th key={h} className="p-4 text-[12px] font-bold text-[#52796f] uppercase tracking-wider">{h}</th>
+                        ))}
                       </tr>
-                    ) : (
-                      calendar.map((e: any) => (
-                        <tr key={e.id} className="transition hover:bg-white/60">
-                          <td className="px-4 py-3 font-medium text-gray-900 text-sm">
-                            {e.crop_type}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {e.region ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {e.recommended_planting_start &&
-                            e.recommended_planting_end
-                              ? `${e.recommended_planting_start}–${e.recommended_planting_end}`
-                              : "—"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {e.expected_harvest_weeks ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                            {e.soil_requirements ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                            {e.water_requirements ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                            {e.common_pests ?? "—"}
-                          </td>
+                    </thead>
+                    <tbody className="divide-y divide-black/5">
+                      {calendar.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="p-10 text-center text-[#52796f] text-sm">No calendar entries yet</td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        calendar.map((e: CalendarEntry) => (
+                          <tr key={e.id} className="transition-colors hover:bg-black/5">
+                            <td className="p-4 font-bold text-[14px] text-[#081c15]">{e.crop_type}</td>
+                            <td className="p-4 text-[13px] text-[#2d3e40]">{e.region ?? "—"}</td>
+                            <td className="p-4 text-[13px] text-[#2d3e40] font-medium">
+                              {e.recommended_planting_start && e.recommended_planting_end ? `${e.recommended_planting_start}–${e.recommended_planting_end}` : "—"}
+                            </td>
+                            <td className="p-4 text-[13px] text-[#2d3e40]">{e.expected_harvest_weeks ?? "—"}</td>
+                            <td className="p-4 text-[12px] text-[#52796f] max-w-xs truncate">{e.soil_requirements ?? "—"}</td>
+                            <td className="p-4 text-[12px] text-[#52796f] max-w-xs truncate">{e.water_requirements ?? "—"}</td>
+                            <td className="p-4 text-[12px] text-[#52796f] max-w-xs truncate">{e.common_pests ?? "—"}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -2188,113 +1923,59 @@ export default function FarmOS() {
 
           {/* ── REPORTS ── */}
           {section === "reports" && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">Reports</h2>
+            <div className="animate-fade-in space-y-6">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                  <i className="fas fa-file-invoice text-[#2d6a4f]"></i> Farm Reports
+                </h2>
+              </div>
+              
               {!weeklyReport && !monthlyReport ? (
-                <div className="py-16 flex justify-center">
+                <div className="farm-glass-card py-16 flex justify-center">
                   <LoadingSpinner />
                 </div>
               ) : (
                 <>
                   {monthlyReport && (
-                    <Card className={panelCls}>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">
-                        Monthly Summary —{" "}
-                        {new Date(
-                          monthlyReport.period.year,
-                          monthlyReport.period.month - 1
-                        ).toLocaleDateString("en-GB", {
-                          month: "long",
-                          year: "numeric",
-                        })}
+                    <div className="farm-glass-card p-6">
+                      <h3 className="text-[18px] font-bold text-[#081c15] mb-5 border-b border-black/5 pb-4">
+                        Monthly Summary — {new Date(monthlyReport.period.year, monthlyReport.period.month - 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
                       </h3>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         {[
-                          {
-                            label: "Man-Days",
-                            value: monthlyReport.summary.totalManDays,
-                          },
-                          {
-                            label: "Wages",
-                            value: `$${parseFloat(
-                              monthlyReport.summary.totalWages || "0"
-                            ).toFixed(2)}`,
-                          },
-                          {
-                            label: "Input Costs",
-                            value: `$${parseFloat(
-                              monthlyReport.summary.totalInputs || "0"
-                            ).toFixed(2)}`,
-                          },
-                          {
-                            label: "Total Cost",
-                            value: `$${parseFloat(
-                              monthlyReport.summary.totalCost || "0"
-                            ).toFixed(2)}`,
-                          },
+                          { label: "Man-Days", value: monthlyReport.summary.totalManDays, icon: "fa-user-clock", color: "text-[#118ab2]" },
+                          { label: "Wages", value: `$${toNumber(monthlyReport.summary.totalWages).toFixed(2)}`, icon: "fa-money-bill-wave", color: "text-[#e63946]" },
+                          { label: "Input Costs", value: `$${toNumber(monthlyReport.summary.totalInputs).toFixed(2)}`, icon: "fa-seedling", color: "text-[#ff9f1c]" },
+                          { label: "Total Cost", value: `$${toNumber(monthlyReport.summary.totalCost).toFixed(2)}`, icon: "fa-calculator", color: "text-[#2d6a4f]" },
                         ].map((s) => (
-                          <div
-                            key={s.label}
-                            className="rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2 text-center"
-                          >
-                            <div className="text-xl font-bold text-gray-900">
-                              {s.value}
-                            </div>
-                            <div className="text-xs text-gray-600">{s.label}</div>
+                          <div key={s.label} className="bg-gradient-to-br from-white to-[#f8f9fa] border border-[#dad7cd] rounded-xl p-4 text-center">
+                            <i className={`fas ${s.icon} ${s.color} text-xl mb-2`}></i>
+                            <div className="text-xl font-bold text-[#081c15]">{s.value}</div>
+                            <div className="text-[12px] font-bold uppercase tracking-wider text-[#52796f] mt-1">{s.label}</div>
                           </div>
                         ))}
                       </div>
+                      
                       {monthlyReport.labour.byTask.length > 0 && (
-                        <div className="mb-4">
-                          <h4 className="font-semibold text-gray-800 mb-2 text-sm">
-                            Labour by Task
-                          </h4>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b border-secondary-green/10">
-                                  {[
-                                    "Task",
-                                    "Man-Days",
-                                    "Hours",
-                                    "Area (ha)",
-                                    "Wages",
-                                  ].map((h) => (
-                                    <th
-                                      key={h}
-                                      className={`py-2 ${h === "Task" ? "text-left" : "text-right"} text-gray-500 font-medium`}
-                                    >
-                                      {h}
-                                    </th>
+                        <div className="mb-6">
+                          <h4 className="font-bold text-[#081c15] mb-3 text-sm flex items-center gap-2"><i className="fas fa-tasks text-[#2d6a4f]"></i> Labour by Task</h4>
+                          <div className="overflow-x-auto rounded-xl border border-[#dad7cd]">
+                            <table className="w-full text-left border-collapse text-sm">
+                              <thead className="bg-[#f8f9fa] border-b border-[#dad7cd]">
+                                <tr>
+                                  {["Task", "Man-Days", "Hours", "Area (ha)", "Wages"].map((h) => (
+                                    <th key={h} className={`p-3 text-[11px] font-bold text-[#52796f] uppercase tracking-wider ${h !== "Task" ? "text-right" : ""}`}>{h}</th>
                                   ))}
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-secondary-green/5">
-                                {monthlyReport.labour.byTask.map((row: any) => (
-                                  <tr
-                                    key={row.task_category}
-                                  >
-                                    <td className="py-2 capitalize">
-                                      {row.task_category.replace("_", " ")}
-                                    </td>
-                                    <td className="py-2 text-right font-medium">
-                                      {row.man_days}
-                                    </td>
-                                    <td className="py-2 text-right">
-                                      {parseFloat(row.total_hours || "0").toFixed(
-                                        0
-                                      )}
-                                    </td>
-                                    <td className="py-2 text-right">
-                                      {parseFloat(
-                                        row.area_covered || "0"
-                                      ).toFixed(2)}
-                                    </td>
-                                    <td className="py-2 text-right text-red-600">
-                                      ${parseFloat(
-                                        row.total_wages || "0"
-                                      ).toFixed(2)}
-                                    </td>
+                              <tbody className="divide-y divide-black/5">
+                                {monthlyReport.labour.byTask.map((row: MonthlyLabourTaskRow) => (
+                                  <tr key={row.task_category} className="hover:bg-black/5 transition-colors">
+                                    <td className="p-3 font-medium text-[#081c15] capitalize">{row.task_category.replace("_", " ")}</td>
+                                    <td className="p-3 text-right">{row.man_days}</td>
+                                    <td className="p-3 text-right">{toNumber(row.total_hours).toFixed(0)}</td>
+                                    <td className="p-3 text-right">{toNumber(row.area_covered).toFixed(2)}</td>
+                                    <td className="p-3 text-right font-bold text-[#e63946]">${toNumber(row.total_wages).toFixed(2)}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -2302,144 +1983,129 @@ export default function FarmOS() {
                           </div>
                         </div>
                       )}
+                      
                       {monthlyReport.inventory.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-gray-800 mb-2 text-sm">
-                            Inputs Consumed
-                          </h4>
-                          <div className="space-y-1">
-                            {monthlyReport.inventory.map((row: any) => (
-                              <div
-                                key={row.name}
-                                className="flex items-center justify-between text-sm py-1 border-b border-secondary-green/5"
-                              >
-                                <span>
-                                  {row.name}{" "}
-                                  <span className="text-gray-400 text-xs">
-                                    ({row.item_type})
-                                  </span>
-                                </span>
-                                <span className="font-medium">
-                                  {parseFloat(row.total_used).toLocaleString()} {row.unit}
-                                </span>
-                                <span className="text-red-600">
-                                  ${parseFloat(row.total_cost || "0").toFixed(2)}
-                                </span>
+                          <h4 className="font-bold text-[#081c15] mb-3 text-sm flex items-center gap-2"><i className="fas fa-boxes text-[#ff9f1c]"></i> Inputs Consumed</h4>
+                          <div className="space-y-2">
+                            {monthlyReport.inventory.map((row: MonthlyInventoryRow) => (
+                              <div key={row.name} className="flex items-center justify-between bg-white border border-[#dad7cd] rounded-lg p-3 text-sm">
+                                <div>
+                                  <span className="font-bold text-[#081c15]">{row.name}</span>
+                                  <span className="text-[#52796f] text-xs ml-2 capitalize bg-[#f8f9fa] px-2 py-0.5 rounded-full">{row.item_type}</span>
+                                </div>
+                                <div className="flex gap-4">
+                                  <span className="font-bold text-[#2d6a4f]">{toNumber(row.total_used).toLocaleString()} {row.unit}</span>
+                                  <span className="font-bold text-[#e63946] w-20 text-right">${toNumber(row.total_cost).toFixed(2)}</span>
+                                </div>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
-                    </Card>
+                    </div>
                   )}
+                  
                   {weeklyReport && (
-                    <Card className={panelCls}>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">
-                        Weekly Summary — {weeklyReport.period.startDate} to{" "}
-                        {weeklyReport.period.endDate}
+                    <div className="farm-glass-card p-6">
+                      <h3 className="text-[18px] font-bold text-[#081c15] mb-5 border-b border-black/5 pb-4">
+                        Weekly Summary — {weeklyReport.period.startDate} to {weeklyReport.period.endDate}
                       </h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="rounded-lg border border-secondary-green/10 bg-white/70 p-3 text-center">
-                          <div className="text-xl font-bold text-blue-700">
-                            {weeklyReport.labour?.total_entries ?? 0}
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            Labour Entries
-                          </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-gradient-to-br from-[#e0f7fa] to-[#b2ebf2] border border-[#118ab2]/20 rounded-xl p-4 text-center">
+                          <div className="text-3xl font-extrabold text-[#118ab2]">{weeklyReport.labour?.total_entries ?? 0}</div>
+                          <div className="text-[12px] font-bold text-[#118ab2] uppercase tracking-wider mt-1">Labour Entries</div>
                         </div>
-                        <div className="bg-gray-50 rounded p-3 text-center">
-                          <div className="text-xl font-bold text-red-600">
-                            ${
-                              parseFloat(
-                                weeklyReport.labour?.total_wages ?? "0"
-                              ).toFixed(2)
-                            }
-                          </div>
-                          <div className="text-xs text-gray-600">Wages Paid</div>
+                        <div className="bg-gradient-to-br from-[#ffebee] to-[#ffcdd2] border border-[#e63946]/20 rounded-xl p-4 text-center">
+                          <div className="text-3xl font-extrabold text-[#e63946]">${toNumber(weeklyReport.labour?.total_wages).toFixed(2)}</div>
+                          <div className="text-[12px] font-bold text-[#e63946] uppercase tracking-wider mt-1">Wages Paid</div>
                         </div>
-                        <div className="bg-gray-50 rounded p-3 text-center">
-                          <div className="text-xl font-bold text-green-700">
-                            {weeklyReport.cropActivities?.length ?? 0}
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            Crop Activities
-                          </div>
+                        <div className="bg-gradient-to-br from-[#e8f5e9] to-[#c8e6c9] border border-[#2d6a4f]/20 rounded-xl p-4 text-center">
+                          <div className="text-3xl font-extrabold text-[#2d6a4f]">{weeklyReport.cropActivities?.length ?? 0}</div>
+                          <div className="text-[12px] font-bold text-[#2d6a4f] uppercase tracking-wider mt-1">Crop Activities</div>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   )}
                 </>
               )}
             </div>
           )}
 
-          {/* ── AI INSIGHTS ── */}
+          {/* ── FINANCE ── */}
           {section === "finance" && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900">Financial Management</h2>
-                <div className="flex gap-2">
-                  <button onClick={() => openModal("revenue-entry")} className={btnOutlineCls}>+ Record Revenue</button>
-                  <button onClick={() => openModal("expense")} className={btnPrimaryCls}>+ Record Expense</button>
+            <div className="animate-fade-in space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                  <i className="fas fa-coins text-[#ff9f1c]"></i> Financial Management
+                </h2>
+                <div className="flex gap-3">
+                  <button onClick={() => openModal("expense")} className="bg-white/50 border border-[#dad7cd] text-[#e63946] px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-white shadow-sm transition-all">
+                    - Record Expense
+                  </button>
+                  <button onClick={() => openModal("revenue-entry")} className="bg-[#2d6a4f] text-white px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-[#40916c] shadow-md transition-all">
+                    + Record Revenue
+                  </button>
                 </div>
               </div>
 
               {/* Month selector */}
-              <div className={`${panelCls} flex items-center gap-3 rounded-2xl px-4 py-3`}>
-                <span className="text-sm font-medium text-gray-600">Period:</span>
-                <select value={finPeriod.month} onChange={e => setFinPeriod(p => ({ ...p, month: Number(e.target.value) }))} className={inputCompactCls}>
+              <div className="farm-glass-card flex items-center gap-3 px-5 py-3 w-fit border-l-[4px] border-[var(--farm-primary)]">
+                <i className="fas fa-calendar-alt text-[#2d6a4f]"></i>
+                <span className="text-sm font-bold text-[#081c15]">Period:</span>
+                <select value={finPeriod.month} onChange={e => setFinPeriod(p => ({ ...p, month: Number(e.target.value) }))} className="bg-white border border-[#dad7cd] rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:border-[#2d6a4f]">
                   { ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>(
                     <option key={i} value={i+1}>{m}</option>
                   )) }
                 </select>
-                <select value={finPeriod.year} onChange={e => setFinPeriod(p => ({ ...p, year: Number(e.target.value) }))} className={inputCompactCls}>
+                <select value={finPeriod.year} onChange={e => setFinPeriod(p => ({ ...p, year: Number(e.target.value) }))} className="bg-white border border-[#dad7cd] rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:border-[#2d6a4f]">
                   {[new Date().getFullYear()-1, new Date().getFullYear(), new Date().getFullYear()+1].map(y=>(<option key={y} value={y}>{y}</option>))}
                 </select>
               </div>
 
               {/* P&L Summary */}
               {profitability && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className={`${panelCls} rounded-2xl border-l-4 border-secondary-green p-4 text-center`}>
-                    <div className="text-2xl font-bold text-secondary-green">${profitability.summary.totalRevenue.toFixed(2)}</div>
-                    <div className="text-sm text-gray-600">Total Revenue</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+                  <div className="farm-glass-card p-5 border-t-[4px] border-[#06d6a0] text-center">
+                    <div className="text-[#52796f] text-[11px] font-bold uppercase tracking-wider mb-2">Total Revenue</div>
+                    <div className="text-[28px] font-extrabold text-[#06d6a0]">${profitability.summary.totalRevenue.toFixed(2)}</div>
                   </div>
-                  <div className={`${panelCls} rounded-2xl border-l-4 border-red-400 p-4 text-center`}>
-                    <div className="text-2xl font-bold text-red-600">${profitability.summary.totalExpenses.toFixed(2)}</div>
-                    <div className="text-sm text-gray-600">Total Expenses</div>
+                  <div className="farm-glass-card p-5 border-t-[4px] border-[#e63946] text-center">
+                    <div className="text-[#52796f] text-[11px] font-bold uppercase tracking-wider mb-2">Total Expenses</div>
+                    <div className="text-[28px] font-extrabold text-[#e63946]">${profitability.summary.totalExpenses.toFixed(2)}</div>
                   </div>
-                  <div className={`${panelCls} rounded-2xl border-l-4 p-4 text-center ${profitability.summary.isProfit ? "border-blue-400" : "border-orange-400"}`}>
-                    <div className={`text-2xl font-bold ${profitability.summary.isProfit ? "text-blue-700" : "text-orange-600"}`}>
+                  <div className={`farm-glass-card p-5 border-t-[4px] text-center ${profitability.summary.isProfit ? "border-[#118ab2]" : "border-[#ff9f1c]"}`}>
+                    <div className="text-[#52796f] text-[11px] font-bold uppercase tracking-wider mb-2">Net {profitability.summary.isProfit ? "Profit" : "Loss"}</div>
+                    <div className={`text-[28px] font-extrabold ${profitability.summary.isProfit ? "text-[#118ab2]" : "text-[#ff9f1c]"}`}>
                       {profitability.summary.isProfit ? "+" : ""}${profitability.summary.netProfit.toFixed(2)}
                     </div>
-                    <div className="text-sm text-gray-600">Net {profitability.summary.isProfit ? "Profit" : "Loss"}</div>
                   </div>
-                  <div className={`${panelCls} rounded-2xl border-l-4 border-accent-gold p-4 text-center`}>
-                    <div className="text-2xl font-bold text-amber-600">{profitability.summary.profitMargin}</div>
-                    <div className="text-sm text-gray-600">Profit Margin</div>
+                  <div className="farm-glass-card p-5 border-t-[4px] border-[#ffb703] text-center">
+                    <div className="text-[#52796f] text-[11px] font-bold uppercase tracking-wider mb-2">Profit Margin</div>
+                    <div className="text-[28px] font-extrabold text-[#ffb703]">{profitability.summary.profitMargin}</div>
                   </div>
                 </div>
               )}
 
               {/* Profit by crop */}
               {profitability && profitability.byCrop.length > 0 && (
-                <Card className={panelCls}>
-                  <h3 className="font-bold text-gray-900 mb-4">Profit by Crop</h3>
-                  <div className="space-y-2">
-                    {profitability.byCrop.map((c: any) => {
-                      const profit = parseFloat(c.profit || "0");
-                      const revenue = parseFloat(c.revenue || "0");
-                      const expenses = parseFloat(c.expenses || "0");
+                <div className="farm-glass-card p-6">
+                  <h3 className="font-bold text-[#081c15] mb-4 flex items-center gap-2"><i className="fas fa-chart-pie text-[#2d6a4f]"></i> Profit by Crop</h3>
+                  <div className="space-y-3">
+                    {profitability.byCrop.map((c: ProfitabilityCropRow) => {
+                      const profit = toNumber(c.profit);
+                      const revenue = toNumber(c.revenue);
+                      const expenses = toNumber(c.expenses);
                       return (
-                        <div key={c.crop_plan_id} className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2">
-                          <div>
-                            <span className="font-medium text-gray-900">{c.crop_type}</span>
-                            {c.variety && <span className="text-sm text-gray-500 ml-1">({c.variety})</span>}
+                        <div key={c.crop_plan_id} className="flex flex-col md:flex-row md:items-center justify-between rounded-xl border border-[#dad7cd] bg-white p-4 transition-transform hover:-translate-y-0.5 shadow-sm">
+                          <div className="mb-2 md:mb-0">
+                            <span className="font-bold text-[16px] text-[#081c15]">{c.crop_type}</span>
+                            {c.variety && <span className="text-[13px] text-[#52796f] ml-2">({c.variety})</span>}
                           </div>
-                          <div className="flex items-center gap-6 text-sm">
-                            <span className="text-green-600">Rev: ${revenue.toFixed(2)}</span>
-                            <span className="text-red-500">Exp: ${expenses.toFixed(2)}</span>
-                            <span className={`font-bold px-2 py-0.5 rounded-full ${profit >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"}`}>
+                          <div className="flex flex-wrap items-center gap-4 text-sm font-medium">
+                            <span className="text-[#06d6a0] bg-[#06d6a0]/10 px-3 py-1 rounded-full"><i className="fas fa-arrow-up"></i> ${revenue.toFixed(2)}</span>
+                            <span className="text-[#e63946] bg-[#e63946]/10 px-3 py-1 rounded-full"><i className="fas fa-arrow-down"></i> ${expenses.toFixed(2)}</span>
+                            <span className={`font-bold px-4 py-1 rounded-full text-white ${profit >= 0 ? "bg-[#118ab2]" : "bg-[#ff9f1c]"}`}>
                               {profit >= 0 ? "+" : ""}${profit.toFixed(2)}
                             </span>
                           </div>
@@ -2447,29 +2113,29 @@ export default function FarmOS() {
                       );
                     })}
                   </div>
-                </Card>
+                </div>
               )}
 
               {/* 6-month trend */}
               {profitability && profitability.trend.length > 0 && (
-                <Card className={panelCls}>
-                  <h3 className="font-bold text-gray-900 mb-4">6-Month Trend</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-secondary-green/10">
-                          { ["Month","Revenue","Expenses","Net P&L"].map(h=>(<th key={h} className={`py-2 text-gray-500 font-medium ${h==="Month"?"text-left":"text-right"}`}>{h}</th>)) }
+                <div className="farm-glass-card p-6">
+                  <h3 className="font-bold text-[#081c15] mb-4 flex items-center gap-2"><i className="fas fa-chart-line text-[#2d6a4f]"></i> 6-Month Trend</h3>
+                  <div className="overflow-x-auto rounded-xl border border-[#dad7cd]">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-[#f8f9fa] border-b border-[#dad7cd]">
+                        <tr>
+                          {["Month","Revenue","Expenses","Net P&L"].map(h=>(<th key={h} className={`p-3 text-[11px] font-bold text-[#52796f] uppercase tracking-wider ${h!=="Month"?"text-right":""}`}>{h}</th>))}
                         </tr>
                       </thead>
-                      <tbody>
-                        {profitability.trend.map((row: any) => {
-                          const net = parseFloat(row.profit || "0");
+                      <tbody className="divide-y divide-black/5">
+                        {profitability.trend.map((row: ProfitabilityTrendRow) => {
+                          const net = toNumber(row.profit);
                           return (
-                            <tr key={row.month} className="border-b border-secondary-green/5">
-                              <td className="py-2 font-medium">{row.month}</td>
-                              <td className="py-2 text-right text-green-600">${parseFloat(row.revenue || "0").toFixed(2)}</td>
-                              <td className="py-2 text-right text-red-500">${parseFloat(row.expenses || "0").toFixed(2)}</td>
-                              <td className={`py-2 text-right font-bold ${net >= 0 ? "text-blue-700" : "text-orange-600"}`}>
+                            <tr key={row.month} className="hover:bg-black/5 transition-colors">
+                              <td className="p-3 font-bold text-[#081c15]">{row.month}</td>
+                              <td className="p-3 text-right font-medium text-[#06d6a0]">${toNumber(row.revenue).toFixed(2)}</td>
+                              <td className="p-3 text-right font-medium text-[#e63946]">${toNumber(row.expenses).toFixed(2)}</td>
+                              <td className={`p-3 text-right font-bold ${net >= 0 ? "text-[#118ab2]" : "text-[#ff9f1c]"}`}>
                                 {net >= 0 ? "+" : ""}${net.toFixed(2)}
                               </td>
                             </tr>
@@ -2478,75 +2144,82 @@ export default function FarmOS() {
                       </tbody>
                     </table>
                   </div>
-                </Card>
+                </div>
               )}
 
               {/* Two columns: recent expenses + revenue */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className={panelCls}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-gray-900">Recent Expenses</h3>
-                    <button onClick={() => openModal("expense")} className="text-sm font-semibold text-secondary-green hover:text-primary-green">+ Add</button>
+                <div className="farm-glass-card p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="font-bold text-[#081c15] flex items-center gap-2"><i className="fas fa-arrow-down text-[#e63946]"></i> Recent Expenses</h3>
+                    <button onClick={() => openModal("expense")} className="text-xs font-bold text-[#2d6a4f] hover:underline bg-[#f8f9fa] border border-[#dad7cd] px-3 py-1.5 rounded-[60px]">+ Add</button>
                   </div>
                   {expenses.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-6 text-center text-sm text-gray-500">
+                    <div className="rounded-xl border border-dashed border-[#dad7cd] bg-white/50 py-10 text-center text-sm text-[#52796f]">
                       No expenses recorded this period
                     </div>
-                  ) : expenses.slice(0, 8).map(exp => (
-                    <div key={exp.id} className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{exp.description}</div>
-                        <div className="text-xs text-gray-400">
-                          {exp.category} · {new Date(exp.expense_date).toLocaleDateString("en-GB", { day:"2-digit", month:"short" })}
-                          {exp.crop_type && ` · ${exp.crop_type}`}
+                  ) : (
+                    <div className="space-y-3">
+                      {expenses.slice(0, 8).map(exp => (
+                        <div key={exp.id} className="flex items-center justify-between bg-white border border-[#dad7cd] rounded-xl p-3 shadow-sm hover:border-[#e63946]/50 transition-colors cursor-pointer" onClick={() => openModal("expense", exp)}>
+                          <div>
+                            <div className="text-[14px] font-bold text-[#081c15]">{exp.description}</div>
+                            <div className="text-[11px] text-[#52796f] mt-0.5">
+                              <span className="capitalize">{exp.category}</span> • {new Date(exp.expense_date).toLocaleDateString("en-GB", { day:"2-digit", month:"short" })}
+                              {exp.crop_type && ` • ${exp.crop_type}`}
+                            </div>
+                          </div>
+                          <span className="text-[15px] font-extrabold text-[#e63946]">${parseFloat(exp.amount_usd).toFixed(2)}</span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-red-600">${parseFloat(exp.amount_usd).toFixed(2)}</span>
-                        <button onClick={() => openModal("expense", exp)} className="text-xs font-semibold text-secondary-green">Edit</button>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </Card>
+                  )}
+                </div>
 
-                <Card className={panelCls}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-gray-900">Recent Revenue</h3>
-                    <button onClick={() => openModal("revenue-entry")} className="text-sm font-semibold text-secondary-green hover:text-primary-green">+ Add</button>
+                <div className="farm-glass-card p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="font-bold text-[#081c15] flex items-center gap-2"><i className="fas fa-arrow-up text-[#06d6a0]"></i> Recent Revenue</h3>
+                    <button onClick={() => openModal("revenue-entry")} className="text-xs font-bold text-[#2d6a4f] hover:underline bg-[#f8f9fa] border border-[#dad7cd] px-3 py-1.5 rounded-[60px]">+ Add</button>
                   </div>
                   {revenue.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-6 text-center text-sm text-gray-500">
+                    <div className="rounded-xl border border-dashed border-[#dad7cd] bg-white/50 py-10 text-center text-sm text-[#52796f]">
                       No revenue recorded this period
                     </div>
-                  ) : revenue.slice(0, 8).map(rev => (
-                    <div key={rev.id} className="flex items-center justify-between rounded-lg border border-secondary-green/10 bg-white/70 px-3 py-2">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{rev.description}</div>
-                        <div className="text-xs text-gray-400">
-                          {rev.category} · {new Date(rev.revenue_date).toLocaleDateString("en-GB", { day:"2-digit", month:"short" })}
-                          {rev.buyer_name && ` · ${rev.buyer_name}`}
+                  ) : (
+                    <div className="space-y-3">
+                      {revenue.slice(0, 8).map(rev => (
+                        <div key={rev.id} className="flex items-center justify-between bg-white border border-[#dad7cd] rounded-xl p-3 shadow-sm hover:border-[#06d6a0]/50 transition-colors cursor-pointer" onClick={() => openModal("revenue-entry", rev)}>
+                          <div>
+                            <div className="text-[14px] font-bold text-[#081c15]">{rev.description}</div>
+                            <div className="text-[11px] text-[#52796f] mt-0.5">
+                              <span className="capitalize">{rev.category}</span> • {new Date(rev.revenue_date).toLocaleDateString("en-GB", { day:"2-digit", month:"short" })}
+                              {rev.buyer_name && ` • ${rev.buyer_name}`}
+                            </div>
+                          </div>
+                          <span className="text-[15px] font-extrabold text-[#06d6a0]">${parseFloat(rev.amount_usd).toFixed(2)}</span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-green-600">${parseFloat(rev.amount_usd).toFixed(2)}</span>
-                        <button onClick={() => openModal("revenue-entry", rev)} className="text-xs font-semibold text-secondary-green">Edit</button>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </Card>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
+          {/* ── MARKET ── */}
           {section === "market" && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
+            <div className="animate-fade-in space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Market Intelligence</h2>
-                  <p className="text-sm text-gray-500 mt-0.5">Current prices and AI-powered market recommendations</p>
+                  <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                    <i className="fas fa-broadcast-tower text-[#2d6a4f]"></i> Market Intelligence
+                  </h2>
+                  <p className="text-[13px] text-[#52796f] mt-1">Current prices and AI-powered market recommendations</p>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => openModal("market-price")} className={btnOutlineCls}>+ Add Price</button>
+                <div className="flex gap-3">
+                  <button onClick={() => openModal("market-price")} className="bg-white/50 border border-[#dad7cd] text-[#2d6a4f] px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-white shadow-sm transition-all">
+                    + Add Price
+                  </button>
                   <button
                     onClick={async () => {
                       try {
@@ -2558,530 +2231,440 @@ export default function FarmOS() {
                           if (mpR.data.success) setMarketPrices(mpR.data.data.prices);
                           flash("success", "Market insights generated");
                         }
-                      } catch (err: any) {
-                        flash("error", err.response?.data?.message ?? "Failed");
+                      } catch (err: unknown) {
+                        flash("error", getApiErrorMessage(err, "Failed"));
                       } finally { setGenMarket(false); }
                     }}
                     disabled={genMarket}
-                    className={`${btnPrimaryCls} disabled:opacity-50`}
+                    className="bg-[var(--farm-primary)] text-white px-5 py-2.5 rounded-[60px] font-semibold text-sm hover:bg-[var(--farm-primary-light)] shadow-md transition-all disabled:opacity-50 flex items-center gap-2"
                   >
-                    {genMarket ? "Analysing..." : "📡 Get Market Insights"}
+                    {genMarket ? <><i className="fas fa-spinner fa-spin"></i> Analysing...</> : <><i className="fas fa-satellite-dish"></i> Get Market Insights</>}
                   </button>
                 </div>
-
-            {false && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Analytics</h2>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      Operational trends, forecasts, and export tools
-                    </p>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => handleExportCSV("expenses")}
-                      className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium"
-                    >
-                      Export Expenses CSV
-                    </button>
-                    <button
-                      onClick={() => handleExportCSV("revenue")}
-                      className="px-4 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium"
-                    >
-                      Export Revenue CSV
-                    </button>
-                    <button
-                      onClick={handleExportReport}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
-                    >
-                      Export Report
-                    </button>
-                  </div>
-                </div>
-
-                <Card>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Export / forecast year
-                      </label>
-                      <input
-                        type="number"
-                        className={inputCls}
-                        value={exportYear}
-                        onChange={(e) =>
-                          setExportYear(
-                            Number(e.target.value) || new Date().getFullYear(),
-                          )
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Month
-                      </label>
-                      <select
-                        className={inputCls}
-                        value={exportMonth}
-                        onChange={(e) =>
-                          setExportMonth(Number(e.target.value) || 1)
-                        }
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(
-                          (month) => (
-                            <option key={month} value={month}>
-                              {new Date(2000, month - 1, 1).toLocaleString(
-                                "en-US",
-                                { month: "long" },
-                              )}
-                            </option>
-                          ),
-                        )}
-                      </select>
-                    </div>
-                    <div className="md:col-span-2 flex gap-2 flex-wrap">
-                      <button
-                        onClick={async () => {
-                          try {
-                            setGenPredictions(true);
-                            const r = await api.post("/farm-os/analytics/predict", {
-                              year: exportYear,
-                              month: exportMonth,
-                            });
-                            if (r.data.success) setPredictions(r.data.data);
-                          } catch (err: any) {
-                            flash(
-                              "error",
-                              err.response?.data?.message ??
-                                "Prediction failed",
-                            );
-                          } finally {
-                            setGenPredictions(false);
-                          }
-                        }}
-                        disabled={genPredictions}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-                      >
-                        {genPredictions ? "Generating..." : "Generate Predictions"}
-                      </button>
-                      <button
-                        onClick={() => handleExportCSV("analytics")}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-medium"
-                      >
-                        Export Analytics CSV
-                      </button>
-                    </div>
-                  </div>
-                </Card>
-
-                {analyticsLoading ? (
-                  <div className="py-16 flex justify-center">
-                    <LoadingSpinner />
-                  </div>
-                ) : analytics ? (
-                  <>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {[
-                        {
-                          label: "Revenue",
-                          value:
-                            analytics.summary?.revenue ??
-                            analytics.summary?.totalRevenue ??
-                            0,
-                          tone: "text-green-700 bg-green-50",
-                        },
-                        {
-                          label: "Expenses",
-                          value:
-                            analytics.summary?.expenses ??
-                            analytics.summary?.totalExpenses ??
-                            0,
-                          tone: "text-red-700 bg-red-50",
-                        },
-                        {
-                          label: "Profit",
-                          value:
-                            analytics.summary?.profit ??
-                            analytics.summary?.netProfit ??
-                            0,
-                          tone: "text-blue-700 bg-blue-50",
-                        },
-                        {
-                          label: "Margin",
-                          value:
-                            analytics.summary?.margin ??
-                            analytics.summary?.profitMargin ??
-                            "—",
-                          tone: "text-purple-700 bg-purple-50",
-                        },
-                      ].map((item) => (
-                        <Card key={item.label} className={item.tone}>
-                          <div className="text-center">
-                            <div className="text-xl font-bold">
-                              {typeof item.value === "number"
-                                ? `$${item.value.toFixed(2)}`
-                                : item.value}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {item.label}
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                      <Card>
-                        <h3 className="font-bold text-gray-900 mb-4">
-                          Financial Trend
-                        </h3>
-                        {analyticsTrendData.length === 0 ? (
-                          <p className="text-sm text-gray-500 py-8 text-center">
-                            No trend data available.
-                          </p>
-                        ) : (
-                          <div className="h-72">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={analyticsTrendData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="label" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Line
-                                  type="monotone"
-                                  dataKey="revenue"
-                                  stroke="#16a34a"
-                                  strokeWidth={3}
-                                />
-                                <Line
-                                  type="monotone"
-                                  dataKey="expenses"
-                                  stroke="#ef4444"
-                                  strokeWidth={3}
-                                />
-                                <Line
-                                  type="monotone"
-                                  dataKey="net"
-                                  stroke="#2563eb"
-                                  strokeWidth={3}
-                                />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        )}
-                      </Card>
-
-                      <Card>
-                        <h3 className="font-bold text-gray-900 mb-4">
-                          Profit by Crop
-                        </h3>
-                        {analyticsCropData.length === 0 ? (
-                          <p className="text-sm text-gray-500 py-8 text-center">
-                            No crop analytics available.
-                          </p>
-                        ) : (
-                          <div className="h-72">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={analyticsCropData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="label" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Bar
-                                  dataKey="value"
-                                  fill="#16a34a"
-                                  radius={[6, 6, 0, 0]}
-                                />
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </div>
-                        )}
-                      </Card>
-
-                      <Card>
-                        <h3 className="font-bold text-gray-900 mb-4">
-                          Category Mix
-                        </h3>
-                        {analyticsCategoryData.length === 0 ? (
-                          <p className="text-sm text-gray-500 py-8 text-center">
-                            No category analytics available.
-                          </p>
-                        ) : (
-                          <div className="h-72">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Pie
-                                  data={analyticsCategoryData}
-                                  dataKey="value"
-                                  nameKey="label"
-                                  innerRadius={45}
-                                  outerRadius={90}
-                                  paddingAngle={2}
-                                >
-                                  {analyticsCategoryData.map(
-                                    (entry: any, index: number) => (
-                                      <Cell
-                                        key={`cell-${entry.label}-${index}`}
-                                        fill={
-                                          chartColors[index % chartColors.length]
-                                        }
-                                      />
-                                    ),
-                                  )}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </div>
-                        )}
-                      </Card>
-
-                      <Card>
-                        <h3 className="font-bold text-gray-900 mb-4">Forecast</h3>
-                        {predictionData.length === 0 ? (
-                          <p className="text-sm text-gray-500 py-8 text-center">
-                            Generate predictions to see the forecast here.
-                          </p>
-                        ) : (
-                          <div className="h-72">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={predictionData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="label" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Line
-                                  type="monotone"
-                                  dataKey="value"
-                                  stroke="#8b5cf6"
-                                  strokeWidth={3}
-                                />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        )}
-                      </Card>
-                    </div>
-
-                    {predictions && (
-                      <Card>
-                        <h3 className="font-bold text-gray-900 mb-4">
-                          Predictions
-                        </h3>
-                        <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-x-auto">
-                          {JSON.stringify(predictions, null, 2)}
-                        </pre>
-                      </Card>
-                    )}
-                  </>
-                ) : (
-                  <Card>
-                    <p className="text-sm text-gray-500 py-6 text-center">
-                      Select Analytics to load data.
-                    </p>
-                  </Card>
-                )}
-              </div>
-            )}
               </div>
 
               {/* AI market insights */}
               {marketInsights && (
-                <Card className={`${panelCls} mb-6 border-l-4 border-secondary-green/60`}>
-                  <h3 className="font-bold text-gray-900 mb-2">Market Overview</h3>
-                  <p className="text-sm text-gray-700 mb-4">{marketInsights.marketSummary}</p>
-                  {marketInsights.recommendations?.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-semibold text-gray-900">Recommendations</h4>
-                      {marketInsights.recommendations.map((rec: any, i: number) => (
-                        <div key={i} className="flex items-start justify-between rounded-lg border border-secondary-green/10 bg-white/70 p-3">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-gray-900">{rec.crop}</span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                rec.action === "sell_now" ? "bg-green-100 text-green-800" :
-                                rec.action === "hold"     ? "bg-yellow-100 text-yellow-800" :
-                                rec.action === "plant_more" ? "bg-blue-100 text-blue-800" :
-                                "bg-red-100 text-red-700"
-                              }`}>{rec.action?.replace("_"," ").toUpperCase()}</span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                rec.urgency === "high" ? "bg-red-100 text-red-700" :
-                                rec.urgency === "medium" ? "bg-orange-100 text-orange-700" :
-                                "bg-gray-100 text-gray-600"
-                              }`}>{rec.urgency}</span>
+                <div className="farm-glass-card p-6 border-l-[5px] border-[var(--farm-info)]">
+                  <h3 className="font-bold text-[#081c15] mb-2 flex items-center gap-2">
+                    <i className="fas fa-robot text-[var(--farm-info)]"></i> AI Market Overview
+                  </h3>
+                  <p className="text-[14px] text-[#2d3e40] mb-5 bg-[#f8f9fa] p-4 rounded-xl border border-[#dad7cd] leading-relaxed">
+                    {marketInsights.marketSummary}
+                  </p>
+                  
+                  {(marketInsights.recommendations ?? []).length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-[13px] font-bold text-[#52796f] uppercase tracking-wider mb-2">Recommendations</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(marketInsights.recommendations ?? []).map((rec: MarketRecommendation, i: number) => (
+                          <div key={i} className="bg-white border border-[#dad7cd] rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                <span className="font-bold text-[#081c15] text-[16px]">{rec.crop}</span>
+                                <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
+                                  rec.action === "sell_now" ? "bg-[#e8f5e9] text-[#2d6a4f]" :
+                                  rec.action === "hold"     ? "bg-[#fff3e0] text-[#ff9f1c]" :
+                                  rec.action === "plant_more" ? "bg-[#e0f7fa] text-[#118ab2]" :
+                                  "bg-[#ffebee] text-[#e63946]"
+                                }`}>{rec.action?.replace("_"," ")}</span>
+                                <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
+                                  rec.urgency === "high" ? "bg-[#e63946] text-white" :
+                                  rec.urgency === "medium" ? "bg-[#ff9f1c] text-white" :
+                                  "bg-[#dad7cd] text-[#2d3e40]"
+                                }`}>{rec.urgency}</span>
+                              </div>
+                              <p className="text-[13px] text-[#52796f] leading-relaxed">{rec.reason}</p>
                             </div>
-                            <p className="text-sm text-gray-600">{rec.reason}</p>
+                            {rec.estimatedPrice && (
+                              <div className="mt-3 pt-3 border-t border-black/5 text-right">
+                                <span className="text-[12px] text-[#52796f] font-medium mr-2">Est. Price:</span>
+                                <span className="text-[16px] font-bold text-[#081c15]">{rec.estimatedPrice}</span>
+                              </div>
+                            )}
                           </div>
-                          {rec.estimatedPrice && <span className="text-sm font-bold text-secondary-green shrink-0 ml-3">{rec.estimatedPrice}</span>}
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   )}
-                </Card>
+                </div>
               )}
 
               {/* Commodity prices table */}
-              <Card className={panelCls}>
-                <h3 className="font-bold text-gray-900 mb-4">Current Market Prices</h3>
+              <div className="farm-glass-card overflow-hidden">
+                <div className="p-5 border-b border-[#dad7cd] flex items-center justify-between">
+                  <h3 className="font-bold text-[#081c15]">Current Market Prices</h3>
+                </div>
                 {marketPrices.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-secondary-green/20 bg-white/60 py-12 text-center">
-                    <div className="text-4xl mb-3">📡</div>
-                    <p className="text-gray-500 text-sm">No market prices yet</p>
-                    <p className="text-xs text-gray-400 mt-1">Add prices manually or generate AI market insights</p>
+                  <div className="py-16 text-center">
+                    <i className="fas fa-satellite-dish text-5xl text-[#dad7cd] mb-4"></i>
+                    <p className="font-bold text-[#081c15] text-lg">No market prices yet</p>
+                    <p className="text-sm text-[#52796f] mt-1">Add prices manually or generate AI market insights</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="border-b border-secondary-green/10">
+                    <table className="w-full text-left border-collapse text-sm">
+                      <thead className="bg-[#f8f9fa] border-b border-[#dad7cd]">
                         <tr>{["Commodity","Price","Unit","Demand","Region","Date","Source"].map(h => (
-                          <th key={h} className="pb-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                          <th key={h} className="p-4 text-[11px] font-bold text-[#52796f] uppercase tracking-wider">{h}</th>
                         ))}</tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-black/5">
                         {marketPrices.map(price => (
-                          <tr key={price.id} className="hover:bg-gray-50">
-                            <td className="py-3 font-medium text-gray-900">{price.commodity}{price.is_ai_generated && <span className="ml-1 text-xs text-purple-500">AI</span>}</td>
-                            <td className="py-3 font-bold text-green-700">${parseFloat(price.price_usd).toFixed(2)}</td>
-                            <td className="py-3 text-gray-600">per {price.unit}</td>
-                            <td className="py-3">
+                          <tr key={price.id} className="hover:bg-black/5 transition-colors">
+                            <td className="p-4 font-bold text-[#081c15]">
+                              {price.commodity}
+                              {price.is_ai_generated && <span className="ml-2 text-[10px] bg-[#e0f7fa] text-[#118ab2] px-2 py-0.5 rounded-full font-bold">AI</span>}
+                            </td>
+                            <td className="p-4 font-extrabold text-[#06d6a0]">${parseFloat(price.price_usd).toFixed(2)}</td>
+                            <td className="p-4 text-[#52796f]">per {price.unit}</td>
+                            <td className="p-4">
                               {price.demand_level && (
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                  price.demand_level === "very_high" ? "bg-red-100 text-red-700" :
-                                  price.demand_level === "high"      ? "bg-orange-100 text-orange-700" :
-                                  price.demand_level === "medium"    ? "bg-yellow-100 text-yellow-700" :
-                                  "bg-gray-100 text-gray-600"
+                                <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
+                                  price.demand_level === "very_high" ? "bg-[#ffebee] text-[#e63946]" :
+                                  price.demand_level === "high"      ? "bg-[#fff3e0] text-[#e85d04]" :
+                                  price.demand_level === "medium"    ? "bg-[#fffde7] text-[#ffb703]" :
+                                  "bg-[#f8f9fa] text-[#52796f]"
                                 }`}>{price.demand_level.replace("_"," ")}</span>
                               )}
                             </td>
-                            <td className="py-3 text-gray-600">{price.region ?? "—"}</td>
-                            <td className="py-3 text-gray-500">{new Date(price.price_date).toLocaleDateString("en-GB", { day:"2-digit", month:"short" })}</td>
-                            <td className="py-3 text-gray-400 text-xs">{price.source ?? "—"}</td>
+                            <td className="p-4 text-[#2d3e40]">{price.region ?? "—"}</td>
+                            <td className="p-4 text-[#52796f]">{new Date(price.price_date).toLocaleDateString("en-GB", { day:"2-digit", month:"short" })}</td>
+                            <td className="p-4 text-[#52796f] text-xs">{price.source ?? "—"}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 )}
-              </Card>
+              </div>
             </div>
           )}
-          {section === "insights" && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
+
+          {/* ── ANALYTICS ── */}
+          {section === "analytics" && (
+            <div className="animate-fade-in space-y-6">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    AI Farm Insights
+                  <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                    <i className="fas fa-chart-line text-[#2d6a4f]"></i> Analytics & Export
                   </h2>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Powered by Claude AI — analysed from your farm data
+                  <p className="text-[13px] text-[#52796f] mt-1">
+                    Operational trends, forecasts, and export tools
+                  </p>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={() => handleExportCSV("expenses")} className="bg-white/50 border border-[#dad7cd] text-[#2d6a4f] px-4 py-2 rounded-[60px] font-semibold text-[13px] hover:bg-white shadow-sm transition-all">
+                    <i className="fas fa-file-csv"></i> Export Expenses
+                  </button>
+                  <button onClick={() => handleExportCSV("revenue")} className="bg-white/50 border border-[#dad7cd] text-[#2d6a4f] px-4 py-2 rounded-[60px] font-semibold text-[13px] hover:bg-white shadow-sm transition-all">
+                    <i className="fas fa-file-csv"></i> Export Revenue
+                  </button>
+                  <button onClick={handleExportReport} className="bg-[var(--farm-primary)] text-white px-4 py-2 rounded-[60px] font-semibold text-[13px] hover:bg-[var(--farm-primary-light)] shadow-md transition-all">
+                    <i className="fas fa-file-pdf"></i> Export Report
+                  </button>
+                </div>
+              </div>
+
+              <div className="farm-glass-card p-5">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div>
+                    <label className="block text-[12px] font-bold text-[#52796f] uppercase tracking-wider mb-2">Export / Forecast Year</label>
+                    <input type="number" className="w-full rounded-xl border border-[#dad7cd] bg-white px-3 py-2 text-sm text-[#081c15] focus:outline-none focus:border-[#2d6a4f]" value={exportYear} onChange={(e) => setExportYear(Number(e.target.value) || new Date().getFullYear())} />
+                  </div>
+                  <div>
+                    <label className="block text-[12px] font-bold text-[#52796f] uppercase tracking-wider mb-2">Month</label>
+                    <select className="w-full rounded-xl border border-[#dad7cd] bg-white px-3 py-2 text-sm text-[#081c15] focus:outline-none focus:border-[#2d6a4f]" value={exportMonth} onChange={(e) => setExportMonth(Number(e.target.value) || 1)}>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                        <option key={month} value={month}>{new Date(2000, month - 1, 1).toLocaleString("en-US", { month: "long" })}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 flex gap-3 flex-wrap h-full pb-[1px]">
+                    <button
+                      onClick={async () => {
+                        try {
+                          setGenPredictions(true);
+                          const r = await api.post("/farm-os/analytics/predict", { year: exportYear, month: exportMonth });
+                          if (r.data.success) setPredictions(r.data.data);
+                        } catch (err: unknown) {
+                          flash("error", getApiErrorMessage(err, "Prediction failed"));
+                        } finally { setGenPredictions(false); }
+                      }}
+                      disabled={genPredictions}
+                      className="bg-[var(--farm-info)] text-white px-5 py-2 rounded-xl font-semibold text-sm hover:opacity-90 shadow-sm transition-all disabled:opacity-50 h-[38px]"
+                    >
+                      {genPredictions ? <><i className="fas fa-spinner fa-spin"></i> Generating...</> : <><i className="fas fa-magic"></i> Predict</>}
+                    </button>
+                    <button onClick={() => handleExportCSV("analytics")} className="bg-[#f8f9fa] border border-[#dad7cd] text-[#2d3e40] px-5 py-2 rounded-xl font-semibold text-sm hover:bg-white shadow-sm transition-all h-[38px]">
+                      Export Analytics
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {analyticsLoading ? (
+                <div className="farm-glass-card py-16 flex justify-center">
+                  <LoadingSpinner />
+                </div>
+              ) : analytics ? (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+                    {[
+                      { label: "Revenue", value: analytics.summary?.revenue ?? analytics.summary?.totalRevenue ?? 0, icon: "fa-arrow-up", color: "text-[#06d6a0]", border: "border-[#06d6a0]" },
+                      { label: "Expenses", value: analytics.summary?.expenses ?? analytics.summary?.totalExpenses ?? 0, icon: "fa-arrow-down", color: "text-[#e63946]", border: "border-[#e63946]" },
+                      { label: "Profit", value: analytics.summary?.profit ?? analytics.summary?.netProfit ?? 0, icon: "fa-wallet", color: "text-[#118ab2]", border: "border-[#118ab2]" },
+                      { label: "Margin", value: analytics.summary?.margin ?? analytics.summary?.profitMargin ?? "—", icon: "fa-percentage", color: "text-[#ff9f1c]", border: "border-[#ff9f1c]" },
+                    ].map((item) => (
+                      <div key={item.label} className={`farm-glass-card p-5 border-t-[4px] ${item.border} text-center relative overflow-hidden`}>
+                        <i className={`fas ${item.icon} ${item.color} opacity-10 text-5xl absolute -bottom-2 -right-2`}></i>
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-[#52796f] mb-2">{item.label}</div>
+                        <div className={`text-[24px] font-extrabold ${item.color}`}>
+                          {typeof item.value === "number" ? `$${item.value.toFixed(2)}` : item.value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div className="farm-glass-card p-6 flex flex-col">
+                      <h3 className="font-bold text-[#081c15] mb-5 flex items-center gap-2"><i className="fas fa-chart-area text-[#2d6a4f]"></i> Financial Trend</h3>
+                      {analyticsTrendData.length === 0 ? (
+                        <div className="py-16 text-center text-[#52796f] bg-white/50 rounded-xl border border-dashed border-[#dad7cd] flex-1 flex items-center justify-center">
+                          No trend data available.
+                        </div>
+                      ) : (
+                        <div className="h-[300px] w-full mt-auto">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={analyticsTrendData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#dad7cd" vertical={false} />
+                              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#52796f', fontSize: 12}} dy={10} />
+                              <YAxis axisLine={false} tickLine={false} tick={{fill: '#52796f', fontSize: 12}} dx={-10} />
+                              <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)'}} />
+                              <Legend wrapperStyle={{paddingTop: '20px'}} />
+                              <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#06d6a0" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+                              <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#e63946" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} />
+                              <Line type="monotone" dataKey="net" name="Net Profit" stroke="#118ab2" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="farm-glass-card p-6 flex flex-col">
+                      <h3 className="font-bold text-[#081c15] mb-5 flex items-center gap-2"><i className="fas fa-chart-bar text-[#2d6a4f]"></i> Profit by Crop</h3>
+                      {analyticsCropData.length === 0 ? (
+                        <div className="py-16 text-center text-[#52796f] bg-white/50 rounded-xl border border-dashed border-[#dad7cd] flex-1 flex items-center justify-center">
+                          No crop analytics available.
+                        </div>
+                      ) : (
+                        <div className="h-[300px] w-full mt-auto">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={analyticsCropData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#dad7cd" vertical={false} />
+                              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#52796f', fontSize: 12}} dy={10} />
+                              <YAxis axisLine={false} tickLine={false} tick={{fill: '#52796f', fontSize: 12}} dx={-10} />
+                              <Tooltip cursor={{fill: 'rgba(45, 106, 79, 0.05)'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)'}} />
+                              <Bar dataKey="value" name="Value ($)" fill="url(#colorCrop)" radius={[6, 6, 0, 0]}>
+                                {/* Gradient def for bar chart */}
+                                <defs>
+                                  <linearGradient id="colorCrop" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#40916c" stopOpacity={1}/>
+                                    <stop offset="100%" stopColor="#2d6a4f" stopOpacity={1}/>
+                                  </linearGradient>
+                                </defs>
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="farm-glass-card p-6 flex flex-col">
+                      <h3 className="font-bold text-[#081c15] mb-5 flex items-center gap-2"><i className="fas fa-chart-pie text-[#2d6a4f]"></i> Category Mix</h3>
+                      {analyticsCategoryData.length === 0 ? (
+                        <div className="py-16 text-center text-[#52796f] bg-white/50 rounded-xl border border-dashed border-[#dad7cd] flex-1 flex items-center justify-center">
+                          No category analytics available.
+                        </div>
+                      ) : (
+                        <div className="h-[300px] w-full mt-auto">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={analyticsCategoryData} dataKey="value" nameKey="label" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3}>
+                                {analyticsCategoryData.map((_entry: AnalyticsCategoryRow, index: number) => (
+                                  <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} stroke="rgba(255,255,255,0.5)" strokeWidth={2} />
+                                ))}
+                              </Pie>
+                              <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)'}} />
+                              <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{paddingTop: '20px'}} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="farm-glass-card p-6 flex flex-col">
+                      <h3 className="font-bold text-[#081c15] mb-5 flex items-center gap-2"><i className="fas fa-magic text-[#118ab2]"></i> Forecast</h3>
+                      {predictionData.length === 0 ? (
+                        <div className="py-16 text-center text-[#52796f] bg-white/50 rounded-xl border border-dashed border-[#dad7cd] flex-1 flex items-center justify-center flex-col">
+                          <i className="fas fa-wand-magic-sparkles text-3xl mb-3 text-[#dad7cd]"></i>
+                          Generate predictions to see the forecast here.
+                        </div>
+                      ) : (
+                        <div className="h-[300px] w-full mt-auto">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={predictionData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#dad7cd" vertical={false} />
+                              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#52796f', fontSize: 12}} dy={10} />
+                              <YAxis axisLine={false} tickLine={false} tick={{fill: '#52796f', fontSize: 12}} dx={-10} />
+                              <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)'}} />
+                              <Line type="monotone" dataKey="value" name="Projected" stroke="#118ab2" strokeWidth={4} strokeDasharray="5 5" dot={{r: 5, fill: '#fff', strokeWidth: 2}} activeDot={{r: 8}} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {predictions && (
+                    <div className="farm-glass-card p-6 border-l-[5px] border-[#118ab2]">
+                      <h3 className="font-bold text-[#081c15] mb-4">Raw Prediction Output</h3>
+                      <pre className="text-[11px] text-[#2d3e40] bg-white/50 border border-[#dad7cd] rounded-xl p-4 overflow-x-auto">
+                        {JSON.stringify(predictions, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="farm-glass-card py-16 text-center">
+                  <i className="fas fa-chart-pie text-5xl text-[#dad7cd] mb-4"></i>
+                  <p className="text-[#52796f] font-medium">Select a period to load Analytics data.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── INSIGHTS ── */}
+          {section === "insights" && (
+            <div className="animate-fade-in space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#081c15] flex items-center gap-3">
+                    <i className="fas fa-brain text-[#118ab2]"></i> AI Farm Insights
+                  </h2>
+                  <p className="text-[13px] text-[#52796f] mt-1">
+                    Powered by Claude AI — analysed dynamically from your farm data
                   </p>
                 </div>
                 <button
                   onClick={handleGenerateInsights}
                   disabled={genInsights}
-                  className={`${btnPrimaryCls} transition-colors disabled:opacity-50`}
+                  className="bg-[var(--farm-info)] text-white px-6 py-3 rounded-[60px] font-bold text-sm hover:opacity-90 shadow-md transition-all disabled:opacity-50 flex items-center gap-2"
                 >
-                  {genInsights ? "Analysing..." : "🤖 Generate Insights"}
+                  {genInsights ? <><i className="fas fa-spinner fa-spin"></i> Analysing...</> : <><i className="fas fa-robot"></i> Generate Insights</>}
                 </button>
               </div>
+              
               {genInsights && (
-                <Card className={`${panelCls} mb-4`}>
-                  <div className="flex items-center gap-3 py-4">
-                    <LoadingSpinner />
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        Analysing your farm data...
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        This takes about 15 seconds
-                      </p>
-                    </div>
+                <div className="farm-glass-card p-6 border-l-[5px] border-[var(--farm-info)] flex items-center gap-5">
+                  <div className="w-12 h-12 rounded-full bg-[#e0f7fa] flex items-center justify-center">
+                    <i className="fas fa-cog fa-spin text-2xl text-[#118ab2]"></i>
                   </div>
-                </Card>
+                  <div>
+                    <h3 className="font-bold text-[#081c15] text-[16px]">Analysing your farm ecosystem...</h3>
+                    <p className="text-[#52796f] text-sm mt-1">Reviewing crops, livestock, inventory, and finance data. This takes about 15 seconds.</p>
+                  </div>
+                </div>
               )}
+              
               {insights.length === 0 && !genInsights ? (
-                <Card className={panelCls}>
-                  <div className="py-16 text-center">
-                    <div className="text-5xl mb-3">🤖</div>
-                    <p className="font-medium text-gray-700">No insights yet</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Add farm data then click Generate Insights
-                    </p>
-                    <button
-                      onClick={handleGenerateInsights}
-                      className={`${btnPrimaryCls} mt-4`}
-                    >
-                      Generate First Insights
-                    </button>
-                  </div>
-                </Card>
+                <div className="farm-glass-card py-20 text-center">
+                  <i className="fas fa-robot text-6xl text-[#dad7cd] mb-5"></i>
+                  <p className="font-bold text-[#081c15] text-xl">No insights generated yet</p>
+                  <p className="text-sm text-[#52796f] mt-2 max-w-md mx-auto">
+                    Ensure your farm profile has active data (crops, livestock, expenses), then click Generate Insights to receive AI recommendations.
+                  </p>
+                  <button onClick={handleGenerateInsights} className="bg-[var(--farm-info)] text-white px-8 py-3 rounded-[60px] font-bold text-sm shadow-md mt-6 hover:-translate-y-0.5 transition-transform">
+                    Generate First Insights
+                  </button>
+                </div>
               ) : (
-                <div className="space-y-4">
-                  {insights.map((insight) => (
-                    <div
-                      key={insight.id}
-                      className={`${panelCls} rounded-xl border-l-4 p-5 ${
-                        INSIGHT_BORDER[insight.insight_type] ??
-                        INSIGHT_BORDER.general
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-bold text-gray-900">
-                          {insight.title}
-                        </h3>
-                        <span className="text-xs text-gray-400 shrink-0 ml-3">
-                          {new Date(insight.generated_at).toLocaleDateString()}
-                        </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {insights.map((insight) => {
+                    // Match insight categories to custom colors
+                    let styleClass = "border-l-[5px] border-[var(--farm-gray)] bg-gradient-to-br from-white to-[#f8f9fa]";
+                    let icon = "fa-lightbulb text-[var(--farm-gray)]";
+                    
+                    const type = insight.insight_type.toLowerCase();
+                    if (type.includes("crop") || type.includes("plant")) {
+                      styleClass = "border-l-[5px] border-[var(--farm-primary)] bg-gradient-to-br from-[#f8f9fa] to-[#e8f5e9]";
+                      icon = "fa-seedling text-[var(--farm-primary)]";
+                    } else if (type.includes("finance") || type.includes("profit") || type.includes("cost")) {
+                      styleClass = "border-l-[5px] border-[#ffb703] bg-gradient-to-br from-[#f8f9fa] to-[#fffde7]";
+                      icon = "fa-coins text-[#ffb703]";
+                    } else if (type.includes("risk") || type.includes("alert") || type.includes("pest")) {
+                      styleClass = "border-l-[5px] border-[var(--farm-danger)] bg-gradient-to-br from-[#f8f9fa] to-[#ffebee]";
+                      icon = "fa-exclamation-triangle text-[var(--farm-danger)]";
+                    } else if (type.includes("livestock") || type.includes("animal")) {
+                      styleClass = "border-l-[5px] border-[var(--farm-warning)] bg-gradient-to-br from-[#f8f9fa] to-[#fff3e0]";
+                      icon = "fa-paw text-[var(--farm-warning)]";
+                    } else if (type.includes("labour") || type.includes("worker")) {
+                      styleClass = "border-l-[5px] border-[var(--farm-info)] bg-gradient-to-br from-[#f8f9fa] to-[#e0f7fa]";
+                      icon = "fa-users-cog text-[var(--farm-info)]";
+                    }
+
+                    return (
+                      <div key={insight.id} className={`rounded-2xl p-6 shadow-sm border border-[#dad7cd] hover:-translate-y-1 transition-all ${styleClass}`}>
+                        <div className="flex items-start justify-between mb-3 border-b border-black/5 pb-3">
+                          <h3 className="font-bold text-[#081c15] text-[16px] pr-4 leading-tight flex items-start gap-2">
+                            <i className={`fas ${icon} mt-0.5`}></i> {insight.title}
+                          </h3>
+                        </div>
+                        <p className="text-[14px] text-[#2d3e40] leading-relaxed">
+                          {insight.content}
+                        </p>
+                        <div className="mt-4 pt-3 border-t border-black/5 flex justify-between items-center text-[11px] font-bold text-[#52796f] uppercase tracking-wider">
+                          <span>{insight.insight_type}</span>
+                          <span>{new Date(insight.generated_at).toLocaleDateString("en-GB")}</span>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {insight.content}
-                      </p>
-                      <span className="mt-2 inline-block text-xs font-medium capitalize text-gray-400">
-                        {insight.insight_type}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
-        </main>
-      </div>
+        </div>
 
-      {/* ── MODAL ──────────────────────────────────────────────────────────── */}
-      {modal.type && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className={`${panelCls} rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto`}>
-            <div className="px-6 py-4 border-b border-secondary-green/10 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur z-10">
-              <h2 className="text-lg font-bold text-gray-900">
-                {(
-                  {
-                    farm: "Farm Profile",
-                    field: modal.editing ? "Edit Field" : "Add Field",
-                    worker: modal.editing ? "Edit Worker" : "Add Worker",
-                    crop: modal.editing ? "Edit Crop Plan" : "New Crop Plan",
-                    "crop-activity": "Log Crop Activity",
-                    livestock: modal.editing ? "Edit Livestock" : "Add Livestock",
-                    "livestock-activity": "Log Livestock Activity",
-                    labour: "Log Labour Day",
-                    inventory: modal.editing ? "Edit Item" : "Add Inventory Item",
-                    calendar: "Add Calendar Entry",
-                  } as Record<string, string>
-                )[modal.type!] ?? modal.type}
-              </h2>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600 transition text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-            <form onSubmit={handleSave} className="px-6 py-5 space-y-4">
+        {/* ── MODAL ──────────────────────────────────────────────────────────── */}
+        {modal.type && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className={`${panelCls} rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto`}>
+              <div className="px-6 py-4 border-b border-secondary-green/10 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur z-10">
+                <h2 className="text-lg font-bold text-gray-900">
+                  {(
+                    {
+                      farm: "Farm Profile",
+                      field: modal.editing ? "Edit Field" : "Add Field",
+                      worker: modal.editing ? "Edit Worker" : "Add Worker",
+                      crop: modal.editing ? "Edit Crop Plan" : "New Crop Plan",
+                      "crop-activity": "Log Crop Activity",
+                      livestock: modal.editing ? "Edit Livestock" : "Add Livestock",
+                      "livestock-activity": "Log Livestock Activity",
+                      labour: "Log Labour Day",
+                      inventory: modal.editing ? "Edit Item" : "Add Inventory Item",
+                      calendar: "Add Calendar Entry",
+                    } as Record<string, string>
+                  )[modal.type!] ?? modal.type}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-400 hover:text-gray-600 transition text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              <form onSubmit={handleSave} className="px-6 py-5 space-y-4">
               {modal.type === "farm" && (
                 <>
                   <Field label="Farm Name" required>
@@ -3316,7 +2899,7 @@ export default function FarmOS() {
                         onChange={(e) =>
                           setForm((f) => ({
                             ...f,
-                            is_active: e.target.value === "true",
+                            is_active: e.target.value,
                           }))
                         }
                         className={inputCls}
@@ -4297,6 +3880,6 @@ export default function FarmOS() {
         </div>
       )}
     </div>
-    </div>
+  </div>
   );
 }

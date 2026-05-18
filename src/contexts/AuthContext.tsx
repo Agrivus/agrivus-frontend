@@ -2,7 +2,6 @@ import React, {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
 } from "react";
 import type {
@@ -31,24 +30,63 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+type ApiError = {
+  response?: {
+    status?: number;
+    data?: unknown;
+  };
+  request?: unknown;
+};
+
+const getErrorResponse = (error: unknown) => {
+  if (!error || typeof error !== "object") return null;
+  return (error as ApiError).response ?? null;
+};
+
+const hasRequest = (error: unknown) =>
+  !!error && typeof error === "object" && "request" in error;
+
+const getServerMessage = (data: unknown) => {
+  if (typeof data === "string") return data;
+  if (!data || typeof data !== "object") return undefined;
+  const record = data as Record<string, unknown>;
+  if (typeof record.message === "string") return record.message;
+  if (typeof record.error === "string") return record.error;
+  const details = record.details;
+  if (details && typeof details === "object") {
+    const detailsMessage = (details as Record<string, unknown>).message;
+    if (typeof detailsMessage === "string") return detailsMessage;
+  }
+  return undefined;
+};
+
+const getRetryAfterSeconds = (data: unknown) => {
+  if (!data || typeof data !== "object") return null;
+  const retryAfter = (data as Record<string, unknown>).retryAfter;
+  if (typeof retryAfter === "number") return retryAfter;
+  if (typeof retryAfter === "string" && retryAfter.trim()) {
+    const parsed = Number(retryAfter);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Load user from localStorage on mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
+  const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem("user");
-
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    if (!storedUser) return null;
+    try {
+      return JSON.parse(storedUser) as User;
+    } catch {
+      return null;
     }
-    setLoading(false);
-  }, []);
+  });
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem("token"),
+  );
+  const [loading] = useState(false);
 
   const login = async (credentials: LoginCredentials) => {
     try {
@@ -69,15 +107,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         localStorage.setItem("user", JSON.stringify(userData));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle different types of errors with user-friendly messages
-      if (error.response) {
-        const status = error.response.status;
-        const data = error.response.data;
+      const response = getErrorResponse(error);
+      if (response) {
+        const status = response.status ?? 0;
+        const data = response.data;
 
         if (status === 429) {
           // Rate limiting error
-          const retryAfter = data.retryAfter || 900; // Default to 15 minutes
+          const retryAfter = getRetryAfterSeconds(data) ?? 900; // Default to 15 minutes
           const minutes = Math.ceil(retryAfter / 60);
           throw new Error(
             `Too many login attempts. Please wait ${minutes} minute${minutes > 1 ? "s" : ""} before trying again.`,
@@ -94,9 +133,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           );
         } else {
           // Other errors with backend message
-          throw new Error(data.message || "Login failed. Please try again.");
+          throw new Error(
+            getServerMessage(data) || "Login failed. Please try again.",
+          );
         }
-      } else if (error.request) {
+      } else if (hasRequest(error)) {
         // Network error - no response received
         throw new Error(
           "Unable to connect to the server. Please check your internet connection and try again.",
@@ -121,17 +162,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         localStorage.setItem("token", userToken);
         localStorage.setItem("user", JSON.stringify(userData));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle different types of errors with user-friendly messages
-      if (error.response) {
-        const status = error.response.status;
-        const responseData = error.response.data;
-        const serverMessage =
-          typeof responseData === "string"
-            ? responseData
-            : responseData?.message ||
-              responseData?.error ||
-              responseData?.details?.message;
+      const response = getErrorResponse(error);
+      if (response) {
+        const status = response.status ?? 0;
+        const responseData = response.data;
+        const serverMessage = getServerMessage(responseData);
         const fallbackStatusMessage =
           status === 400
             ? "Registration request was rejected. Please verify your details and try again."
@@ -139,7 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (status === 429) {
           // Rate limiting error
-          const retryAfter = responseData?.retryAfter || 900; // Default to 15 minutes
+          const retryAfter = getRetryAfterSeconds(responseData) ?? 900; // Default to 15 minutes
           const minutes = Math.ceil(retryAfter / 60);
           throw new Error(
             `Too many registration attempts. Please wait ${minutes} minute${minutes > 1 ? "s" : ""} before trying again.`,
@@ -165,7 +202,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             serverMessage || fallbackStatusMessage,
           );
         }
-      } else if (error.request) {
+      } else if (hasRequest(error)) {
         // Network error - no response received
         throw new Error(
           "Unable to connect to the server. Please check your internet connection and try again.",
@@ -228,7 +265,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to refresh user data:", error);
       // Don't throw - silently fail to avoid breaking the app
     }
@@ -249,6 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
