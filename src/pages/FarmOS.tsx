@@ -1122,7 +1122,7 @@ export default function FarmOS() {
         <div className="bg-white/95 backdrop-blur-xl rounded-[32px] p-4 md:px-7 md:py-4 mb-6 flex justify-between items-center flex-wrap gap-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] border border-white/50">
           <div className="flex items-center gap-4">
             <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm animate-[pulse_2s_infinite]" style={{ background: "linear-gradient(135deg, var(--farm-primary), var(--farm-primary-light))" }}>
-              <i className="fas fa-seedling text-white text-[28px]"></i>
+              <img src="logo.png" alt="" />
             </div>
             <div>
               <h1 className="text-2xl font-extrabold bg-clip-text text-transparent" style={{ backgroundImage: "linear-gradient(135deg, var(--farm-primary), var(--farm-secondary))" }}>
