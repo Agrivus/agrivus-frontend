@@ -87,11 +87,13 @@ const Header: React.FC = () => {
       ...baseLinks,
       { to: "/agrimall/products", label: "Agri-Mall" },
       { to: "/agrimall/orders", label: "Mall Orders" },
-      { to: "/recommendations", label: "Insights" },
+      // FUTURE WORK: Enable when Insights feature is ready
+      // { to: "/recommendations", label: "Insights" },
     ];
 
     if (user?.role === "farmer") {
-      authenticatedLinks.push({ to: "/export", label: "Export Gateway" });
+      // FUTURE WORK: Enable when Export Gateway feature is ready
+      // authenticatedLinks.push({ to: "/export", label: "Export Gateway" });
       authenticatedLinks.push({ to: "/farm-log", label: "Farm Log" });
       authenticatedLinks.push({ to: "/farm-os", label: "Farm OS" });
     }
@@ -300,12 +302,17 @@ const Header: React.FC = () => {
       <div className="hidden md:block bg-gray-50/50 border-t border-gray-100">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center py-3">
-            <nav className="flex items-center gap-8">
+            
+            {/* Left spacer for perfect flexbox centering */}
+            <div className="flex-1"></div>
+
+            {/* Centered Navigation */}
+            <nav className="flex flex-wrap justify-center items-center gap-x-6 xl:gap-x-8 gap-y-2 shrink-0">
               {getNavLinks().map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="text-sm text-gray-600 hover:text-primary-green font-medium transition-colors relative group"
+                  className="text-sm text-gray-600 hover:text-primary-green font-medium transition-colors relative group whitespace-nowrap"
                 >
                   {link.label}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-green transition-all duration-300 group-hover:w-full rounded-full"></span>
@@ -313,38 +320,42 @@ const Header: React.FC = () => {
               ))}
             </nav>
 
-            {isAuthenticated && (
-              <div className="flex items-center gap-5">
-                <NotificationBell />
-                <Link
-                  to="/chat"
-                  className="relative text-gray-500 hover:text-primary-green transition-colors p-1"
-                  aria-label="Messages"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
+            {/* Right Tools - Now part of normal flow to prevent overlap */}
+            <div className="flex-1 flex justify-end items-center gap-5">
+              {isAuthenticated && (
+                <>
+                  <NotificationBell />
+                  <Link
+                    to="/chat"
+                    className="relative text-gray-500 hover:text-primary-green transition-colors p-1"
+                    aria-label="Messages"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  {displayUnreadChatCount > 0 && (
-                    <span className="absolute -top-1 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-sm">
-                      {displayUnreadChatCount > 9
-                        ? "9+"
-                        : displayUnreadChatCount}
-                    </span>
-                  )}
-                </Link>
-              </div>
-            )}
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    {displayUnreadChatCount > 0 && (
+                      <span className="absolute -top-1 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-sm">
+                        {displayUnreadChatCount > 9
+                          ? "9+"
+                          : displayUnreadChatCount}
+                      </span>
+                    )}
+                  </Link>
+                </>
+              )}
+            </div>
+            
           </div>
         </div>
       </div>
