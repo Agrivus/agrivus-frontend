@@ -313,10 +313,6 @@ const btnOutlineCls =
 const inputCls =
   "w-full rounded-xl border border-secondary-green/20 bg-white/80 px-3 py-2 text-sm text-gray-800 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-accent-gold/40 focus:border-secondary-green/50";
 
-const [trackerEntries, setTrackerEntries] = useState<TrackerEntry[]>([]);
-const [trackerUpcoming, setTrackerUpcoming] = useState<TrackerEntry[]>([]);
-const [trackerOverdue, setTrackerOverdue] = useState<TrackerEntry[]>([]);
-
 function Field({
   label,
   required,
@@ -365,6 +361,9 @@ export default function FarmOS() {
   const [plantingNow, setPlantingNow] = useState<PlantingWindow[]>([]);
   const [calendarUpcoming, setCalendarUpcoming] = useState<any[]>([]);
   const [cropPlanAlerts, setCropPlanAlerts] = useState<any[]>([]);
+  const [trackerEntries, setTrackerEntries] = useState<TrackerEntry[]>([]);
+  const [trackerUpcoming, setTrackerUpcoming] = useState<TrackerEntry[]>([]);
+  const [trackerOverdue, setTrackerOverdue] = useState<TrackerEntry[]>([]);
   const [weeklyReport, setWeeklyReport] = useState<WeeklyReport | null>(null);
   const [monthlyReport, setMonthlyReport] = useState<MonthlyReport | null>(
     null,
