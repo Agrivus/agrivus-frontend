@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import { Card, LoadingSpinner } from "../components/common";
 import FarmOSAnalytics from "./FarmOSAnalytics";
@@ -338,6 +339,9 @@ function Field({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function FarmOS() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   // Subscription
   const [subLoading, setSubLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
@@ -405,8 +409,15 @@ export default function FarmOS() {
   // ── Subscription ──────────────────────────────────────────────────────────
 
   useEffect(() => {
+    if (isAdmin) {
+      setHasAccess(true);
+      setPlans([]);
+      setSubLoading(false);
+      return;
+    }
+
     checkSub();
-  }, []);
+  }, [isAdmin]);
 
   const checkSub = async () => {
     try {

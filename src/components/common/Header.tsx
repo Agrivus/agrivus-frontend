@@ -91,7 +91,7 @@ const Header: React.FC = () => {
       // { to: "/recommendations", label: "Insights" },
     ];
 
-    if (user?.role === "farmer") {
+    if (user?.role === "farmer" || user?.role === "admin") {
       // FUTURE WORK: Enable when Export Gateway feature is ready
       // authenticatedLinks.push({ to: "/export", label: "Export Gateway" });
       authenticatedLinks.push({ to: "/farm-log", label: "Farm Log" });
@@ -114,14 +114,14 @@ const Header: React.FC = () => {
       authenticatedLinks.push(
         { to: "/admin/transactions", label: "Transactions" },
         { to: "/admin/cash-deposits", label: "Cash Deposits" },
-        { to: "/admin/revenue-report", label: "Revenue" }
+        { to: "/admin/revenue-report", label: "Revenue" },
       );
     }
 
     authenticatedLinks.push(
       { to: "/wallet", label: "Wallet" },
       { to: "/orders", label: "Orders" },
-      { to: "/about", label: "About" }
+      { to: "/about", label: "About" },
     );
 
     return authenticatedLinks;
@@ -211,18 +211,18 @@ const Header: React.FC = () => {
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-red-500 hover:bg-red-600 shadow-[0_4px_12px_rgba(239,68,68,0.3),inset_0_1px_2px_rgba(255,255,255,0.2)] hover:shadow-[0_6px_16px_rgba(239,68,68,0.4)] transform hover:-translate-y-0.5 transition-all duration-300"
                 >
-                  <svg 
-                    className="w-4 h-4" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24" 
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                     />
                   </svg>
                   Logout
@@ -302,7 +302,6 @@ const Header: React.FC = () => {
       <div className="hidden md:block bg-gray-50/50 border-t border-gray-100">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center py-3">
-            
             {/* Left spacer for perfect flexbox centering */}
             <div className="flex-1"></div>
 
@@ -355,7 +354,6 @@ const Header: React.FC = () => {
                 </>
               )}
             </div>
-            
           </div>
         </div>
       </div>
@@ -419,18 +417,18 @@ const Header: React.FC = () => {
                       }}
                       className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 shadow-sm transition-colors"
                     >
-                      <svg 
-                        className="w-4 h-4" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24" 
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                         aria-hidden="true"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                         />
                       </svg>
                       Logout

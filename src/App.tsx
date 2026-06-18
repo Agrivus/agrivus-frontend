@@ -18,7 +18,9 @@ const TransportOffers = React.lazy(() => import("./pages/TransportOffers"));
 const Login = React.lazy(() => import("./pages/Login"));
 const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
 const Register = React.lazy(() => import("./pages/Register"));
-const GoogleAuthCallback = React.lazy(() => import("./pages/GoogleAuthCallback"));
+const GoogleAuthCallback = React.lazy(
+  () => import("./pages/GoogleAuthCallback"),
+);
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 const Wallet = React.lazy(() => import("./pages/Wallet"));
@@ -39,21 +41,31 @@ const AdminTransactions = React.lazy(() => import("./pages/AdminTransactions"));
 const AdminSecurity = React.lazy(() => import("./pages/AdminSecurity"));
 const AdminReports = React.lazy(() => import("./pages/AdminReports"));
 const AdminCashDeposits = React.lazy(() => import("./pages/AdminCashDeposits"));
-const ModeratorDashboard = React.lazy(() => import("./pages/ModeratorDashboard"));
+const ModeratorDashboard = React.lazy(
+  () => import("./pages/ModeratorDashboard"),
+);
 const AgriMallProducts = React.lazy(() => import("./pages/AgriMallProducts"));
 const Cart = React.lazy(() => import("./pages/Cart"));
 const Checkout = React.lazy(() => import("./pages/Checkout"));
 const AgriMallOrders = React.lazy(() => import("./pages/AgriMallOrders"));
-const AgriMallOrderDetail = React.lazy(() => import("./pages/AgriMallOrderDetail"));
+const AgriMallOrderDetail = React.lazy(
+  () => import("./pages/AgriMallOrderDetail"),
+);
 const ExportGateway = React.lazy(() => import("./pages/ExportGateway"));
 const ExportAssessment = React.lazy(() => import("./pages/ExportAssessment"));
-const ExportAssessmentResults = React.lazy(() => import("./pages/ExportAssessmentResults"));
-const ExportMarketIntelligence = React.lazy(() => import("./pages/ExportMarketIntelligence"));
+const ExportAssessmentResults = React.lazy(
+  () => import("./pages/ExportAssessmentResults"),
+);
+const ExportMarketIntelligence = React.lazy(
+  () => import("./pages/ExportMarketIntelligence"),
+);
 const ExportDocuments = React.lazy(() => import("./pages/ExportDocuments"));
 const ExportLogistics = React.lazy(() => import("./pages/ExportLogistics"));
 const MockPayment = React.lazy(() => import("./pages/MockPayment.tsx"));
 const PaynowPayment = React.lazy(() => import("./pages/PaynowPayment"));
-const AccountsOfficerDashboard = React.lazy(() => import("./pages/AccountsOfficerDashboard"));
+const AccountsOfficerDashboard = React.lazy(
+  () => import("./pages/AccountsOfficerDashboard"),
+);
 const AdminCropTracker = React.lazy(() => import("./pages/AdminCropTracker"));
 const FarmLog = React.lazy(() => import("./pages/FarmLog"));
 const FarmOS = React.lazy(() => import("./pages/FarmOS"));
@@ -104,7 +116,7 @@ function App() {
                   <Route
                     path="/farm-os"
                     element={
-                      <ProtectedRoute allowedRoles={["farmer"]}>
+                      <ProtectedRoute allowedRoles={["farmer", "admin"]}>
                         <FarmOS />
                       </ProtectedRoute>
                     }
@@ -147,7 +159,10 @@ function App() {
                   <Route path="/register" element={<Register />} />
 
                   {/* Google OAuth callback — no ProtectedRoute, handles its own auth */}
-                  <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+                  <Route
+                    path="/auth/google/callback"
+                    element={<GoogleAuthCallback />}
+                  />
 
                   <Route
                     path="/dashboard"
@@ -158,13 +173,13 @@ function App() {
                     }
                   />
                   <Route
-  path="/accounts"
-  element={
-    <ProtectedRoute allowedRoles={["accounts_officer"]}>
-      <AccountsOfficerDashboard />
-    </ProtectedRoute>
-  }
-/>
+                    path="/accounts"
+                    element={
+                      <ProtectedRoute allowedRoles={["accounts_officer"]}>
+                        <AccountsOfficerDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/wallet"
                     element={
@@ -280,7 +295,13 @@ function App() {
                   <Route
                     path="/admin/users"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator", "accounts_officer"]}>
+                      <ProtectedRoute
+                        allowedRoles={[
+                          "admin",
+                          "support_moderator",
+                          "accounts_officer",
+                        ]}
+                      >
                         <AdminUsers />
                       </ProtectedRoute>
                     }
@@ -288,7 +309,13 @@ function App() {
                   <Route
                     path="/admin/users/:userId"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator", "accounts_officer"]}>
+                      <ProtectedRoute
+                        allowedRoles={[
+                          "admin",
+                          "support_moderator",
+                          "accounts_officer",
+                        ]}
+                      >
                         <AdminUserDetail />
                       </ProtectedRoute>
                     }
@@ -296,7 +323,13 @@ function App() {
                   <Route
                     path="/admin/orders"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator", "accounts_officer"]}>
+                      <ProtectedRoute
+                        allowedRoles={[
+                          "admin",
+                          "support_moderator",
+                          "accounts_officer",
+                        ]}
+                      >
                         <AdminOrders />
                       </ProtectedRoute>
                     }
@@ -304,7 +337,13 @@ function App() {
                   <Route
                     path="/admin/transactions"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator", "accounts_officer"]}>
+                      <ProtectedRoute
+                        allowedRoles={[
+                          "admin",
+                          "support_moderator",
+                          "accounts_officer",
+                        ]}
+                      >
                         <AdminTransactions />
                       </ProtectedRoute>
                     }
@@ -312,19 +351,21 @@ function App() {
                   <Route
                     path="/admin/cash-deposits"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "accounts_officer"]}>
+                      <ProtectedRoute
+                        allowedRoles={["admin", "accounts_officer"]}
+                      >
                         <AdminCashDeposits />
                       </ProtectedRoute>
                     }
                   />
                   <Route
-  path="/admin/crop-tracker"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminCropTracker />
-    </ProtectedRoute>
-  }
-/>
+                    path="/admin/crop-tracker"
+                    element={
+                      <ProtectedRoute allowedRoles={["admin"]}>
+                        <AdminCropTracker />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/admin/farm-log"
                     element={
@@ -351,19 +392,23 @@ function App() {
                   />
 
                   <Route
-  path="/admin/revenue-report"
-  element={
-    <ProtectedRoute allowedRoles={["admin", "accounts_officer"]}>
-      <AdminReports />
-    </ProtectedRoute>
-  }
-/>
+                    path="/admin/revenue-report"
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={["admin", "accounts_officer"]}
+                      >
+                        <AdminReports />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Moderator Routes */}
                   <Route
                     path="/moderator"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
+                      <ProtectedRoute
+                        allowedRoles={["admin", "support_moderator"]}
+                      >
                         <ModeratorDashboard />
                       </ProtectedRoute>
                     }
@@ -371,7 +416,9 @@ function App() {
                   <Route
                     path="/moderator/activity-log"
                     element={
-                      <ProtectedRoute allowedRoles={["admin", "support_moderator"]}>
+                      <ProtectedRoute
+                        allowedRoles={["admin", "support_moderator"]}
+                      >
                         <ModeratorDashboard />
                       </ProtectedRoute>
                     }
@@ -428,7 +475,10 @@ function App() {
                   />
 
                   {/* Payment Routes */}
-                  <Route path="/payment/mock/:paymentId" element={<MockPayment />} />
+                  <Route
+                    path="/payment/mock/:paymentId"
+                    element={<MockPayment />}
+                  />
                   <Route
                     path="/payment/history"
                     element={
