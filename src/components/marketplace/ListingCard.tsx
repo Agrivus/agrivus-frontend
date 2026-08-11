@@ -3,7 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, Button, BoostBadge } from "../common";
 import OptimizedImage from "../common/OptimizedImage";
 import type { ListingWithFarmer } from "../../types";
-import { safeDisplayText, singularizeUnit } from "../../utils/textUtils";
+import {
+  getListingDisplayTitle,
+  singularizeUnit,
+} from "../../utils/textUtils";
 import chatService from "../../services/chatService";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -87,12 +90,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
       <div className="p-5">
         {/* Title */}
         <h3 className="text-xl font-bold text-primary-green mb-2 font-serif">
-          {listingData.cropType}
-          {listingData.cropName && (
-            <span className="text-base font-normal text-gray-600 ml-2">
-              ({safeDisplayText(listingData.cropName)})
-            </span>
-          )}
+          {getListingDisplayTitle(listingData.cropType, listingData.cropName)}
         </h3>
 
         {/* Farmer Info */}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { safeDisplayText } from "../utils/textUtils";
+import { getListingDisplayTitle } from "../utils/textUtils";
 import { Button, Card, LoadingSpinner } from "../components/common";
 import OptimizedImage from "../components/common/OptimizedImage";
 import { listingsService } from "../services/listingsService";
@@ -272,12 +272,9 @@ const MyListings: React.FC = () => {
                           )}
                           <div>
                             <p className="font-semibold text-gray-900">
-                              {listing.cropType}
-                              {listing.cropName && (
-                                <span className="font-normal text-gray-600">
-                                  {" "}
-                                  ({safeDisplayText(listing.cropName)})
-                                </span>
+                              {getListingDisplayTitle(
+                                listing.cropType,
+                                listing.cropName,
                               )}
                             </p>
                             <p className="text-sm text-gray-600">

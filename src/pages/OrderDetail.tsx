@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { safeDisplayText } from "../utils/textUtils";
+import { safeDisplayText, getListingDisplayTitle } from "../utils/textUtils";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -515,7 +515,12 @@ const OrderDetail: React.FC = () => {
                 <div>
                   <span className="text-gray-600">Product:</span>
                   <span className="ml-2 font-semibold">
-                    {order.listing?.cropType || "N/A"}
+                    {order.listing
+                      ? getListingDisplayTitle(
+                          order.listing.cropType,
+                          order.listing.cropName,
+                        )
+                      : "N/A"}
                   </span>
                 </div>
                 <div>

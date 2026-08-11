@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getMyBids } from "../services/auctionsService";
 import { Card, LoadingSpinner } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
+import { getListingDisplayTitle } from "../utils/textUtils";
 
 const MyBids: React.FC = () => {
   const { user } = useAuth();
@@ -94,7 +95,12 @@ const MyBids: React.FC = () => {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h3 className="text-xl font-bold text-gray-800">
-                          {item.listing?.cropType || "Crop"}
+                          {item.listing
+                            ? getListingDisplayTitle(
+                                item.listing.cropType,
+                                item.listing.cropName,
+                              )
+                            : "Crop"}
                         </h3>
                         <p className="text-sm text-gray-600">
                           📍 {item.listing?.location}

@@ -4,7 +4,10 @@ import { createAuction } from "../services/auctionsService";
 import { listingsService } from "../services/listingsService";
 import { Card, Button, Input } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
-import { singularizeUnit } from "../utils/textUtils";
+import {
+  singularizeUnit,
+  getListingDisplayTitle,
+} from "../utils/textUtils";
 import { getAuctionErrorMessage } from "../utils/errorHandler";
 
 const CreateAuction: React.FC = () => {
@@ -168,7 +171,8 @@ const CreateAuction: React.FC = () => {
                 <option value="">Choose a listing...</option>
                 {listings.map((listing) => (
                   <option key={listing.id} value={listing.id}>
-                    {listing.cropType} - {listing.quantity} {listing.unit} - $
+                    {getListingDisplayTitle(listing.cropType, listing.cropName)}{" "}
+                    - {listing.quantity} {listing.unit} - $
                     {listing.pricePerUnit}/{singularizeUnit(listing.unit)}
                   </option>
                 ))}

@@ -6,6 +6,7 @@ import Card from "../components/common/Card";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { auctionsService } from "../services/auctionsService";
 import api from "../services/api";
+import { getListingDisplayTitle } from "../utils/textUtils";
 
 interface Transporter {
   id: string;
@@ -172,7 +173,12 @@ const AuctionWinner: React.FC = () => {
           <div className="text-6xl mb-4">🎉</div>
           <h1 className="text-4xl font-bold mb-2">Congratulations!</h1>
           <p className="text-xl">
-            You won the auction for {auction?.listing.cropType}
+            You won the auction for{" "}
+            {auction &&
+              getListingDisplayTitle(
+                auction.listing.cropType,
+                auction.listing.cropName,
+              )}
           </p>
         </div>
 
@@ -417,8 +423,12 @@ const AuctionWinner: React.FC = () => {
               <div className="mb-4 pb-4 border-b">
                 <p className="text-sm text-gray-600 mb-1">Product</p>
                 <p className="font-semibold">
-                  {auction?.listing.cropType} - {auction?.listing.quantity}{" "}
-                  {auction?.listing.unit}
+                  {auction &&
+                    getListingDisplayTitle(
+                      auction.listing.cropType,
+                      auction.listing.cropName,
+                    )}{" "}
+                  - {auction?.listing.quantity} {auction?.listing.unit}
                 </p>
                 <p className="text-sm text-gray-600 mt-2">
                   📍 {auction?.listing.location}

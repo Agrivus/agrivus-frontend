@@ -6,6 +6,7 @@ import {
 } from "../services/auctionsService";
 import { Card, Button, LoadingSpinner } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
+import { getListingDisplayTitle } from "../utils/textUtils";
 
 const AuctionCheckout: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -175,7 +176,10 @@ const AuctionCheckout: React.FC = () => {
                   {listing?.cropType?.charAt(0) || "🌾"}
                 </span>
               </div>
-              <h4 className="font-bold text-gray-800">{listing?.cropType}</h4>
+              <h4 className="font-bold text-gray-800">
+                {listing &&
+                  getListingDisplayTitle(listing.cropType, listing.cropName)}
+              </h4>
               <p className="text-sm text-gray-600">📍 {listing?.location}</p>
             </div>
 

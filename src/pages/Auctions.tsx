@@ -4,7 +4,10 @@ import { getLiveAuctions } from "../services/auctionsService";
 import OptimizedImage from "../components/common/OptimizedImage";
 import { Card, LoadingSpinner } from "../components/common";
 import { getErrorMessage } from "../utils/errorHandler";
-import { safeDisplayText } from "../utils/textUtils";
+import {
+  getListingDisplayTitle,
+  safeDisplayText,
+} from "../utils/textUtils";
 
 const Auctions: React.FC = () => {
   const [auctions, setAuctions] = useState<any[]>([]);
@@ -44,20 +47,7 @@ const Auctions: React.FC = () => {
   const getListingDisplayName = (listing?: {
     cropType?: string;
     cropName?: string;
-  }) => {
-    const cropType = listing?.cropType?.trim();
-    const cropName = listing?.cropName?.trim();
-
-    if (!cropType) {
-      return cropName ? safeDisplayText(cropName) : "Crop";
-    }
-
-    if (!cropName || cropType.toLowerCase() === cropName.toLowerCase()) {
-      return safeDisplayText(cropType);
-    }
-
-    return `${safeDisplayText(cropType)} (${safeDisplayText(cropName)})`;
-  };
+  }) => getListingDisplayTitle(listing?.cropType, listing?.cropName);
 
   const getListingImage = (listing?: { images?: string[] }) =>
     listing?.images?.find((image: string) => image.trim().length > 0);

@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Input, Button } from "../common";
 import type { ListingFilters } from "../../types";
+
+const SEARCH_DEBOUNCE_MS = 350;
 
 interface MarketplaceFiltersProps {
   filters: ListingFilters;
@@ -19,6 +21,29 @@ const MarketplaceFilters: React.FC<MarketplaceFiltersProps> = ({
     });
   };
 
+  // Local buffer for the search box so typing feels instant, while the
+  // actual filter change (and the API request it triggers) is debounced.
+  const [searchInput, setSearchInput] = useState(filters.search || "");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setSearchInput(filters.search || "");
+  }, [filters.search]);
+
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      handleInputChange("search", value);
+    }, SEARCH_DEBOUNCE_MS);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   const handleClearFilters = () => {
     onFilterChange({
       page: 1,
@@ -36,8 +61,8 @@ const MarketplaceFilters: React.FC<MarketplaceFiltersProps> = ({
         {/* Search */}
         <Input
           placeholder="Search..."
-          value={filters.search || ""}
-          onChange={(e) => handleInputChange("search", e.target.value)}
+          value={searchInput}
+          onChange={(e) => handleSearchInputChange(e.target.value)}
           icon={
             <svg
               className="w-5 h-5"

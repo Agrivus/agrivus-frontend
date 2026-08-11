@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getAuctionDetails, placeBid } from "../services/auctionsService";
-import { safeDisplayText } from "../utils/textUtils";
+import { safeDisplayText, getListingDisplayTitle } from "../utils/textUtils";
 import OptimizedImage from "../components/common/OptimizedImage";
 import { Card, LoadingSpinner, Button } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
@@ -123,15 +123,10 @@ const AuctionDetail: React.FC = () => {
     ? parseFloat(auction.currentPrice) >= parseFloat(auction.reservePrice)
     : true;
 
-  const cropType = listing?.cropType?.trim();
-  const cropName = listing?.cropName?.trim();
-  const listingDisplayName = !cropType
-    ? cropName
-      ? safeDisplayText(cropName)
-      : "Crop Auction"
-    : !cropName || cropType.toLowerCase() === cropName.toLowerCase()
-      ? safeDisplayText(cropType)
-      : `${safeDisplayText(cropType)} (${safeDisplayText(cropName)})`;
+  const listingDisplayName = getListingDisplayTitle(
+    listing?.cropType,
+    listing?.cropName,
+  );
   const listingImage = listing?.images?.find(
     (image: string) => image.trim().length > 0,
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { safeDisplayText } from "../utils/textUtils";
+import { safeDisplayText, getListingDisplayTitle } from "../utils/textUtils";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -187,8 +187,11 @@ const Orders: React.FC = () => {
                               Product
                             </p>
                             <p className="font-semibold text-lg">
-                              {listing.cropType} -{" "}
-                              {parseFloat(order.quantity).toFixed(2)}{" "}
+                              {getListingDisplayTitle(
+                                listing.cropType,
+                                listing.cropName,
+                              )}{" "}
+                              - {parseFloat(order.quantity).toFixed(2)}{" "}
                               {listing.unit}
                             </p>
                           </div>

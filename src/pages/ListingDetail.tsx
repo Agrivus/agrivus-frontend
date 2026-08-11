@@ -7,7 +7,11 @@ import OptimizedImage from "../components/common/OptimizedImage";
 import { listingsService } from "../services/listingsService";
 import chatService from "../services/chatService";
 import type { Listing } from "../types";
-import { safeDisplayText, singularizeUnit } from "../utils/textUtils";
+import {
+  safeDisplayText,
+  singularizeUnit,
+  getListingDisplayTitle,
+} from "../utils/textUtils";
 import { getListingErrorMessage } from "../utils/errorHandler";
 
 const ListingDetail: React.FC = () => {
@@ -223,7 +227,9 @@ const ListingDetail: React.FC = () => {
             Marketplace
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-gray-900">{listing.cropType}</span>
+          <span className="text-gray-900">
+            {getListingDisplayTitle(listing.cropType, listing.cropName)}
+          </span>
         </div>
 
         {actionError && (
@@ -280,12 +286,7 @@ const ListingDetail: React.FC = () => {
               {/* Details */}
               <div className="p-8">
                 <h1 className="text-4xl font-bold text-primary-green mb-4 font-serif">
-                  {listing.cropType}
-                  {listing.cropName && (
-                    <span className="text-2xl font-normal text-gray-600 ml-3">
-                      ({safeDisplayText(listing.cropName)})
-                    </span>
-                  )}
+                  {getListingDisplayTitle(listing.cropType, listing.cropName)}
                 </h1>
 
                 {/* Price */}

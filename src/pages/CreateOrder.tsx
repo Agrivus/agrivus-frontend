@@ -8,6 +8,7 @@ import {
   getOrderErrorMessage,
   getListingErrorMessage,
 } from "../utils/errorHandler";
+import { getListingDisplayTitle } from "../utils/textUtils";
 
 const CreateOrder: React.FC = () => {
   const navigate = useNavigate();
@@ -384,7 +385,8 @@ const CreateOrder: React.FC = () => {
               {/* Product Info */}
               <div className="mb-6 pb-6 border-b">
                 <h4 className="font-semibold text-gray-900 mb-2">
-                  {listing?.cropType}
+                  {listing &&
+                    getListingDisplayTitle(listing.cropType, listing.cropName)}
                 </h4>
                 <p className="text-sm text-gray-600 mb-1">
                   Price: ${parseFloat(listing?.pricePerUnit || "0").toFixed(2)}/
