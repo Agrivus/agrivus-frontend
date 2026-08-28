@@ -193,3 +193,19 @@ export const getWalletErrorMessage = (err: any): string => {
 
   return getErrorMessage(err, "Wallet operation failed. Please try again.");
 };
+
+export const getWithdrawErrorMessage = (err: any): string => {
+  const status = err?.response?.status;
+  const serverMessage = err?.response?.data?.message;
+
+  // The withdraw endpoint's 400/403 messages are already specific and
+  // accurate ("Insufficient available balance", "Daily withdrawal limit
+  // exceeded", "Wallet is locked...") — surface them directly rather than
+  // the generic wallet fallback, which would misleadingly say "Invalid
+  // amount" for all of those cases.
+  if ((status === 400 || status === 403) && serverMessage) {
+    return serverMessage;
+  }
+
+  return getErrorMessage(err, "Withdrawal failed. Please try again.");
+};

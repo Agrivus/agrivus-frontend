@@ -7,7 +7,11 @@ import paymentService, {
   type SupportedPaymentMethod,
 } from "../services/paymentService";
 import type { WalletBalance, Transaction } from "../services/walletService";
-import { getWalletErrorMessage, getErrorMessage } from "../utils/errorHandler";
+import {
+  getWalletErrorMessage,
+  getWithdrawErrorMessage,
+  getErrorMessage,
+} from "../utils/errorHandler";
 
 // ── Tiny inline toast (no extra dependency) ───────────────────────────────────
 type ToastType = "success" | "error" | "warning" | "info";
@@ -61,8 +65,17 @@ const Wallet: React.FC = () => {
     method: string;
   } | null>(null);
 
+  // Withdraw modal state
+  const [showWithdrawModal, setShowWithdrawModal]   = useState(false);
+  const [withdrawAmount, setWithdrawAmount]         = useState("");
+  const [withdrawMethod, setWithdrawMethod]         = useState<SupportedPaymentMethod>("ecocash");
+  const [withdrawAccountDetails, setWithdrawAccountDetails] = useState("");
+  const [withdrawing, setWithdrawing]               = useState(false);
+
   // Available methods only
   const availableMethods = PAYMENT_METHODS.filter((m) => m.available);
+  // Cash isn't a sensible withdrawal destination — it's deposit-only.
+  const withdrawMethods = availableMethods.filter((m) => m.id !== "cash");
 
   // ── Toast helpers ───────────────────────────────────────────────────────────
 
@@ -162,6 +175,48 @@ const Wallet: React.FC = () => {
     }
   };
 
+  // ── Handle withdraw ─────────────────────────────────────────────────────────
+
+  const handleWithdraw = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const amount = parseFloat(withdrawAmount);
+    const available = balance?.availableBalance ?? 0;
+
+    if (!amount || amount <= 0)         { addToast("Please enter a valid amount", "error"); return; }
+    if (amount > available)             { addToast(`You can withdraw up to $${available.toLocaleString()}`, "error"); return; }
+    if (!withdrawMethod)                { addToast("Please select a withdrawal method", "error"); return; }
+    if (!withdrawAccountDetails.trim()) { addToast("Please enter your account details", "error"); return; }
+
+    try {
+      setWithdrawing(true);
+
+      const response = await walletService.withdraw(
+        amount,
+        withdrawMethod,
+        withdrawAccountDetails.trim(),
+      );
+
+      if (!response.success) {
+        addToast(response.message ?? "Failed to submit withdrawal", "error");
+        return;
+      }
+
+      setShowWithdrawModal(false);
+      setWithdrawAmount("");
+      setWithdrawAccountDetails("");
+      addToast(
+        "Withdrawal request submitted! Your balance has been updated — funds will be sent to your account within 1–3 business days.",
+        "success",
+      );
+      await loadWalletData();
+    } catch (error: any) {
+      addToast(getWithdrawErrorMessage(error), "error");
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
   // ── Loading ─────────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -223,6 +278,13 @@ const Wallet: React.FC = () => {
       <div className="flex gap-4 mb-8">
         <Button onClick={() => setShowDepositModal(true)}>
           <span className="mr-2">💰</span>Deposit Funds
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setShowWithdrawModal(true)}
+          disabled={!balance || balance.availableBalance <= 0}
+        >
+          <span className="mr-2">💸</span>Withdraw Funds
         </Button>
         <Button variant="outline" onClick={() => navigate("/payment/history")}>
           <span className="mr-2">📜</span>Payment History
@@ -456,6 +518,156 @@ const Wallet: React.FC = () => {
                   onClick={() => { setShowDepositModal(false); setDepositAmount(""); }}
                   className="flex-1"
                   disabled={processing}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Withdraw Modal ──────────────────────────────────────────────────── */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto p-6">
+
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900">Withdraw Funds</h3>
+              <button
+                onClick={() => { setShowWithdrawModal(false); setWithdrawAmount(""); setWithdrawAccountDetails(""); }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+                disabled={withdrawing}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleWithdraw}>
+
+              {/* Amount */}
+              <div className="mb-5">
+                <label
+                  htmlFor="withdraw-amount"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Amount (USD) *
+                </label>
+                <input
+                  id="withdraw-amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max={balance?.availableBalance || undefined}
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
+                  placeholder="Enter amount"
+                  required
+                  disabled={withdrawing}
+                  autoFocus
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Available: ${(balance?.availableBalance ?? 0).toLocaleString()} · Daily limit: $10,000
+                </p>
+              </div>
+
+              {/* Withdrawal method selector */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Withdraw To
+                </label>
+                <div className="space-y-2">
+                  {withdrawMethods.map((method) => (
+                    <button
+                      key={method.id}
+                      type="button"
+                      onClick={() => setWithdrawMethod(method.id)}
+                      disabled={withdrawing}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 text-left transition ${
+                        withdrawMethod === method.id
+                          ? "border-green-500 bg-green-50"
+                          : "border-gray-200 hover:border-gray-300 bg-white"
+                      }`}
+                    >
+                      <span className="text-2xl">{method.icon}</span>
+                      <div className="flex-1">
+                        <p className={`font-semibold text-sm ${withdrawMethod === method.id ? "text-green-900" : "text-gray-900"}`}>
+                          {method.label}
+                        </p>
+                        <p className="text-xs text-gray-500">{method.description}</p>
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        withdrawMethod === method.id ? "border-green-500 bg-green-500" : "border-gray-300"
+                      }`}>
+                        {withdrawMethod === method.id && (
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Account details */}
+              <div className="mb-5">
+                <label
+                  htmlFor="withdraw-account-details"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  {(() => {
+                    const m = withdrawMethods.find((x) => x.id === withdrawMethod);
+                    return m?.requiresPhone
+                      ? "Phone Number *"
+                      : "Account / Bank Details *";
+                  })()}
+                </label>
+                <input
+                  id="withdraw-account-details"
+                  type="text"
+                  value={withdrawAccountDetails}
+                  onChange={(e) => setWithdrawAccountDetails(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter phone number or account number"
+                  required
+                  disabled={withdrawing}
+                />
+              </div>
+
+              <div className="mb-5 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm text-amber-800">
+                  ⚠️ Your available balance is deducted immediately. Funds are sent
+                  to the details above within 1–3 business days.
+                </p>
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={
+                    withdrawing ||
+                    !withdrawAmount ||
+                    parseFloat(withdrawAmount) <= 0 ||
+                    !withdrawAccountDetails.trim()
+                  }
+                >
+                  {withdrawing ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <LoadingSpinner size="sm" />
+                      Processing…
+                    </span>
+                  ) : (
+                    `Withdraw $${parseFloat(withdrawAmount || "0").toFixed(2)}`
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setShowWithdrawModal(false); setWithdrawAmount(""); setWithdrawAccountDetails(""); }}
+                  className="flex-1"
+                  disabled={withdrawing}
                 >
                   Cancel
                 </Button>
