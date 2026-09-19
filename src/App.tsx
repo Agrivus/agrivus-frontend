@@ -41,6 +41,7 @@ const AdminTransactions = React.lazy(() => import("./pages/AdminTransactions"));
 const AdminSecurity = React.lazy(() => import("./pages/AdminSecurity"));
 const AdminReports = React.lazy(() => import("./pages/AdminReports"));
 const AdminCashDeposits = React.lazy(() => import("./pages/AdminCashDeposits"));
+const AdminWithdrawals = React.lazy(() => import("./pages/AdminWithdrawals"));
 const ModeratorDashboard = React.lazy(
   () => import("./pages/ModeratorDashboard"),
 );
@@ -355,6 +356,16 @@ function App() {
                         allowedRoles={["admin", "accounts_officer"]}
                       >
                         <AdminCashDeposits />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/withdrawals"
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={["admin", "accounts_officer"]}
+                      >
+                        <AdminWithdrawals />
                       </ProtectedRoute>
                     }
                   />

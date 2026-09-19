@@ -114,6 +114,7 @@ const Header: React.FC = () => {
       authenticatedLinks.push(
         { to: "/admin/transactions", label: "Transactions" },
         { to: "/admin/cash-deposits", label: "Cash Deposits" },
+        { to: "/admin/withdrawals", label: "Withdrawals" },
         { to: "/admin/revenue-report", label: "Revenue" },
       );
     }

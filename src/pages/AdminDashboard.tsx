@@ -445,6 +445,17 @@ const AdminDashboard: React.FC = () => {
               </button>
 
               <button
+                onClick={() => navigate("/admin/withdrawals")}
+                className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow border-2 border-transparent hover:border-primary-green"
+              >
+                <div className="text-4xl mb-2">💸</div>
+                <h3 className="font-bold text-gray-800">Review Withdrawals</h3>
+                <p className="text-sm text-gray-600">
+                  Approve or reject requests
+                </p>
+              </button>
+
+              <button
                 onClick={() => navigate("/admin/security")}
                 className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow border-2 border-transparent hover:border-primary-green"
               >

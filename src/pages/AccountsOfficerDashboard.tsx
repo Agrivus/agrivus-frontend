@@ -36,7 +36,12 @@ interface PendingDeposit {
   created_at: string;
 }
 
-const CREDIT_TYPES = new Set(["deposit", "refund", "escrow_release", "commission"]);
+const CREDIT_TYPES = new Set([
+  "deposit",
+  "refund",
+  "escrow_release",
+  "commission",
+]);
 
 function isCredit(type: string): boolean {
   return CREDIT_TYPES.has(type.toLowerCase());
@@ -52,17 +57,19 @@ const AccountsOfficerDashboard: React.FC = () => {
   const navigate = useNavigate();
 
   const [summary, setSummary] = useState<FinanceSummary>({
-    totalDeposits:       0,
-    totalWithdrawals:    0,
-    totalTransactions:   0,
+    totalDeposits: 0,
+    totalWithdrawals: 0,
+    totalTransactions: 0,
     pendingCashDeposits: 0,
-    totalOrderVolume:    0,
-    totalCommission:     0,
+    totalOrderVolume: 0,
+    totalCommission: 0,
   });
-  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
-  const [pendingDeposits, setPendingDeposits]       = useState<PendingDeposit[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<
+    RecentTransaction[]
+  >([]);
+  const [pendingDeposits, setPendingDeposits] = useState<PendingDeposit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadDashboard();
@@ -94,8 +101,8 @@ const AccountsOfficerDashboard: React.FC = () => {
 
         setSummary((prev) => ({
           ...prev,
-          totalDeposits:     depositTotal,
-          totalWithdrawals:  withdrawalTotal,
+          totalDeposits: depositTotal,
+          totalWithdrawals: withdrawalTotal,
           totalTransactions: total,
         }));
 
@@ -108,7 +115,8 @@ const AccountsOfficerDashboard: React.FC = () => {
         setPendingDeposits(pending.slice(0, 5));
         setSummary((prev) => ({
           ...prev,
-          pendingCashDeposits: depositRes.value.data.pagination?.total ?? pending.length,
+          pendingCashDeposits:
+            depositRes.value.data.pagination?.total ?? pending.length,
         }));
       }
 
@@ -118,7 +126,7 @@ const AccountsOfficerDashboard: React.FC = () => {
         setSummary((prev) => ({
           ...prev,
           totalOrderVolume: toNumber(rev?.total_volume),
-          totalCommission:  toNumber(rev?.total_earnings),
+          totalCommission: toNumber(rev?.total_earnings),
         }));
       }
     } catch (err: any) {
@@ -167,7 +175,11 @@ const AccountsOfficerDashboard: React.FC = () => {
             <div>
               <p className="text-sm opacity-90">Total Deposits</p>
               <p className="text-3xl font-bold">
-                ${summary.totalDeposits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                $
+                {summary.totalDeposits.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
             </div>
             <div className="text-5xl opacity-40">💰</div>
@@ -179,7 +191,11 @@ const AccountsOfficerDashboard: React.FC = () => {
             <div>
               <p className="text-sm opacity-90">Total Withdrawals</p>
               <p className="text-3xl font-bold">
-                ${summary.totalWithdrawals.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                $
+                {summary.totalWithdrawals.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
             </div>
             <div className="text-5xl opacity-40">📤</div>
@@ -198,11 +214,15 @@ const AccountsOfficerDashboard: React.FC = () => {
           </div>
         </Card>
 
-        <Card className={`${summary.pendingCashDeposits > 0 ? "bg-gradient-to-br from-orange-400 to-orange-500" : "bg-gradient-to-br from-gray-400 to-gray-500"} text-white`}>
+        <Card
+          className={`${summary.pendingCashDeposits > 0 ? "bg-gradient-to-br from-orange-400 to-orange-500" : "bg-gradient-to-br from-gray-400 to-gray-500"} text-white`}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm opacity-90">Pending Cash Deposits</p>
-              <p className="text-3xl font-bold">{summary.pendingCashDeposits}</p>
+              <p className="text-3xl font-bold">
+                {summary.pendingCashDeposits}
+              </p>
               {summary.pendingCashDeposits > 0 && (
                 <p className="text-xs opacity-80 mt-1">Requires attention ⚠️</p>
               )}
@@ -216,7 +236,11 @@ const AccountsOfficerDashboard: React.FC = () => {
             <div>
               <p className="text-sm opacity-90">Order Volume</p>
               <p className="text-3xl font-bold">
-                ${summary.totalOrderVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                $
+                {summary.totalOrderVolume.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
             </div>
             <div className="text-5xl opacity-40">📦</div>
@@ -228,7 +252,11 @@ const AccountsOfficerDashboard: React.FC = () => {
             <div>
               <p className="text-sm opacity-90">Platform Commission</p>
               <p className="text-3xl font-bold">
-                ${summary.totalCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                $
+                {summary.totalCommission.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
             </div>
             <div className="text-5xl opacity-40">📊</div>
@@ -264,7 +292,9 @@ const AccountsOfficerDashboard: React.FC = () => {
                   className="flex items-center justify-between p-3 bg-orange-50 border border-orange-100 rounded-lg"
                 >
                   <div>
-                    <div className="font-medium text-gray-900">{deposit.full_name}</div>
+                    <div className="font-medium text-gray-900">
+                      {deposit.full_name}
+                    </div>
                     <div className="text-xs text-gray-500">{deposit.email}</div>
                     <div className="text-xs text-gray-400">
                       Ref: {deposit.reference?.substring(0, 16)}...
@@ -272,7 +302,10 @@ const AccountsOfficerDashboard: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-green-600">
-                      ${toNumber(deposit.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      $
+                      {toNumber(deposit.amount).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
                     </div>
                     <div className="text-xs text-gray-400">
                       {new Date(deposit.created_at).toLocaleDateString()}
@@ -329,8 +362,13 @@ const AccountsOfficerDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right ml-3">
-                      <div className={`font-bold text-sm ${credit ? "text-green-600" : "text-red-600"}`}>
-                        {credit ? "+" : "-"}${toNumber(txn.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      <div
+                        className={`font-bold text-sm ${credit ? "text-green-600" : "text-red-600"}`}
+                      >
+                        {credit ? "+" : "-"}$
+                        {toNumber(txn.amount).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
                       </div>
                       <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded">
                         {txn.type.replace(/_/g, " ").toUpperCase()}
@@ -349,11 +387,48 @@ const AccountsOfficerDashboard: React.FC = () => {
         <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {[
-            { icon: "💵", label: "Cash Deposits",  sub: "Approve pending",     path: "/admin/cash-deposits",  urgent: summary.pendingCashDeposits > 0 },
-            { icon: "💳", label: "Transactions",   sub: "All wallet activity", path: "/admin/transactions",   urgent: false },
-            { icon: "📊", label: "Revenue Report", sub: "Income & commission",  path: "/admin/revenue-report", urgent: false },
-            { icon: "📦", label: "Orders",         sub: "Payment reconcile",   path: "/admin/orders",         urgent: false },
-            { icon: "👥", label: "Users",          sub: "View & search",       path: "/admin/users",          urgent: false },
+            {
+              icon: "💵",
+              label: "Cash Deposits",
+              sub: "Approve pending",
+              path: "/admin/cash-deposits",
+              urgent: summary.pendingCashDeposits > 0,
+            },
+            {
+              icon: "�",
+              label: "Withdrawals",
+              sub: "Review pending",
+              path: "/admin/withdrawals",
+              urgent: false,
+            },
+            {
+              icon: "�💳",
+              label: "Transactions",
+              sub: "All wallet activity",
+              path: "/admin/transactions",
+              urgent: false,
+            },
+            {
+              icon: "📊",
+              label: "Revenue Report",
+              sub: "Income & commission",
+              path: "/admin/revenue-report",
+              urgent: false,
+            },
+            {
+              icon: "📦",
+              label: "Orders",
+              sub: "Payment reconcile",
+              path: "/admin/orders",
+              urgent: false,
+            },
+            {
+              icon: "👥",
+              label: "Users",
+              sub: "View & search",
+              path: "/admin/users",
+              urgent: false,
+            },
           ].map((action) => (
             <button
               key={action.path}
@@ -365,7 +440,9 @@ const AccountsOfficerDashboard: React.FC = () => {
               }`}
             >
               <div className="text-3xl mb-2">{action.icon}</div>
-              <div className="font-bold text-gray-800 text-sm">{action.label}</div>
+              <div className="font-bold text-gray-800 text-sm">
+                {action.label}
+              </div>
               <div className="text-xs text-gray-500">{action.sub}</div>
               {action.urgent && (
                 <div className="mt-2 text-xs font-medium text-orange-600">

@@ -31,6 +31,18 @@ export interface TransactionHistory {
   };
 }
 
+export interface WithdrawalRequest {
+  id: string;
+  amount: string;
+  withdrawal_method: string;
+  account_details: string;
+  status: "pending" | "processing" | "completed" | "rejected";
+  payment_reference: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  processed_at: string | null;
+}
+
 export const walletService = {
   // Get wallet balance
   async getBalance(): Promise<WalletBalance> {
@@ -51,7 +63,7 @@ export const walletService = {
   async withdraw(
     amount: number,
     withdrawalMethod: string,
-    accountDetails: string
+    accountDetails: string,
   ) {
     const response = await api.post("/wallet/withdraw", {
       amount,
@@ -61,11 +73,16 @@ export const walletService = {
     return response.data;
   },
 
+  async getMyWithdrawals(): Promise<WithdrawalRequest[]> {
+    const response = await api.get("/wallet/withdrawals");
+    return response.data.data.requests;
+  },
+
   // Get transaction history
   async getTransactions(
     page = 1,
     limit = 20,
-    type?: string
+    type?: string,
   ): Promise<TransactionHistory> {
     const params = new URLSearchParams({
       page: page.toString(),

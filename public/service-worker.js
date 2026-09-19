@@ -1,4 +1,4 @@
-const CACHE_NAME = "agrivus-2026-03-11";
+const CACHE_NAME = "agrivus-2026-09-16";
 const urlsToCache = ["/manifest.json"];
 
 // Install event - cache essential files
