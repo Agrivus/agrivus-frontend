@@ -117,6 +117,41 @@ export interface AgrimallOrder {
   updatedAt: string;
 }
 
+export interface Vendor {
+  id: string;
+  userId: string;
+  storeName: string;
+  storeDescription: string | null;
+  storeLogo: string | null;
+  storeBanner: string | null;
+  businessRegistration: string | null;
+  taxId: string | null;
+  phone: string;
+  email: string | null;
+  physicalAddress: string | null;
+  deliveryAreas: string[];
+  totalProducts: number;
+  totalSales: string;
+  totalOrders: number;
+  rating: string;
+  reviewCount: number;
+  isVerified: boolean;
+  isActive: boolean;
+}
+
+export interface VendorAnalytics {
+  totalProducts: number;
+  activeProducts: number;
+  lowStockProducts: number;
+  totalOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  totalRevenue: string;
+  averageOrderValue: string;
+  rating: string;
+  reviewCount: number;
+}
+
 // ==================== PRODUCTS ====================
 
 export const agrimallService = {
@@ -141,6 +176,37 @@ export const agrimallService = {
   // Get vendor's products
   async getVendorProducts() {
     const response = await api.get("/agrimall/products/my-products");
+    return response.data;
+  },
+
+  // Create a product (vendor only)
+  async createProduct(data: {
+    name: string;
+    description?: string;
+    categoryId?: string;
+    price: number | string;
+    compareAtPrice?: number | string;
+    sku?: string;
+    stockQuantity?: number;
+    unit?: string;
+    brand?: string;
+    manufacturer?: string;
+    images?: string[];
+    tags?: string[];
+  }) {
+    const response = await api.post("/agrimall/products", data);
+    return response.data;
+  },
+
+  // Update a product (vendor only, own product)
+  async updateProduct(productId: string, data: Record<string, unknown>) {
+    const response = await api.put(`/agrimall/products/${productId}`, data);
+    return response.data;
+  },
+
+  // Delete a product (vendor only, own product)
+  async deleteProduct(productId: string) {
+    const response = await api.delete(`/agrimall/products/${productId}`);
     return response.data;
   },
 
@@ -263,6 +329,33 @@ export const agrimallService = {
   // Get vendor by ID
   async getVendor(vendorId: string) {
     const response = await api.get(`/agrimall/vendors/${vendorId}`);
+    return response.data;
+  },
+
+  // Register the current user's Agri-Mall store
+  async registerVendor(data: {
+    storeName: string;
+    phone: string;
+    storeDescription?: string;
+    email?: string;
+    physicalAddress?: string;
+    deliveryAreas?: string[];
+    businessRegistration?: string;
+    taxId?: string;
+  }) {
+    const response = await api.post("/agrimall/vendors/register", data);
+    return response.data;
+  },
+
+  // Get the current user's own vendor/store profile
+  async getVendorProfile() {
+    const response = await api.get("/agrimall/vendors/profile");
+    return response.data;
+  },
+
+  // Get the current user's vendor analytics (products/orders/revenue)
+  async getVendorAnalytics() {
+    const response = await api.get("/agrimall/vendors/analytics");
     return response.data;
   },
 };

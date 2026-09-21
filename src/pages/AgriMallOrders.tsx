@@ -55,6 +55,9 @@ export default function AgriMallOrders() {
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
+  const isSupplierView =
+    user?.role === "agro_supplier" || user?.role === "vendor";
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -68,10 +71,12 @@ export default function AgriMallOrders() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          My Agri-Mall Orders
+          {isSupplierView ? "My Agri-Mall Sales" : "My Agri-Mall Orders"}
         </h1>
         <p className="text-gray-600">
-          Track and manage your agricultural product orders
+          {isSupplierView
+            ? "Track and manage orders placed on your Agri-Mall products"
+            : "Track and manage your agricultural product orders"}
         </p>
       </div>
 
@@ -113,9 +118,15 @@ export default function AgriMallOrders() {
       {/* Orders List */}
       {orders.length === 0 ? (
         <Card className="text-center py-12">
-          <p className="text-gray-500 text-lg mb-4">No orders found</p>
-          <Link to="/agrimall/products">
-            <Button variant="primary">Start Shopping</Button>
+          <p className="text-gray-500 text-lg mb-4">
+            {isSupplierView
+              ? "No sales yet"
+              : "No orders found"}
+          </p>
+          <Link to={isSupplierView ? "/agrimall/my-products" : "/agrimall/products"}>
+            <Button variant="primary">
+              {isSupplierView ? "Manage My Products" : "Start Shopping"}
+            </Button>
           </Link>
         </Card>
       ) : (
@@ -123,6 +134,7 @@ export default function AgriMallOrders() {
           {orders.map((orderData) => {
             const order = orderData.order;
             const vendor = orderData.vendor;
+            const buyer = orderData.buyer;
 
             return (
               <Card key={order.id} className="p-6">
@@ -132,7 +144,9 @@ export default function AgriMallOrders() {
                       Order #{order.orderNumber}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {vendor?.storeName || "Vendor"}
+                      {isSupplierView
+                        ? buyer?.fullName || "Buyer"
+                        : vendor?.storeName || "Vendor"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {new Date(order.createdAt).toLocaleDateString()} at{" "}

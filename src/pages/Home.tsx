@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Button, Card } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -1412,8 +1412,12 @@ const Home: React.FC = () => {
     case "transporter":
       return <TransporterHome />;
     case "admin":
-    case "agro_supplier":
       return <AdminHome />;
+    case "agro_supplier":
+      // Suppliers have a real, functional landing at /dashboard (products,
+      // orders, revenue) — unlike admin, they have no separate /admin page
+      // to dead-end at, so send them straight there instead of AdminHome.
+      return <Navigate to="/dashboard" replace />;
     case "support_moderator":
       return <ModeratorHome />;
     default:

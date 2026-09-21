@@ -52,6 +52,12 @@ const AgriMallOrders = React.lazy(() => import("./pages/AgriMallOrders"));
 const AgriMallOrderDetail = React.lazy(
   () => import("./pages/AgriMallOrderDetail"),
 );
+const CreateAgriMallProduct = React.lazy(
+  () => import("./pages/CreateAgriMallProduct"),
+);
+const MyAgriMallProducts = React.lazy(
+  () => import("./pages/MyAgriMallProducts"),
+);
 const ExportGateway = React.lazy(() => import("./pages/ExportGateway"));
 const ExportAssessment = React.lazy(() => import("./pages/ExportAssessment"));
 const ExportAssessmentResults = React.lazy(
@@ -280,6 +286,36 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <AgriMallOrderDetail />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/agrimall/my-products"
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={["agro_supplier", "vendor", "admin"]}
+                      >
+                        <MyAgriMallProducts />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/agrimall/products/create"
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={["agro_supplier", "vendor", "admin"]}
+                      >
+                        <CreateAgriMallProduct />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/agrimall/products/:productId/edit"
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={["agro_supplier", "vendor", "admin"]}
+                      >
+                        <CreateAgriMallProduct />
                       </ProtectedRoute>
                     }
                   />

@@ -4,11 +4,16 @@ import { useAuth } from "../contexts/AuthContext";
 import { Button, Card, LoadingSpinner, BoostBadge } from "../components/common";
 import ClaimPendingBanner from "../components/common/ClaimPendingBanner";
 import StatCard from "../components/common/StatCard";
+import { agrimallService } from "../services/agrimallService";
 
 const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
+  const [supplierAnalytics, setSupplierAnalytics] = useState<any>(null);
+  const [supplierHasStore, setSupplierHasStore] = useState<boolean | null>(
+    null,
+  );
   const [claimMatch, setClaimMatch] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("claimMatch") ?? "null");
@@ -32,6 +37,20 @@ const Dashboard: React.FC = () => {
 
     loadStats();
   }, []);
+
+  useEffect(() => {
+    if (user?.role !== "agro_supplier") return;
+
+    agrimallService
+      .getVendorAnalytics()
+      .then((response: any) => {
+        if (response.success) {
+          setSupplierAnalytics(response.analytics);
+          setSupplierHasStore(true);
+        }
+      })
+      .catch(() => setSupplierHasStore(false));
+  }, [user?.role]);
 
   if (loading) {
     return (
@@ -461,6 +480,158 @@ const Dashboard: React.FC = () => {
                 </h3>
                 <div className="text-center text-gray-500 text-sm py-8">
                   No active deliveries
+                </div>
+              </Card>
+            </div>
+          </>
+        );
+
+      case "agro_supplier":
+        return (
+          <>
+            {supplierHasStore === false ? (
+              <Card className="p-8 text-center mb-8">
+                <div className="text-5xl mb-4">🌾</div>
+                <h3 className="text-2xl font-bold text-primary-green mb-2">
+                  Set Up Your Agri-Mall Store
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Add your first product to start selling seeds, fertilizer,
+                  equipment, and other agricultural inputs on Agri-Mall.
+                </p>
+                <Link to="/agrimall/products/create">
+                  <Button variant="primary">Add Your First Product</Button>
+                </Link>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <StatCard
+                  title="Total Products"
+                  value={supplierAnalytics?.totalProducts ?? 0}
+                  color="green"
+                  icon={
+                    <svg
+                      className="w-8 h-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                      />
+                    </svg>
+                  }
+                />
+                <StatCard
+                  title="Pending Orders"
+                  value={supplierAnalytics?.pendingOrders ?? 0}
+                  color="gold"
+                  icon={
+                    <svg
+                      className="w-8 h-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  }
+                />
+                <StatCard
+                  title="Total Revenue"
+                  value={`$${parseFloat(supplierAnalytics?.totalRevenue ?? "0").toLocaleString()}`}
+                  color="blue"
+                  icon={
+                    <svg
+                      className="w-8 h-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  }
+                />
+                <StatCard
+                  title="Rating"
+                  value={
+                    supplierAnalytics?.rating
+                      ? `${parseFloat(supplierAnalytics.rating).toFixed(1)} ★`
+                      : "No ratings yet"
+                  }
+                  color="red"
+                  icon={
+                    <svg
+                      className="w-8 h-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                      />
+                    </svg>
+                  }
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="p-6">
+                <h3 className="text-xl font-bold text-primary-green mb-4">
+                  Quick Actions
+                </h3>
+                <div className="space-y-3">
+                  <Link to="/agrimall/my-products">
+                    <Button variant="primary" className="w-full">
+                      📦 My Products
+                    </Button>
+                  </Link>
+                  <Link to="/agrimall/products/create">
+                    <Button variant="success" className="w-full">
+                      ➕ Add Product
+                    </Button>
+                  </Link>
+                  <Link to="/agrimall/orders">
+                    <Button variant="outline" className="w-full">
+                      🧾 Mall Orders
+                    </Button>
+                  </Link>
+                  <Link to="/agrimall/products">
+                    <Button variant="outline" className="w-full">
+                      Browse Agri-Mall
+                    </Button>
+                  </Link>
+                  <Link to="/wallet">
+                    <Button variant="outline" className="w-full">
+                      💰 Wallet
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="text-xl font-bold text-primary-green mb-4">
+                  Recent Activity
+                </h3>
+                <div className="text-center text-gray-500 text-sm py-8">
+                  No recent activity yet
                 </div>
               </Card>
             </div>
